@@ -34,12 +34,12 @@ div .gm-style-iw {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 0.8rem;
+  gap: 0.5rem;
 }
 
 .title-bar-logo-img {
-  width: 36px;
-  height: 36px;
+  width: 46px;
+  height: 46px;
 }
 
 .title {

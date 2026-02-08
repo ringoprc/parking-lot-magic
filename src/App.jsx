@@ -94,13 +94,13 @@ export default function App() {
   function handlePickPlace(p) {
     setActive(null);
     // 1) move map (smoothly) — your ParkingMap already supports focus/fit viewport
-    flyToRef.current?.({ lat: p.lat, lng: p.lng, zoom: 13 });
+    flyToRef.current?.({ lat: p.lat, lng: p.lng, zoom: 14 });
     setFocus({
       name: p.name,
       address: p.address,
       lat: p.lat,
       lng: p.lng,
-      zoom: 15,
+      zoom: 14,
       kind: "search",
     });
 

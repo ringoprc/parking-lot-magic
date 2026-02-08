@@ -30,8 +30,20 @@ div .gm-style-iw {
   flex: 0 0 auto;
 }
 
+.title-bar-inner {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.title-bar-logo-img {
+  width: 36px;
+  height: 36px;
+}
+
 .title {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 700;
 }
 
@@ -41,6 +53,9 @@ div .gm-style-iw {
   display: flex;
   min-height: 0;
   min-width: 0;
+  position: absolute;
+  height: calc(100% - 106px);
+  bottom: 0px;
 }
 
 .side {
@@ -64,13 +79,17 @@ div .gm-style-iw {
   margin: 6px 6px 10px;
 }
 
+.lot-btn-list {
+  padding: 8px 15px 8px 15px;
+}
+
 .lot-btn {
   width: 100%;
   text-align: left;
-  border: 1px solid #eee;
+  border: 1px solid #d1d1d1;
   background: #fff;
-  padding: 10px;
-  border-radius: 10px;
+  padding: 12px 16px 12px 20px;
+  border-radius: 12px;
   margin-bottom: 8px;
   cursor: pointer;
 }
@@ -79,7 +98,14 @@ div .gm-style-iw {
   border-color: #222;
 }
 
+.lot-btn-name-div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .lot-btn-name {
+  max-width: 70%;
   font-weight: 700;
   margin-bottom: 6px;
 }
@@ -90,6 +116,11 @@ div .gm-style-iw {
   padding: 0px 0px 0px 0px;
   font-size: 12px;
   opacity: 0.8;
+}
+
+.lot-btn-sub-vacancy-count {
+  font-size: 14px;
+  white-space: nowrap;
 }
 
 .lot-btn-sub-time-ago {
@@ -110,14 +141,24 @@ div .gm-style-iw {
   height: 100%;
 }
 
+.gm-style-mtc-bbw {
+  gap: 6px !important;
+}
+
+.gm-style-mtc button {
+  display: none !important;
+  border-radius: 10px !important;
+}
+
 /* ===== InfoWindow placeholder image ===== */
 .iw-hero {
-  width: 100%;
-  height: 120px;          /* adjust */
+  width: calc(100% - 2px);
+  height: 120px;
   overflow: hidden;
   border-radius: 10px;
   margin-bottom: 10px;
-  background: #eef2f7;    /* fallback behind image */
+  background: #eef2f7;
+  border: 1px solid #ccc;
 }
 
 .iw-hero-img {
@@ -148,7 +189,7 @@ div .gm-style-iw {
 
 .mobile-lots-label {
   font-weight: 700;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .mobile-lots-toggle {
@@ -174,15 +215,15 @@ div .gm-style-iw {
   .mobile-lots-overlay {
     display: block;
 
-    position: fixed;
+    /*position: fixed;
     left: 0;
-    right: 0;
-    top: calc(56px + 48px); /* title-bar + mobile-lots-bar */
+    right: 0;*/
+    /*top: calc(56px + 48px); /* title-bar + mobile-lots-bar */
     background: #fff;
     z-index: 999;
 
     /* dropdown animation */
-    max-height: 100px;
+    max-height: 0px;
     opacity: 0;
     pointer-events: none;
 
@@ -192,14 +233,17 @@ div .gm-style-iw {
   }
 
   .mobile-lots-overlay.open {
+    position: relative;
     max-height: calc(100vh - (56px + 48px));
-    opacity: 1;
+    opacity: 0.98;
     pointer-events: auto;
+    border-bottom-right-radius: 16px;
+    border-bottom-left-radius: 16px;
   }
 
   /* make inside scrollable while wrapper animates */
   .mobile-lots-overlay-scroll {
-    height: calc(100vh - (56px + 48px));
+    height: calc(100vh - (57px + 49px + 100px));
     overflow: auto;
     padding: 10px;
   }
@@ -208,6 +252,216 @@ div .gm-style-iw {
 .mobile-lots-overlay-list {
   max-width: 720px;
   margin: 0 auto;
+}
+
+
+/* =========================
+   Lot search (input + dropdown)
+   ========================= */
+
+.lot-search {
+  position: relative; /* for absolute dropdown */
+  margin: 10px 0 12px;
+}
+
+.lot-search gmp-place-autocomplete {
+  border-radius: 999px !important;
+  outline: none !important;
+}
+
+.lot-search.is-focused gmp-place-autocomplete {
+  /*border-color: #2196F3 !important;*/
+  border: 1px solid transparent;
+}
+
+/* input */
+.lot-search-input {
+  width: 100%;
+  height: 34px;
+  box-sizing: border-box;
+  padding: 20px 27px;
+  border-radius: 999px;
+  border: 1px solid #949494;
+  outline: none;
+  line-height: 1;
+  background: #fff;
+
+  font-size: 16px;
+  font-weight: 800;
+  color: #111;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* optional: make focus slightly stronger */
+.lot-search.is-focused .lot-search-input,
+.lot-search:focus-within .lot-search-input {
+  border-color: #1a73e8;
+}
+
+.lot-search.is-focused .lot-search-input.has-items,
+.lot-search:focus-within .lot-search-input.has-items {
+  border-color: #1a73e8;
+  border-radius: 12px;
+  border-bottom-right-radius: 0px;
+  border-bottom-left-radius: 0px;
+  border-bottom: 1px solid #ccc;
+}
+
+
+/* dropdown container */
+.lot-search-dd {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% - 1px);
+  z-index: 2000;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.10);
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid #a0a0a0;
+  border-top-right-radius: 0px;
+  border-top-left-radius: 0px;
+  border-top: 1px solid #afaeae;
+  border-width: thin;
+}
+
+.lot-search-dd::-webkit-scrollbar {
+  width: 4px;
+}
+.lot-search-dd::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 1);
+  border-radius: 10px;
+  border: 3px solid #999;
+}
+
+/* dropdown item button */
+.lot-search-dd-item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 8px 18px;
+  border-radius: 999px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 600;
+  color: #111;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lot-search-dd-item:hover {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.lot-search-dd-item.active,
+.lot-search-dd-item:active {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* two-line layout inside each suggestion button */
+.lot-search-dd-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* line 1: name */
+.lot-search-dd-title {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #111;
+
+  /* prevent super long names from exploding layout */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* line 2: address */
+.lot-search-dd-sub {
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.2;
+  color: #727272;
+  white-space: normal;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .mobile-lots-overlay {
+    z-index: 1500; /* your overlay already has z-index, just ensure it's high enough */
+  }
+
+  /* dropdown inside overlay should still be above overlay list */
+  .mobile-lots-overlay .lot-search-dd {
+    z-index: 2001;
+  }
+}
+
+/* custom marker pin */
+.vl-pin{
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 3px solid;
+  box-shadow: 0 10px 18px rgba(0,0,0,.18);
+  position: relative;
+  transform: translateY(-6px); /* 視覺上更像 pin */
+}
+
+/*
+.vl-pin::after{
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 10px solid currentColor;
+  filter: drop-shadow(0 6px 10px rgba(0,0,0,.12));
+  opacity: .7;
+}
+*/
+
+.vl-pin--num{
+  width: 30px;
+  height: 30px;
+  transform: translateY(-10px);
+}
+
+.vl-pin-num{
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: 13px;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0,0,0,.25);
+}
+
+/* inner dot (optional) */
+.vl-pin-dot{
+  position: absolute;
+  inset: 4px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.85);
 }
 
 

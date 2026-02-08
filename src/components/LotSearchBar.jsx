@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
 
+import { FiX } from "react-icons/fi";
+
 function getSuggestionTitle(s) {
   const p = s?.placePrediction;
   const sf = p?.structuredFormat;
@@ -205,7 +207,7 @@ export default function LotSearchBar({
           viewport: place.viewport,
         });
       } else {
-        // ✅ classic fallback：用 PlacesService.getDetails
+        // classic fallback：用 PlacesService.getDetails
         const g = window.google;
         const mapDiv = document.createElement("div"); // 不需要真的掛到 DOM
         const svc = new g.maps.places.PlacesService(mapDiv);
@@ -261,33 +263,64 @@ export default function LotSearchBar({
       ref={rootRef}
       className={`lot-search ${searchFocused ? "is-focused" : ""}`}
     >
-      <input
-        ref={inputRef}
-        className={`lot-search-input ${items.length > 0 ? "has-items" : ""}`}
-        value={q}
-        placeholder={placeholder}
-        onChange={(e) => setQ(e.target.value)}
-        onFocus={() => {
-          if (items.length > 0 && q.trim()) setOpen(true);
-        }}
-        onKeyDown={(e) => {
-          if (!open) return;
+      <div className="lot-search-input-wrap">
+        <input
+          ref={inputRef}
+          className={`lot-search-input ${items.length > 0 ? "has-items" : ""}`}
+          value={q}
+          placeholder={placeholder}
+          onChange={(e) => setQ(e.target.value)}
+          onFocus={() => {
+            if (items.length > 0 && q.trim()) setOpen(true);
+          }}
+          onKeyDown={(e) => {
+            if (!open) return;
 
-          if (e.key === "ArrowDown") {
-            e.preventDefault();
-            setActiveIdx((i) => Math.min(i + 1, items.length - 1));
-          } else if (e.key === "ArrowUp") {
-            e.preventDefault();
-            setActiveIdx((i) => Math.max(i - 1, 0));
-          } else if (e.key === "Enter") {
-            e.preventDefault();
-            const chosen = items[activeIdx] || items[0];
-            if (chosen) pickSuggestion(chosen);
-          } else if (e.key === "Escape") {
-            setOpen(false);
-          }
-        }}
-      />
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              setActiveIdx((i) => Math.min(i + 1, items.length - 1));
+            } else if (e.key === "ArrowUp") {
+              e.preventDefault();
+              setActiveIdx((i) => Math.max(i - 1, 0));
+            } else if (e.key === "Enter") {
+              e.preventDefault();
+              const chosen = items[activeIdx] || items[0];
+              if (chosen) pickSuggestion(chosen);
+            } else if (e.key === "Escape") {
+              setOpen(false);
+            }
+          }}
+        />
+
+        {/* Clear (X) */}
+        {q.trim() !== "" && (
+          <button
+            type="button"
+            className="lot-search-clear"
+            aria-label="清除搜尋"
+            onMouseDown={(e) => {
+              // 避免 mousedown 先讓 input blur，導致 focusout 邏輯介入
+              e.preventDefault();
+            }}
+            onClick={() => {
+              setQ("");
+              setOpen(false);
+              setActiveIdx(-1);
+
+              // 你現在的策略：q 清空後 items 會被 effect 清掉
+              // 這邊可以不手動 setItems([])，交給 effect
+              tokenRef.current = null;
+              lastFetchedQRef.current = "";
+              skipNextFetchRef.current = false;
+
+              // 讓使用者可以立刻再輸入
+              inputRef.current?.focus?.();
+            }}
+          >
+            <FiX size={16} />
+          </button>
+        )}
+      </div>
 
       {open && items.length > 0 && (
         <div className="lot-search-dd">

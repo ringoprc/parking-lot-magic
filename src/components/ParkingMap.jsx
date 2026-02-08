@@ -8,7 +8,7 @@ import {
   useMap,
 } from "@vis.gl/react-google-maps";
 
-import { formatTime, minutesAgo } from "../utils/time";
+import { formatTime, minutesAgo, minSecAgo } from "../utils/time";
 
 function getPinColorsFromVacancy(v) {
   if (v == null) return { bg: "#9AA0A6", border: "#5F6368", glyph: "#FFFFFF" }; // unknown = 灰
@@ -141,40 +141,79 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
             position={{ lat: active.lat, lng: active.lng }}
             onCloseClick={() => setActive?.(null)}
           >
-            <div className="iw-hero">
-              <img
-                className="iw-hero-img"
-                src="https://placehold.co/640x240/f9f9f9/999999/png?text=Parking"
-                alt=""
-                loading="lazy"
-              />
+            <div className="iw-hero-outer">
+              <div className="iw-hero">
+                <img
+                  className="iw-hero-img"
+                  src="https://placehold.co/640x240/f9f9f9/999999/png?text=Parking"
+                  alt=""
+                  loading="lazy"
+                />
+              </div>
             </div>
 
-            <div style={{ minWidth: 220 }}>
-              <div style={{ fontWeight: 700, marginBottom: 6 }}>
+            <div style={{ minWidth: 120 }}>
+              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>
                 {active.name}
               </div>
-              <div>
-                空位：{" "}
-                <span style={{ fontWeight: 700 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>
+                空位：
+                <span style={{ fontSize: 17, fontWeight: 700 }}>
                   {active.vacancy ?? "未知"}
                 </span>
               </div>
 
-              <div style={{ marginTop: 6, fontSize: 12, opacity: 0.8 }}>
-                更新：{formatTime(active.lastUpdated)}
-              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  flexDirection: "column"
+                }}
+              >
+                {(() => {
+                  const m = minutesAgo(active.lastUpdated);
+                  if (m == null) return null;
+                  if (m <= 3) return null;
+                  return (
+                    <div style={{
+                      marginTop: "6px",
+                      fontSize: "11px",
+                      color: "#ea4336",
+                      fontWeight: "900"
+                    }}>
+                      資料可能延遲（{m} 分鐘）
+                    </div>
+                  );
+                })()}
 
-              {(() => {
-                const m = minutesAgo(active.lastUpdated);
-                if (m == null) return null;
-                if (m <= 3) return null;
-                return (
-                  <div style={{ marginTop: 6, fontSize: 12 }}>
-                    資料可能延遲（{m} 分鐘前）
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "5px"
+                  }}
+                >
+                  <div style={{ marginTop: 6, fontSize: 10.5 }}>
+                    最近更新：{formatTime(active.lastUpdated)}
                   </div>
-                );
-              })()}
+                  <div style={{ marginTop: 6, fontSize: 10.5 }}>
+                    {(() => {
+                      const ms = minSecAgo(active.lastUpdated);
+                      if (!ms) return null;
+
+                      // 想要永遠顯示「X 分 Y 秒前」
+                      return (
+                        <div style={{ marginTop: 0, fontSize: 10.5 }}>
+                          （{ms.min} 分 {String(ms.sec).padStart(2, "0")} 秒前）
+                        </div>
+                      );
+
+                      // 如果你更想在 < 60 秒時顯示「Y 秒前」，用這個：
+                      // const txt = ms.min <= 0 ? `${ms.sec} 秒前` : `${ms.min} 分 ${String(ms.sec).padStart(2,"0")} 秒前`;
+                      // return <div style={{ marginTop: 6, fontSize: 10.5 }}>（{txt}）</div>;
+                    })()}
+                  </div>
+                </div>
+              </div>
             </div>
           </InfoWindow>
         )}

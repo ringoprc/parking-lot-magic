@@ -26,10 +26,11 @@ export default function App() {
   const [searchCenter, setSearchCenter] = useState(null); // { lat, lng }
   const [queryCenter, setQueryCenter] = useState({ lat: 25.0522, lng: 121.5203 }); // initial
 
+  const RADIUS_M = 2000;
   const { lots } = useLots({
     apiBase,
-    center: queryCenter,     // {lat,lng}
-    radiusM: 2500,           // pick a default (e.g. 2.5km)
+    center: queryCenter,
+    radiusM: RADIUS_M,
     pollMs: 15000,
   });
 
@@ -57,6 +58,16 @@ export default function App() {
     // show closest ~30 (tweak as you like)
     return withDist.slice(0, 30);
   }, [validLots, searchCenter]);
+
+  const listTitle = useMemo(() => {
+    if (!searchCenter || !focus?.name) return `所有停車場 (${displayedLots.length})`;
+
+    const km = (RADIUS_M / 1000);
+    const kmText = Number.isInteger(km) ? String(km) : km.toFixed(1);
+
+    return `距離 ${focus.name} ${kmText} 公里內的所有停車場 (${displayedLots.length})`;
+  }, [searchCenter, focus?.name, displayedLots.length, RADIUS_M]);
+
 
   function handlePickPlace(p) {
     // 1) move map (smoothly) — your ParkingMap already supports focus/fit viewport
@@ -92,6 +103,7 @@ export default function App() {
         {/* Mobile-only expandable lots bar (row under title) */}
         <div>
           <MobileLotsBar
+            title={listTitle}
             count={displayedLots.length}
             open={mobileMenuOpen}
             onToggle={() => setMobileMenuOpen((v) => !v)}
@@ -114,6 +126,7 @@ export default function App() {
         <div className="content">
           {/* Left list */}
           <LotsSidebar
+            title={listTitle}
             lots={displayedLots}
             active={active}
             onPick={handlePickPlace}

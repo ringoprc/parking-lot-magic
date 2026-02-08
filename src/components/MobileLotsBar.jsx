@@ -1,10 +1,10 @@
 // frontend/src/components/MobileLotsBar.jsx
 import { FiMenu, FiX } from "react-icons/fi";
 
-export default function MobileLotsBar({ count, open, onToggle }) {
+export default function MobileLotsBar({ title, count, open, onToggle }) {
   return (
     <div className="mobile-lots-bar">
-      <div className="mobile-lots-label">所有停車場 ({count})</div>
+      <div className="mobile-lots-label">{title || `所有停車場 (${count})`}</div>
 
       <button
         type="button"

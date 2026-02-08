@@ -101,7 +101,7 @@ div .gm-style-iw {
 }
 
 .lot-btn-list {
-  padding: 8px 15px 8px 15px;
+  padding: 8px 12px 8px 6px;
 }
 
 .lot-btn {
@@ -291,13 +291,14 @@ div .gm-style-iw {
     pointer-events: auto;
     border-bottom-right-radius: 16px;
     border-bottom-left-radius: 16px;
+    padding: 10px 25px;
   }
 
   /* make inside scrollable while wrapper animates */
   .mobile-lots-overlay-scroll {
     height: calc(100vh - (57px + 49px + 100px));
+    max-height: 60vh;
     overflow: hidden;
-    padding: 10px;
   }
 }
 

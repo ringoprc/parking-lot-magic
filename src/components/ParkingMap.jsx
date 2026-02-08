@@ -92,78 +92,73 @@ function VacancyPin({ vacancy }) {
 export default function ParkingMap({ lots, active, setActive, flyToRef, focus }) {
   return (
     <div className="map-wrap">
-      <APIProvider
-        apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
-        libraries={["marker", "places"]}
+      <Map
+        style={{ width: "100%", height: "100%" }}
+        defaultCenter={{ lat: 25.0522, lng: 121.5203 }}
+        defaultZoom={14}
+        gestureHandling={"greedy"}
+        disableDefaultUI={false}
+        mapId={import.meta.env.VITE_GOOGLE_MAP_ID}
       >
-        <Map
-          style={{ width: "100%", height: "100%" }}
-          defaultCenter={{ lat: 25.0522, lng: 121.5203 }}
-          defaultZoom={14}
-          gestureHandling={"greedy"}
-          disableDefaultUI={false}
-          mapId={import.meta.env.VITE_GOOGLE_MAP_ID}
-        >
-          <FitAndFly 
-            lots={lots} 
-            flyToRef={flyToRef} 
-            focus={focus} 
-          />
+        <FitAndFly 
+          lots={lots} 
+          flyToRef={flyToRef} 
+          focus={focus} 
+        />
 
-          {lots.map((l) => (
-            <AdvancedMarker
-              key={l.lotId}
-              position={{ lat: l.lat, lng: l.lng }}
-              onClick={() => setActive?.(l)}
-            >
-              <VacancyPin vacancy={l.vacancy} active={active?.lotId === l.lotId} />
-            </AdvancedMarker>
-          ))}
+        {lots.map((l) => (
+          <AdvancedMarker
+            key={l.lotId}
+            position={{ lat: l.lat, lng: l.lng }}
+            onClick={() => setActive?.(l)}
+          >
+            <VacancyPin vacancy={l.vacancy} active={active?.lotId === l.lotId} />
+          </AdvancedMarker>
+        ))}
 
-          {active && (
-            <InfoWindow
-              position={{ lat: active.lat, lng: active.lng }}
-              onCloseClick={() => setActive?.(null)}
-            >
-              <div className="iw-hero">
-                <img
-                  className="iw-hero-img"
-                  src="https://placehold.co/640x240/f9f9f9/999999/png?text=Parking"
-                  alt=""
-                  loading="lazy"
-                />
+        {active && (
+          <InfoWindow
+            position={{ lat: active.lat, lng: active.lng }}
+            onCloseClick={() => setActive?.(null)}
+          >
+            <div className="iw-hero">
+              <img
+                className="iw-hero-img"
+                src="https://placehold.co/640x240/f9f9f9/999999/png?text=Parking"
+                alt=""
+                loading="lazy"
+              />
+            </div>
+
+            <div style={{ minWidth: 220 }}>
+              <div style={{ fontWeight: 700, marginBottom: 6 }}>
+                {active.name}
+              </div>
+              <div>
+                空位：{" "}
+                <span style={{ fontWeight: 700 }}>
+                  {active.vacancy ?? "未知"}
+                </span>
               </div>
 
-              <div style={{ minWidth: 220 }}>
-                <div style={{ fontWeight: 700, marginBottom: 6 }}>
-                  {active.name}
-                </div>
-                <div>
-                  空位：{" "}
-                  <span style={{ fontWeight: 700 }}>
-                    {active.vacancy ?? "未知"}
-                  </span>
-                </div>
-
-                <div style={{ marginTop: 6, fontSize: 12, opacity: 0.8 }}>
-                  更新：{formatTime(active.lastUpdated)}
-                </div>
-
-                {(() => {
-                  const m = minutesAgo(active.lastUpdated);
-                  if (m == null) return null;
-                  if (m <= 3) return null;
-                  return (
-                    <div style={{ marginTop: 6, fontSize: 12 }}>
-                      資料可能延遲（{m} 分鐘前）
-                    </div>
-                  );
-                })()}
+              <div style={{ marginTop: 6, fontSize: 12, opacity: 0.8 }}>
+                更新：{formatTime(active.lastUpdated)}
               </div>
-            </InfoWindow>
-          )}
-        </Map>
-      </APIProvider>
+
+              {(() => {
+                const m = minutesAgo(active.lastUpdated);
+                if (m == null) return null;
+                if (m <= 3) return null;
+                return (
+                  <div style={{ marginTop: 6, fontSize: 12 }}>
+                    資料可能延遲（{m} 分鐘前）
+                  </div>
+                );
+              })()}
+            </div>
+          </InfoWindow>
+        )}
+      </Map>
     </div>
   );
 }

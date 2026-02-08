@@ -3,6 +3,8 @@ import { useMemo, useRef, useState } from "react";
 import { useLots } from "./hooks/useLots";
 import { haversineMeters } from "./utils/geo";
 
+import { APIProvider } from "@vis.gl/react-google-maps";
+
 import LotsSidebar from "./components/LotsSidebar";
 import MobileLotsBar from "./components/MobileLotsBar";
 import MobileLotsOverlay from "./components/MobileLotsOverlay";
@@ -70,61 +72,66 @@ export default function App() {
   }
 
   return (
-    <div className="app-root">
+    <APIProvider
+      apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+      libraries={["places", "marker"]}
+    >
+      <div className="app-root">
 
-      {/* Top Logo Bar */}
-      <div className="title-bar">
-        <div className="title-bar-inner">
-          <img src={logo} alt="logo" className="title-bar-logo-img" />
-          <div className="title">停車急管家</div>
+        {/* Top Logo Bar */}
+        <div className="title-bar">
+          <div className="title-bar-inner">
+            <img src={logo} alt="logo" className="title-bar-logo-img" />
+            <div className="title">停車急管家</div>
+          </div>
+        </div>
+
+        {/* Mobile-only expandable lots bar (row under title) */}
+        <div>
+          <MobileLotsBar
+            count={displayedLots.length}
+            open={mobileMenuOpen}
+            onToggle={() => setMobileMenuOpen((v) => !v)}
+          />
+          <MobileLotsOverlay
+            open={mobileMenuOpen}
+            lots={displayedLots}
+            active={active}
+            onPick={(p) => {
+              handlePickPlace(p);
+            }}
+            onSelect={(l) => {
+              setActive(l);
+              flyToRef.current?.({ lat: l.lat, lng: l.lng });
+              setMobileMenuOpen(false);
+            }}
+          />
+        </div>
+
+        <div className="content">
+          {/* Left list */}
+          <LotsSidebar
+            lots={displayedLots}
+            active={active}
+            onPick={handlePickPlace}
+            onSelect={(l) => {
+              setActive(l);
+              flyToRef.current?.({ lat: l.lat, lng: l.lng });
+              setMobileMenuOpen(false);
+            }}
+          />
+
+          {/* Map */}
+          <ParkingMap
+            lots={validLots}       // map should still show all lots you have
+            active={active}
+            setActive={setActive}
+            flyToRef={flyToRef}
+            focus={focus}
+          />
         </div>
       </div>
-
-      {/* Mobile-only expandable lots bar (row under title) */}
-      <div>
-        <MobileLotsBar
-          count={displayedLots.length}
-          open={mobileMenuOpen}
-          onToggle={() => setMobileMenuOpen((v) => !v)}
-        />
-        <MobileLotsOverlay
-          open={mobileMenuOpen}
-          lots={displayedLots}
-          active={active}
-          onPick={(p) => {
-            handlePickPlace(p);
-          }}
-          onSelect={(l) => {
-            setActive(l);
-            flyToRef.current?.({ lat: l.lat, lng: l.lng });
-            setMobileMenuOpen(false);
-          }}
-        />
-      </div>
-
-      <div className="content">
-        {/* Left list */}
-        <LotsSidebar
-          lots={displayedLots}
-          active={active}
-          onPick={handlePickPlace}
-          onSelect={(l) => {
-            setActive(l);
-            flyToRef.current?.({ lat: l.lat, lng: l.lng });
-            setMobileMenuOpen(false);
-          }}
-        />
-
-        {/* Map */}
-        <ParkingMap
-          lots={validLots}       // map should still show all lots you have
-          active={active}
-          setActive={setActive}
-          flyToRef={flyToRef}
-          focus={focus}
-        />
-      </div>
-    </div>
+    </APIProvider>
   );
 }
 

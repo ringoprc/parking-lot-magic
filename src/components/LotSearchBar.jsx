@@ -1,5 +1,6 @@
 // frontend/src/components/LotSearchBar.jsx
 import { useState, useEffect, useRef } from "react";
+import { useMapsLibrary } from "@vis.gl/react-google-maps";
 
 function getSuggestionTitle(s) {
   const p = s?.placePrediction;
@@ -44,6 +45,8 @@ export default function LotSearchBar({
   onPick, // (place) => void
 }) {
 
+  const places = useMapsLibrary("places");
+
   const [q, setQ] = useState("");
   const [items, setItems] = useState([]); // suggestions
   const [open, setOpen] = useState(false);
@@ -58,34 +61,18 @@ export default function LotSearchBar({
   const skipNextFetchRef = useRef(false);
   const lastFetchedQRef = useRef(""); // 記錄上次真的打 API 的 query
 
-  useEffect(() => {
-    let disposed = false;
-
-    (async () => {
-      const g = window.google;
-      if (!g?.maps?.importLibrary) return;
-
-      const lib = await g.maps.importLibrary("places");
-      if (disposed) return;
-
-      placesLibRef.current = lib; // contains AutocompleteSuggestion, AutocompleteSessionToken, etc.
-    })();
-
-    return () => {
-      disposed = true;
-    };
-  }, []);
 
   useEffect(() => {
 
     console.log('HERE1');
 
-    const lib = placesLibRef.current;
+    const g = window.google;
+    const lib = places; // 直接用 hook 回來的 library
     const hasNew = !!lib?.AutocompleteSuggestion;
     console.log("[places] hasNewAutocompleteSuggestion:", hasNew);
     console.log('lib:', lib);
     console.log('lib?.AutocompleteSuggestion', lib?.AutocompleteSuggestion);
-    if (!lib?.AutocompleteSuggestion) return;
+    if (!g?.maps || !lib) return; // maps or places library not ready yet
 
     console.log('HERE2');
 
@@ -265,28 +252,9 @@ export default function LotSearchBar({
         });
       }
 
-      await place.fetchFields({
-        fields: ["displayName", "formattedAddress", "location", "viewport"],
-      });
-
-      const loc = place.location;
-      if (!loc) return;
-
-      onPick?.({
-        // Keep your UI flexible; do NOT overwrite q automatically
-        name: place.displayName,
-        address: place.formattedAddress,
-        lat: loc.lat(),
-        lng: loc.lng(),
-        viewport: place.viewport,
-      });
-
       skipNextFetchRef.current = true;
 
-      // ✅ update input to first line
       setQ(getSuggestionTitle(s));
-
-      // ✅ close dropdown but KEEP items for quick reopen
       setOpen(false);
       setActiveIdx(-1);
 

@@ -201,39 +201,43 @@ export default function LotSearchBar({
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
+    document.activeElement?.blur?.();
 
-        // reuse existing contract with parent
-        onPick?.({
-          name: "我的位置",
-          address: "",
-          lat: latitude,
-          lng: longitude,
-          viewport: null,
-          kind: "my_location",
-        });
+    setTimeout(() => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
 
-        // prevent triggering autocomplete fetch due to setQ
-        skipNextFetchRef.current = true;
-        setQ("使用我現在的位置");
-        setOpen(false);
-        setActiveIdx(-1);
+          // reuse existing contract with parent
+          onPick?.({
+            name: "我的位置",
+            address: "",
+            lat: latitude,
+            lng: longitude,
+            viewport: null,
+            kind: "my_location",
+          });
 
-        tokenRef.current = null;
-        inputRef.current?.blur?.();
-      },
-      (err) => {
-        console.error("[geolocation] failed:", err);
-        alert("無法取得定位，請確認已允許定位權限");
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 30000,
-      }
-    );
+          // prevent triggering autocomplete fetch due to setQ
+          skipNextFetchRef.current = true;
+          setQ("使用我現在的位置");
+          setOpen(false);
+          setActiveIdx(-1);
+
+          tokenRef.current = null;
+          inputRef.current?.blur?.();
+        },
+        (err) => {
+          console.error("[geolocation] failed:", err);
+          alert("無法取得定位，請確認已允許定位權限");
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 30000,
+        }
+      );
+    }, 250);
   }
 
   async function pickSuggestion(s) {

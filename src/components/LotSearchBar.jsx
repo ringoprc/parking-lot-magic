@@ -76,9 +76,16 @@ export default function LotSearchBar({
     const query = q.trim();
     if (!query) {
       setItems([]);
-      setOpen(false);
-      setActiveIdx(-1);
       tokenRef.current = null;
+
+      // show dropdown (with only "use my location") when focused
+      if (searchFocused) {
+        setOpen(true);
+        setActiveIdx(0);
+      } else {
+        setOpen(false);
+        setActiveIdx(-1);
+      }
       return;
     }
 
@@ -161,7 +168,7 @@ export default function LotSearchBar({
     }, 180);
 
     return () => clearTimeout(debounceRef.current);
-  }, [q]);
+  }, [q, searchFocused]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -185,6 +192,49 @@ export default function LotSearchBar({
       root.removeEventListener("focusout", onFocusOut);
     };
   }, []);
+
+  function pickMyLocation() {
+    if (composingRef.current) return;
+
+    if (!navigator.geolocation) {
+      alert("此裝置/瀏覽器不支援定位功能");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+
+        // reuse existing contract with parent
+        onPick?.({
+          name: "我的位置",
+          address: "",
+          lat: latitude,
+          lng: longitude,
+          viewport: null,
+          kind: "my_location",
+        });
+
+        // prevent triggering autocomplete fetch due to setQ
+        skipNextFetchRef.current = true;
+        setQ("使用我現在的位置");
+        setOpen(false);
+        setActiveIdx(-1);
+
+        tokenRef.current = null;
+        inputRef.current?.blur?.();
+      },
+      (err) => {
+        console.error("[geolocation] failed:", err);
+        alert("無法取得定位，請確認已允許定位權限");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 30000,
+      }
+    );
+  }
 
   async function pickSuggestion(s) {
     if (!s?.placePrediction) return;
@@ -269,7 +319,7 @@ export default function LotSearchBar({
       <div className="lot-search-input-wrap">
         <input
           ref={inputRef}
-          className={`lot-search-input ${items.length > 0 ? "has-items" : ""}`}
+          className={`lot-search-input ${searchFocused ? "has-items" : ""}`}
           value={q}
           placeholder={placeholder}
           onChange={(e) => setQ(e.target.value)}
@@ -284,6 +334,7 @@ export default function LotSearchBar({
           }}
           onKeyDown={(e) => {
             if (!open) return;
+            const ddLen = (items?.length || 0) + 1; // +1 for "my location"
 
             // IME composing: let Enter finish composition, don't pick suggestion
             const isComposing = e.isComposing || composingRef.current || e.keyCode === 229;
@@ -295,13 +346,17 @@ export default function LotSearchBar({
 
             if (e.key === "ArrowDown") {
               e.preventDefault();
-              setActiveIdx((i) => Math.min(i + 1, items.length - 1));
+              setActiveIdx((i) => Math.min(i + 1, ddLen - 1));
             } else if (e.key === "ArrowUp") {
               e.preventDefault();
               setActiveIdx((i) => Math.max(i - 1, 0));
             } else if (e.key === "Enter") {
               e.preventDefault();
-              const chosen = items[activeIdx] || items[0];
+              if (activeIdx === 0) {
+                pickMyLocation();
+                return;
+              }
+              const chosen = items[activeIdx - 1] || items[0];
               if (chosen) pickSuggestion(chosen);
             } else if (e.key === "Escape") {
               setOpen(false);
@@ -340,16 +395,33 @@ export default function LotSearchBar({
         )}
       </div>
 
-      {open && items.length > 0 && (
+      {open && (items.length > 0 || q.trim() === "") && (
         <div className="lot-search-dd">
-          {items.map((s, idx) => (
-            <button
-              key={s.placePrediction.placeId}
-              type="button"
-              className={`lot-search-dd-item ${idx === activeIdx ? "active" : ""}`}
-              onMouseEnter={() => setActiveIdx(idx)}
-              onClick={() => pickSuggestion(s)}
-            >
+          <button
+            type="button"
+            className={`lot-search-dd-item ${activeIdx === 0 ? "active" : ""}`}
+            style={{
+              background: "#fff3d7"
+            }}
+            onMouseDown={(e) => e.preventDefault()} // stop blur before click
+            onMouseEnter={() => setActiveIdx(0)}
+            onClick={pickMyLocation}
+          >
+            <div className="lot-search-dd-lines">
+              <div className="lot-search-dd-title">📍 使用我現在的位置</div>
+              <div className="lot-search-dd-sub">允許定位後顯示附近停車場</div>
+            </div>
+          </button>
+          {items.map((s, idx) => {
+            const realIdx = idx + 1;
+            return (
+              <button
+                key={s.placePrediction.placeId}
+                type="button"
+                className={`lot-search-dd-item ${realIdx === activeIdx ? "active" : ""}`}
+                onMouseEnter={() => setActiveIdx(realIdx)}
+                onClick={() => pickSuggestion(s)}
+              >
               {(() => {
                 const p = s.placePrediction;
 
@@ -390,7 +462,8 @@ export default function LotSearchBar({
                 );
               })()}
             </button>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

@@ -174,8 +174,17 @@ div .gm-style-iw {
 }
 
 .map-wrap .gm-style-iw-c {
-  max-height: 307px !important;
+  -webkit-transform: translate3d(-50%, -120%, 0);
+  transform: translate3d(-50%, -120%, 0);
+  max-height: 277px !important;
+  min-height: 277px !important;
   padding: 1px 20px 25px 20px !important;
+}
+
+.map-wrap .gm-style-iw-tc {
+  -webkit-transform: translate3d(-50%, -400%, 0);
+  transform: translate3d(-50%, -310%, 0);
+  top: -18px;
 }
 
 .map-wrap .gm-style-iw-d {

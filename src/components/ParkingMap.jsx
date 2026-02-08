@@ -1,5 +1,5 @@
 // frontend/src/components/ParkingMap.jsx
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   APIProvider,
   Map,
@@ -159,7 +159,41 @@ function VacancyPin({ vacancy }) {
 
 export default function ParkingMap({ lots, active, setActive, flyToRef, focus, setFocus }) {
 
+  const map = useMap();
+  const adjustedForIdRef = useRef(null);
+
   const isMobile = window.matchMedia?.("(max-width: 900px)")?.matches ?? false;
+  const panUpY = isMobile ? -120 : -140; // tune
+
+  useEffect(() => {
+    console.log('HERE1');
+    if (!map) return;
+    console.log('HERE2');
+    console.log('active:', active);
+    if (!active?.lotId) return;
+    console.log('HERE3');
+
+    const activeId = active.lotId;
+    if (adjustedForIdRef.current === activeId) return;
+
+    const adjust = () => {
+      console.log('HERE4');
+      if (adjustedForIdRef.current === activeId) return;
+      //map.panBy(0, panUpY);
+      adjustedForIdRef.current = activeId;
+    };
+
+    // Wait until any pan/zoom finishes, then adjust once
+    const listener = map.addListener("idle", adjust);
+
+    // Fallback: if it’s already idle and you missed the event, still adjust once
+    const t = window.setTimeout(adjust, 250);
+
+    return () => {
+      listener?.remove?.();
+      window.clearTimeout(t);
+    };
+  }, [map, active, panUpY]);
 
   const iwOffset =
     window.google?.maps?.Size
@@ -229,7 +263,7 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
             disableAutoPan
             options={{
               disableAutoPan: true,
-              pixelOffset: iwOffset, // <-- add this
+              //pixelOffset: iwOffset, // <-- add this
             }}
           >
             <div className="iw-hero-outer">

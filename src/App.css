@@ -141,13 +141,23 @@ div .gm-style-iw {
   height: 100%;
 }
 
-.gm-style-mtc-bbw {
+.map-wrap .gm-style-mtc-bbw {
   gap: 6px !important;
 }
 
-.gm-style-mtc button {
+.map-wrap  .gm-style-mtc button {
   display: none !important;
   border-radius: 10px !important;
+}
+
+.gm-style .gm-style-iw-c {
+  padding: 3px 10px 10px 10px !important;
+}
+
+.map-wrap .gm-style-iw-d{
+  padding: 0 !important;
+  overflow: hidden !important; /* 把 scroll 關掉 */
+  max-height: none !important; /* 讓內容自然長 */
 }
 
 /* ===== InfoWindow placeholder image ===== */

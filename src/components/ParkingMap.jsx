@@ -181,7 +181,7 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
             position={{ lat: focus.lat, lng: focus.lng }}
             zIndex={9999}
             onClick={() => {
-              flyToRef.current?.({ lat: focus.lat, lng: focus.lng, zoom: 15 });
+              flyToRef.current?.({ lat: focus.lat, lng: focus.lng, zoom: 17 });
             }}
           >
             <div className="search-pin" aria-label="搜尋位置">
@@ -198,7 +198,7 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
             position={{ lat: l.lat, lng: l.lng }}
             onClick={() => {
               setActive?.(l);
-              flyToRef.current?.({ lat: l.lat, lng: l.lng, zoom: 15 });
+              flyToRef.current?.({ lat: l.lat, lng: l.lng, zoom: 17 });
               setFocus?.({
                 name: l.name,
                 lat: l.lat,

@@ -94,13 +94,13 @@ export default function App() {
   function handlePickPlace(p) {
     setActive(null);
     // 1) move map (smoothly) — your ParkingMap already supports focus/fit viewport
-    flyToRef.current?.({ lat: p.lat, lng: p.lng, zoom: 14 });
+    flyToRef.current?.({ lat: p.lat, lng: p.lng, zoom: 15 });
     setFocus({
       name: p.name,
       address: p.address,
       lat: p.lat,
       lng: p.lng,
-      zoom: 14,
+      zoom: 15,
       kind: "search",
     });
 
@@ -138,8 +138,8 @@ export default function App() {
             active={active}
             onSelect={(l) => {
               setActive(l);
-              flyToRef.current?.({ lat: l.lat, lng: l.lng, zoom: 13 });
-              setFocus({ name: l.name, lat: l.lat, lng: l.lng, zoom: 13, kind: "lot" });
+              flyToRef.current?.({ lat: l.lat, lng: l.lng, zoom: 15 });
+              setFocus({ name: l.name, lat: l.lat, lng: l.lng, zoom: 15, kind: "lot" });
               setMobileMenuOpen(false);
               setMobileMenuOpen(false);
             }}
@@ -158,8 +158,8 @@ export default function App() {
             active={active}
             onSelect={(l) => {
               setActive(l);
-              flyToRef.current?.({ lat: l.lat, lng: l.lng, zoom: 13 });
-              setFocus({ name: l.name, lat: l.lat, lng: l.lng, zoom: 13, kind: "lot" });
+              flyToRef.current?.({ lat: l.lat, lng: l.lng, zoom: 15 });
+              setFocus({ name: l.name, lat: l.lat, lng: l.lng, zoom: 15, kind: "lot" });
               setMobileMenuOpen(false);
               setMobileMenuOpen(false);
             }}

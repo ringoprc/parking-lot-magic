@@ -168,24 +168,30 @@ div .gm-style-iw {
   gap: 6px !important;
 }
 
-.map-wrap  .gm-style-mtc button {
+.map-wrap .gm-style-mtc button {
   display: none !important;
   border-radius: 10px !important;
 }
 
-.gm-style .gm-style-iw-c {
-  max-height: 287px !important;
-  padding: 1px 20px 15px 20px !important;
+.map-wrap .gm-style-iw-c {
+  max-height: 307px !important;
+  padding: 1px 20px 25px 20px !important;
 }
 
-.map-wrap .gm-style-iw-d{
+.map-wrap .gm-style-iw-d {
   padding: 0 !important;
-  overflow: scroll;
+  overflow: visible !important;
+  /* background: red; */
   max-height: none !important; /* 讓內容自然長 */
 }
 
+.map-wrap .gm-ui-hover-effect {
+  opacity: 1;
+  background-color: black;
+}
+
 .map-wrap .gm-ui-hover-effect>span {
-    background-color: black;
+  background-color: black;
 }
 
 /* ===== InfoWindow placeholder image ===== */

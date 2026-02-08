@@ -56,8 +56,13 @@ export default function LotSearchBar({
   }, []);
 
   useEffect(() => {
+
+    console.log('HERE1');
+
     const lib = placesLibRef.current;
     if (!lib?.AutocompleteSuggestion) return;
+
+    console.log('HERE2');
 
     const query = q.trim();
     if (!query) {
@@ -67,6 +72,8 @@ export default function LotSearchBar({
       tokenRef.current = null;
       return;
     }
+
+    console.log('HERE3', query);
 
     // ✅ selection 造成的 setQ：不要打 API，也不要改 items
     if (skipNextFetchRef.current) {
@@ -80,6 +87,8 @@ export default function LotSearchBar({
     if (query === lastFetchedQRef.current) {
       return;
     }
+
+    console.log('HERE4');
 
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
@@ -117,6 +126,8 @@ export default function LotSearchBar({
         setActiveIdx(-1);
       }
     }, 180);
+
+    console.log('HERE5');
 
     return () => clearTimeout(debounceRef.current);
   }, [q]);

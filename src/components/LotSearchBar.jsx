@@ -16,6 +16,27 @@ function getSuggestionTitle(s) {
   return first || title;
 }
 
+function classicFetchPredictions(query, opts) {
+  const g = window.google;
+  const svc = new g.maps.places.AutocompleteService();
+
+  return new Promise((resolve, reject) => {
+    svc.getPlacePredictions(
+      {
+        input: query,
+        language: opts?.language || "zh-TW",
+        // componentRestrictions: { country: "tw" }, // 可選：更聚焦台灣
+      },
+      (preds, status) => {
+        if (status !== g.maps.places.PlacesServiceStatus.OK || !preds) {
+          return reject(new Error(`AutocompleteService: ${status}`));
+        }
+        resolve(preds);
+      }
+    );
+  });
+}
+
 
 
 export default function LotSearchBar({
@@ -60,6 +81,9 @@ export default function LotSearchBar({
     console.log('HERE1');
 
     const lib = placesLibRef.current;
+    const hasNew = !!lib?.AutocompleteSuggestion;
+    console.log("[places] hasNewAutocompleteSuggestion:", hasNew);
+    console.log('lib:', lib);
     console.log('lib?.AutocompleteSuggestion', lib?.AutocompleteSuggestion);
     if (!lib?.AutocompleteSuggestion) return;
 
@@ -111,10 +135,38 @@ export default function LotSearchBar({
           sessionToken: tokenRef.current,
         };
 
-        const { suggestions } =
-          await lib.AutocompleteSuggestion.fetchAutocompleteSuggestions(req);
+        let list = [];
 
-        const list = (suggestions || []).slice(0, 8);
+        if (hasNew) {
+          const req = {
+            input: query,
+            language: "zh-TW",
+            region: "tw",
+            sessionToken: tokenRef.current,
+          };
+
+          const { suggestions } =
+            await lib.AutocompleteSuggestion.fetchAutocompleteSuggestions(req);
+
+          list = (suggestions || []).slice(0, 8);
+        } else {
+          // fallback: classic AutocompleteService
+          const preds = await classicFetchPredictions(query, { language: "zh-TW" });
+          list = preds.slice(0, 8).map((p) => ({
+            // 讓你下面 render/pickSuggestion 可以沿用類似結構
+            placePrediction: {
+              placeId: p.place_id,
+              text: { toString: () => p.description },
+              structuredFormat: {
+                mainText: { toString: () => p.structured_formatting?.main_text || "" },
+                secondaryText: { toString: () => p.structured_formatting?.secondary_text || "" },
+              },
+              // ⚠️ classic 沒有 toPlace()，pickSuggestion 也要做 fallback（下一段）
+              _classic: p,
+            },
+          }));
+        }
+
         lastFetchedQRef.current = query;
         setItems(list);
         setOpen(list.length > 0);
@@ -160,7 +212,59 @@ export default function LotSearchBar({
     if (!s?.placePrediction) return;
 
     try {
-      const place = s.placePrediction.toPlace();
+      const pp = s.placePrediction;
+
+      // ✅ 新 API
+      if (pp?.toPlace) {
+        const place = pp.toPlace();
+        await place.fetchFields({ fields: ["displayName", "formattedAddress", "location", "viewport"] });
+        const loc = place.location;
+        if (!loc) return;
+
+        onPick?.({
+          name: place.displayName,
+          address: place.formattedAddress,
+          lat: loc.lat(),
+          lng: loc.lng(),
+          viewport: place.viewport,
+        });
+      } else {
+        // ✅ classic fallback：用 PlacesService.getDetails
+        const g = window.google;
+        const mapDiv = document.createElement("div"); // 不需要真的掛到 DOM
+        const svc = new g.maps.places.PlacesService(mapDiv);
+
+        const placeId = pp?.placeId;
+        if (!placeId) return;
+
+        const detail = await new Promise((resolve, reject) => {
+          svc.getDetails(
+            {
+              placeId,
+              fields: ["name", "formatted_address", "geometry"],
+              language: "zh-TW",
+            },
+            (res, status) => {
+              if (status !== g.maps.places.PlacesServiceStatus.OK || !res) {
+                return reject(new Error(`getDetails: ${status}`));
+              }
+              resolve(res);
+            }
+          );
+        });
+
+        const loc = detail.geometry?.location;
+        if (!loc) return;
+
+        onPick?.({
+          name: detail.name,
+          address: detail.formatted_address,
+          lat: loc.lat(),
+          lng: loc.lng(),
+          viewport: detail.geometry?.viewport,
+        });
+      }
+
       await place.fetchFields({
         fields: ["displayName", "formattedAddress", "location", "viewport"],
       });

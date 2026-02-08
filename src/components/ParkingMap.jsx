@@ -73,17 +73,24 @@ function FitAndFly({ lots, flyToRef, focus }) {
       map.panTo({ lat, lng });
 
       if (typeof zoom === "number") {
-        // step zoom for smoother feel
-        const target = zoom;
-        const start = map.getZoom?.() ?? target;
+        const target = Math.round(zoom);
+        const startRaw = map.getZoom?.();
+        const start = Math.round(Number.isFinite(startRaw) ? startRaw : target);
 
         if (start !== target) {
           const dir = target > start ? 1 : -1;
           let z = start;
           const id = window.setInterval(() => {
             z += dir;
+
+            // clamp + stop condition (works even if start was fractional)
+            if ((dir > 0 && z >= target) || (dir < 0 && z <= target)) {
+              map.setZoom(target);
+              window.clearInterval(id);
+              return;
+            }
+
             map.setZoom(z);
-            if (z === target) window.clearInterval(id);
           }, 80);
 
           window.setTimeout(() => window.clearInterval(id), 1500); // safety

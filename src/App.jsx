@@ -65,7 +65,7 @@ export default function App() {
     const km = (RADIUS_M / 1000);
     const kmText = Number.isInteger(km) ? String(km) : km.toFixed(1);
 
-    return `距離 ${focus.name} ${kmText} 公里內的所有停車場 (${displayedLots.length})`;
+    return `距離 [${focus.name}] ${kmText}公里內的所有停車場 (${displayedLots.length})`;
   }, [searchCenter, focus?.name, displayedLots.length, RADIUS_M]);
 
 

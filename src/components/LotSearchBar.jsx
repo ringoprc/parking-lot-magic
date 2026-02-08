@@ -62,6 +62,7 @@ export default function LotSearchBar({
   const inputRef = useRef(null);
   const skipNextFetchRef = useRef(false);
   const lastFetchedQRef = useRef(""); // 記錄上次真的打 API 的 query
+  const composingRef = useRef(false);
 
 
   useEffect(() => {
@@ -186,7 +187,8 @@ export default function LotSearchBar({
 
   async function pickSuggestion(s) {
     if (!s?.placePrediction) return;
-
+    if (composingRef.current) return;
+    
     try {
       const pp = s.placePrediction;
 
@@ -273,8 +275,22 @@ export default function LotSearchBar({
           onFocus={() => {
             if (items.length > 0 && q.trim()) setOpen(true);
           }}
+          onCompositionStart={() => {
+            composingRef.current = true;
+          }}
+          onCompositionEnd={() => {
+            composingRef.current = false;
+          }}
           onKeyDown={(e) => {
             if (!open) return;
+
+            // IME composing: let Enter finish composition, don't pick suggestion
+            const isComposing = e.isComposing || composingRef.current || e.keyCode === 229;
+            if (isComposing) {
+              // Optional: still allow Escape to close dropdown even during composition
+              if (e.key === "Escape") setOpen(false);
+              return;
+            }
 
             if (e.key === "ArrowDown") {
               e.preventDefault();

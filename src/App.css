@@ -67,7 +67,7 @@ div .gm-style-iw {
     min-height: 0;
     min-width: 0;
     position: absolute;
-    height: calc(100% - 106px);
+    height: calc(100% - 122px);
     border-top: none;
     bottom: 0px;
   }
@@ -208,9 +208,10 @@ div .gm-style-iw {
   .mobile-lots-bar {
     display: flex;
     align-items: center;
+    gap: 10px;
     justify-content: space-between;
-    height: 48px;
-    padding: 0 12px;
+    height: 56px;
+    padding: 4px 22px;
     border-bottom: 1px solid #e6e6e6;
     background: #fff;
     flex: 0 0 auto;

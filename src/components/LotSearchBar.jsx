@@ -111,6 +111,7 @@ export default function LotSearchBar({
         setActiveIdx(list.length ? 0 : -1);
 
       } catch (e) {
+        console.error("[places] fetchAutocompleteSuggestions failed:", e);
         setItems([]);
         setOpen(false);
         setActiveIdx(-1);

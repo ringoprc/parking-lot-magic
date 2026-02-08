@@ -54,8 +54,23 @@ div .gm-style-iw {
   min-height: 0;
   min-width: 0;
   position: absolute;
-  height: calc(100% - 106px);
+  height: calc(100% - 56px);
+  border-top: 1px solid #ddd;
   bottom: 0px;
+}
+
+@media (max-width: 900px) {
+  .content {
+    width: 100%;
+    flex: 1 1 auto;
+    display: flex;
+    min-height: 0;
+    min-width: 0;
+    position: absolute;
+    height: calc(100% - 106px);
+    border-top: none;
+    bottom: 0px;
+  }
 }
 
 .side {

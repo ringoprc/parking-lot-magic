@@ -64,17 +64,10 @@ export default function LotSearchBar({
 
   useEffect(() => {
 
-    console.log('HERE1');
-
     const g = window.google;
     const lib = places; // 直接用 hook 回來的 library
     const hasNew = !!lib?.AutocompleteSuggestion;
-    console.log("[places] hasNewAutocompleteSuggestion:", hasNew);
-    console.log('lib:', lib);
-    console.log('lib?.AutocompleteSuggestion', lib?.AutocompleteSuggestion);
     if (!g?.maps || !lib) return; // maps or places library not ready yet
-
-    console.log('HERE2');
 
     const query = q.trim();
     if (!query) {
@@ -84,8 +77,6 @@ export default function LotSearchBar({
       tokenRef.current = null;
       return;
     }
-
-    console.log('HERE3', query);
 
     // ✅ selection 造成的 setQ：不要打 API，也不要改 items
     if (skipNextFetchRef.current) {
@@ -99,8 +90,6 @@ export default function LotSearchBar({
     if (query === lastFetchedQRef.current) {
       return;
     }
-
-    console.log('HERE4');
 
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
@@ -167,8 +156,6 @@ export default function LotSearchBar({
       }
     }, 180);
 
-    console.log('HERE5');
-
     return () => clearTimeout(debounceRef.current);
   }, [q]);
 
@@ -208,9 +195,11 @@ export default function LotSearchBar({
         const loc = place.location;
         if (!loc) return;
 
+        console.log('place:', place);
+
         onPick?.({
-          name: place.displayName,
-          address: place.formattedAddress,
+          name: place.Gi.displayName,
+          address: place.Gi.formattedAddress,
           lat: loc.lat(),
           lng: loc.lng(),
           viewport: place.viewport,

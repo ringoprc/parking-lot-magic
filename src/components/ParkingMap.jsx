@@ -89,7 +89,8 @@ function VacancyPin({ vacancy }) {
   );
 }
 
-export default function ParkingMap({ lots, active, setActive, flyToRef, focus }) {
+export default function ParkingMap({ lots, active, setActive, flyToRef, focus, setFocus }) {
+  console.log('focus:', focus);
   return (
     <div className="map-wrap">
       <Map
@@ -106,11 +107,30 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus })
           focus={focus} 
         />
 
+        {/* Search focus marker (special pin) */}
+        {focus?.lat != null && focus?.lng != null && (
+          <AdvancedMarker
+            position={{ lat: focus.lat, lng: focus.lng }}
+            zIndex={9999}
+            // Optional: click it to clear focus
+            // onClick={() => setFocus?.(null)}
+          >
+            <div className="search-pin" aria-label="搜尋位置">
+              <div className="search-pin-pulse" />
+              <div className="search-pin-dot" />
+              <div className="search-pin-label">{focus?.name[0] ?? "?"}</div>
+            </div>
+          </AdvancedMarker>
+        )}
+
         {lots.map((l) => (
           <AdvancedMarker
             key={l.lotId}
             position={{ lat: l.lat, lng: l.lng }}
-            onClick={() => setActive?.(l)}
+            onClick={() => {
+              setActive?.(l);
+              setFocus?.(null);
+            }}
           >
             <VacancyPin vacancy={l.vacancy} active={active?.lotId === l.lotId} />
           </AdvancedMarker>

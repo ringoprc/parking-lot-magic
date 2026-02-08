@@ -61,9 +61,12 @@ export default function App() {
   function handlePickPlace(p) {
     // 1) move map (smoothly) — your ParkingMap already supports focus/fit viewport
     setFocus({
+      name: p.name,
+      address: p.address,
       lat: p.lat,
       lng: p.lng,
-      zoom: 15
+      zoom: 15,
+      kind: "search"
     });
 
     // 2) use this point to sort nearest lots in the sidebar
@@ -128,6 +131,7 @@ export default function App() {
             setActive={setActive}
             flyToRef={flyToRef}
             focus={focus}
+            setFocus={setFocus}
           />
         </div>
       </div>

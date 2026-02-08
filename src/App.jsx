@@ -7,6 +7,8 @@ import {
   InfoWindow,
   useMap,
 } from "@vis.gl/react-google-maps";
+import { FiMenu, FiX } from "react-icons/fi";
+
 import "./App.css";
 
 function formatTime(d) {
@@ -57,8 +59,10 @@ function FitAndFly({ lots, flyTo }) {
 }
 
 export default function App() {
+
   const [lots, setLots] = useState([]);
   const [active, setActive] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const apiBase = import.meta.env.VITE_API_BASE || "";
   const area = "Zhongshan";
@@ -93,14 +97,30 @@ export default function App() {
 
   return (
     <div className="app-root">
+
+      {/* Top Logo Bar */}
       <div className="title-bar">
-        <div className="title">Parking Vacancies — Zhongshan</div>
+        <div className="title">停車急管家</div>
+      </div>
+
+      {/* Mobile-only expandable lots bar (under title) */}
+      <div className="mobile-lots-bar">
+        <div className="mobile-lots-label">所有停車場 ({validLots.length})</div>
+
+        <button
+          type="button"
+          className="mobile-lots-toggle"
+          aria-label={mobileMenuOpen ? "關閉停車場清單" : "展開停車場清單"}
+          onClick={() => setMobileMenuOpen((v) => !v)}
+        >
+          {mobileMenuOpen ? <FiX size={22} /> : <FiMenu size={22} />}
+        </button>
       </div>
 
       <div className="content">
         {/* Left list */}
         <div className="side">
-          <div className="side-title">Lots ({validLots.length})</div>
+          <div className="side-title">所有停車場 ({validLots.length})</div>
 
           {validLots.map((l) => (
             <button
@@ -109,15 +129,20 @@ export default function App() {
               onClick={() => {
                 setActive(l);
                 flyTo.current?.({ lat: l.lat, lng: l.lng });
+                setMobileMenuOpen(false);
               }}
               type="button"
             >
               <div className="lot-btn-name">{l.name}</div>
               <div className="lot-btn-sub">
-                空位：<b>{l.vacancy ?? "未知"}</b> ·{" "}
-                {minutesAgo(l.lastUpdated) != null
-                  ? `${minutesAgo(l.lastUpdated)}m ago`
-                  : "—"}
+                <span className="lot-btn-sub-vacancy-count">
+                  空位：<b>{l.vacancy ?? "未知"}</b>
+                </span>
+                <span className="lot-btn-sub-time-ago">
+                  {minutesAgo(l.lastUpdated) != null
+                    ? `更新於 ${minutesAgo(l.lastUpdated)} 分鐘前`
+                    : "—"}
+                </span>
               </div>
             </button>
           ))}
@@ -152,6 +177,16 @@ export default function App() {
                   position={{ lat: active.lat, lng: active.lng }}
                   onCloseClick={() => setActive(null)}
                 >
+                  {/* Placeholder image */}
+                  <div className="iw-hero">
+                    <img
+                      className="iw-hero-img"
+                      src="https://placehold.co/640x240/png?text=Parking"
+                      alt=""
+                      loading="lazy"
+                    />
+                  </div>
+
                   <div style={{ minWidth: 220 }}>
                     <div style={{ fontWeight: 700, marginBottom: 6 }}>
                       {active.name}
@@ -181,6 +216,38 @@ export default function App() {
               )}
             </Map>
           </APIProvider>
+        </div>
+      </div>
+
+      {/* Mobile full-screen lots overlay */}
+      <div className={`mobile-lots-overlay ${mobileMenuOpen ? "open" : ""}`}>
+        <div className="mobile-lots-overlay-scroll">
+          <div className="mobile-lots-overlay-list">
+            {validLots.map((l) => (
+              <button
+                key={`m_${l.lotId}`}
+                className={`lot-btn ${active?.lotId === l.lotId ? "active" : ""}`}
+                onClick={() => {
+                  setActive(l);
+                  flyTo.current?.({ lat: l.lat, lng: l.lng });
+                  setMobileMenuOpen(false); // close on selection
+                }}
+                type="button"
+              >
+                <div className="lot-btn-name">{l.name}</div>
+                <div className="lot-btn-sub">
+                  <span className="lot-btn-sub-vacancy-count">
+                    空位：<b>{l.vacancy ?? "未知"}</b>
+                  </span>
+                  <span className="lot-btn-sub-time-ago">
+                    {minutesAgo(l.lastUpdated) != null
+                      ? `更新於 ${minutesAgo(l.lastUpdated)} 分鐘前`
+                      : "—"}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>

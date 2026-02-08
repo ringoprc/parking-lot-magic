@@ -5,6 +5,14 @@ html, body, #root {
   margin: 0;
 }
 
+button {
+  outline: none !important;
+}
+
+div .gm-style-iw {
+  min-width: 350px !important;
+}
+
 .app-root {
   width: 100%;
   height: 100vh;
@@ -44,6 +52,13 @@ html, body, #root {
   background: #fff;
 }
 
+@media (max-width: 900px) {
+  /* Hide desktop sidebar list on mobile */
+  .side {
+    display: none;
+  }
+}
+
 .side-title {
   font-weight: 700;
   margin: 6px 6px 10px;
@@ -70,8 +85,16 @@ html, body, #root {
 }
 
 .lot-btn-sub {
+  display: flex;
+  justify-content: space-between;
+  padding: 0px 0px 0px 0px;
   font-size: 12px;
   opacity: 0.8;
+}
+
+.lot-btn-sub-time-ago {
+  font-size: 10px;
+  color: #999;
 }
 
 .map-wrap {
@@ -87,6 +110,104 @@ html, body, #root {
   height: 100%;
 }
 
+/* ===== InfoWindow placeholder image ===== */
+.iw-hero {
+  width: 100%;
+  height: 120px;          /* adjust */
+  overflow: hidden;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  background: #eef2f7;    /* fallback behind image */
+}
 
+.iw-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;      /* crop nicely */
+  display: block;
+}
+
+
+/* ===== Mobile expandable lots bar + full-screen overlay ===== */
+
+.mobile-lots-bar {
+  display: none; /* desktop hidden */
+}
+@media (max-width: 900px) {
+  .mobile-lots-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 48px;
+    padding: 0 12px;
+    border-bottom: 1px solid #e6e6e6;
+    background: #fff;
+    flex: 0 0 auto;
+  }
+}
+
+.mobile-lots-label {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.mobile-lots-toggle {
+  border: 0;
+  background: transparent;
+  padding: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.mobile-lots-toggle:active {
+  transform: scale(0.98);
+}
+
+/* Overlay base (hidden by default; enabled on mobile) */
+.mobile-lots-overlay {
+  display: none; /* desktop hidden */
+}
+
+@media (max-width: 900px) {
+  .mobile-lots-overlay {
+    display: block;
+
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: calc(56px + 48px); /* title-bar + mobile-lots-bar */
+    background: #fff;
+    z-index: 999;
+
+    /* dropdown animation */
+    max-height: 100px;
+    opacity: 0;
+    pointer-events: none;
+
+    overflow: hidden;
+    transition: max-height 60ms ease, opacity 120ms ease;
+    border-bottom: 1px solid #e6e6e6;
+  }
+
+  .mobile-lots-overlay.open {
+    max-height: calc(100vh - (56px + 48px));
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* make inside scrollable while wrapper animates */
+  .mobile-lots-overlay-scroll {
+    height: calc(100vh - (56px + 48px));
+    overflow: auto;
+    padding: 10px;
+  }
+}
+
+.mobile-lots-overlay-list {
+  max-width: 720px;
+  margin: 0 auto;
+}
 
 

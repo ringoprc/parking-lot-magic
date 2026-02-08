@@ -60,6 +60,7 @@ export default function LotSearchBar({
     console.log('HERE1');
 
     const lib = placesLibRef.current;
+    console.log('lib?.AutocompleteSuggestion', lib?.AutocompleteSuggestion);
     if (!lib?.AutocompleteSuggestion) return;
 
     console.log('HERE2');

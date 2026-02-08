@@ -158,6 +158,14 @@ function VacancyPin({ vacancy }) {
 }
 
 export default function ParkingMap({ lots, active, setActive, flyToRef, focus, setFocus }) {
+
+  const isMobile = window.matchMedia?.("(max-width: 900px)")?.matches ?? false;
+
+  const iwOffset =
+    window.google?.maps?.Size
+      ? new window.google.maps.Size(0, isMobile ? -50 : -0) // tune these
+      : undefined;
+
   return (
     <div className="map-wrap">
       <Map
@@ -181,7 +189,7 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
             position={{ lat: focus.lat, lng: focus.lng }}
             zIndex={9999}
             onClick={() => {
-              flyToRef.current?.({ lat: focus.lat, lng: focus.lng, zoom: 17 });
+              flyToRef.current?.({ lat: focus.lat, lng: focus.lng, zoom: 16 });
             }}
           >
             <div className="search-pin" aria-label="搜尋位置">
@@ -198,7 +206,8 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
             position={{ lat: l.lat, lng: l.lng }}
             onClick={() => {
               setActive?.(l);
-              flyToRef.current?.({ lat: l.lat, lng: l.lng, zoom: 17 });
+              flyToRef.current?.({ lat: l.lat, lng: l.lng, zoom: 16 });
+              /*
               setFocus?.({
                 name: l.name,
                 lat: l.lat,
@@ -206,6 +215,7 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
                 zoom: 17,
                 kind: "lot",
               });
+              */
             }}
           >
             <VacancyPin vacancy={l.vacancy} active={active?.lotId === l.lotId} />
@@ -217,7 +227,10 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
             position={{ lat: active.lat, lng: active.lng }}
             onCloseClick={() => setActive?.(null)}
             disableAutoPan
-            options={{ disableAutoPan: true }}
+            options={{
+              disableAutoPan: true,
+              pixelOffset: iwOffset, // <-- add this
+            }}
           >
             <div className="iw-hero-outer">
               <div className="iw-hero">

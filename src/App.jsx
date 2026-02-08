@@ -138,8 +138,8 @@ export default function App() {
             active={active}
             onSelect={(l) => {
               setActive(l);
-              flyToRef.current?.({ lat: l.lat, lng: l.lng, zoom: 15 });
-              setFocus({ name: l.name, lat: l.lat, lng: l.lng, zoom: 15, kind: "lot" });
+              flyToRef.current?.({ lat: l.lat, lng: l.lng, zoom: 16 });
+              //setFocus({ name: l.name, lat: l.lat, lng: l.lng, zoom: 15, kind: "lot" });
               setMobileMenuOpen(false);
               setMobileMenuOpen(false);
             }}
@@ -158,8 +158,8 @@ export default function App() {
             active={active}
             onSelect={(l) => {
               setActive(l);
-              flyToRef.current?.({ lat: l.lat, lng: l.lng, zoom: 15 });
-              setFocus({ name: l.name, lat: l.lat, lng: l.lng, zoom: 15, kind: "lot" });
+              flyToRef.current?.({ lat: l.lat, lng: l.lng, zoom: 16 });
+              //setFocus({ name: l.name, lat: l.lat, lng: l.lng, zoom: 15, kind: "lot" });
               setMobileMenuOpen(false);
               setMobileMenuOpen(false);
             }}

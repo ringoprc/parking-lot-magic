@@ -367,8 +367,8 @@ div .gm-style-iw {
   border-color: #1a73e8;
 }
 
-.lot-search.is-focused .lot-search-input.has-items,
-.lot-search:focus-within .lot-search-input.has-items {
+.lot-search .lot-search-input.has-items,
+.lot-search .lot-search-input.has-items {
   border-color: #1a73e8;
   border-radius: 12px;
   border-bottom-right-radius: 0px;

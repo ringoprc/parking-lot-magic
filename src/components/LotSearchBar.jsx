@@ -323,7 +323,7 @@ export default function LotSearchBar({
       <div className="lot-search-input-wrap">
         <input
           ref={inputRef}
-          className={`lot-search-input ${(searchFocused && q !== "使用我現在的位置") ? "has-items" : ""}`}
+          className={`lot-search-input ${((searchFocused && q !== "使用我現在的位置") || open) ? "has-items" : ""}`}
           value={q}
           placeholder={placeholder}
           onChange={(e) => setQ(e.target.value)}

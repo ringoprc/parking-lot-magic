@@ -31,13 +31,11 @@ export default function App() {
   const RADIUS_M = 2000;
   const { lots, meta, reload } = useLots({
     apiBase,
-    district: "中山區",
+    district: null,
     center: queryCenter,
     radiusM: RADIUS_M,
     pollMs: 15000,
   });
-
-  console.log('lots:', lots);
 
   const validLots = useMemo(
     () =>
@@ -50,23 +48,27 @@ export default function App() {
     [lots]
   );
 
-  console.log('validLots:', validLots);
-
   const displayedLots = useMemo(() => {
-    if (!searchCenter) return validLots;
+    if (!searchCenter) {
+      return [...validLots]
+        .sort((a, b) => String(a.lotId).localeCompare(String(b.lotId)))
+        .slice(0, 30);
+    }
 
     const withDist = validLots
       .map((l) => ({
         ...l,
         _dist: haversineMeters(searchCenter, { lat: l.lat, lng: l.lng }),
       }))
-      .sort((a, b) => a._dist - b._dist);
+      .sort((a, b) => {
+        const d = a._dist - b._dist;
+        if (d !== 0) return d;
+        return String(a.lotId).localeCompare(String(b.lotId));
+      });
 
     // show closest ~30 (tweak as you like)
     return withDist.slice(0, 30);
   }, [validLots, searchCenter]);
-
-  console.log('displayedLots:', displayedLots);
 
   const listTitle = useMemo(() => {
 
@@ -83,21 +85,23 @@ export default function App() {
   }, [searchCenter, focus?.name, displayedLots.length, RADIUS_M, meta]);
 
   function handleClearPick() {
-    setSearchCenter(null);     // ✅ 解除 filtered lots
-    setFocus(null);            // ✅ 地圖上那個搜尋 pin 也拿掉
-    setQueryCenter(DEFAULT_CENTER); // ✅ 排序/距離基準回中山預設
-    // setActive(null); // 可選：要不要順便關掉 info window
+    setSearchCenter(null);     // 解除 filtered lots
+    setFocus(null);            // 地圖上那個搜尋 pin 也拿掉
+    setQueryCenter(null);
+    // setActive(null);
   }
 
   function handlePickPlace(p) {
+    setActive(null);
     // 1) move map (smoothly) — your ParkingMap already supports focus/fit viewport
+    flyToRef.current?.({ lat: p.lat, lng: p.lng, zoom: 15 });
     setFocus({
       name: p.name,
       address: p.address,
       lat: p.lat,
       lng: p.lng,
       zoom: 15,
-      kind: "search"
+      kind: "search",
     });
 
     // 2) use this point to sort nearest lots in the sidebar
@@ -134,7 +138,9 @@ export default function App() {
             active={active}
             onSelect={(l) => {
               setActive(l);
-              flyToRef.current?.({ lat: l.lat, lng: l.lng });
+              flyToRef.current?.({ lat: l.lat, lng: l.lng, zoom: 15 });
+              setFocus({ name: l.name, lat: l.lat, lng: l.lng, zoom: 15, kind: "lot" });
+              setMobileMenuOpen(false);
               setMobileMenuOpen(false);
             }}
             onPick={(p) => {
@@ -152,7 +158,9 @@ export default function App() {
             active={active}
             onSelect={(l) => {
               setActive(l);
-              flyToRef.current?.({ lat: l.lat, lng: l.lng });
+              flyToRef.current?.({ lat: l.lat, lng: l.lng, zoom: 15 });
+              setFocus({ name: l.name, lat: l.lat, lng: l.lng, zoom: 15, kind: "lot" });
+              setMobileMenuOpen(false);
               setMobileMenuOpen(false);
             }}
             onPick={handlePickPlace}

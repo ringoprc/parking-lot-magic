@@ -9,11 +9,15 @@ export default function MobileLotsOverlay({ open, lots, active, onSelect, onPick
       <div className="mobile-lots-overlay-scroll">
         <div className="mobile-lots-overlay-list">
           <LotSearchBar onPick={onPick} onClear={onClear} />
-          <LotsList
-            lots={lots}
-            active={active}
-            onSelect={(l) => onSelect?.(l)}
-          />
+          <div
+            className="lot-btn-list-outer"
+          >
+            <LotsList
+              lots={lots}
+              active={active}
+              onSelect={(l) => onSelect?.(l)}
+            />
+          </div>
         </div>
       </div>
     </div>

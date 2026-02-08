@@ -17,26 +17,95 @@ function getPinColorsFromVacancy(v) {
   return { bg: "#34A853", border: "#0F7B2E", glyph: "#FFFFFF" };              // 多 = 綠
 }
 
+function CloseInfoOnMapClick({ setActive }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) return;
+
+    const listener = map.addListener("click", () => {
+      setActive?.(null);
+    });
+
+    return () => listener?.remove?.();
+  }, [map, setActive]);
+
+  return null;
+}
+
 function FitAndFly({ lots, flyToRef, focus }) {
   const map = useMap();
+  const userMovedRef = useRef(false);
   const didInitialFitRef = useRef(false);
 
   // -----------------------------------
   // When focus changes, pan/zoom (or fit viewport)
   // -----------------------------------
+  /*
   useEffect(() => {
     if (!map) return;
     if (focus?.lat == null || focus?.lng == null) return;
 
-    // Always "fly" feel: pan then zoom slightly later
     map.panTo({ lat: focus.lat, lng: focus.lng });
 
-    const t = window.setTimeout(() => {
-      map.setZoom(focus.zoom ?? 15);
-    }, 180);
+    const target = focus.zoom ?? 15;
+    const start = map.getZoom?.() ?? target;
+    if (start === target) return;
 
-    return () => window.clearTimeout(t);
+    const dir = target > start ? 1 : -1;
+    let z = start;
+    const id = window.setInterval(() => {
+      z += dir;
+      map.setZoom(z);
+      if (z === target) window.clearInterval(id);
+    }, 80);
+
+    return () => window.clearInterval(id);
   }, [map, focus?.lat, focus?.lng, focus?.zoom]);
+  */
+
+  useEffect(() => {
+    if (!map) return;
+
+    flyToRef.current = ({ lat, lng, zoom }) => {
+      // mark that we're intentionally moving the camera (not user)
+      // but still allow user to take over after
+      map.panTo({ lat, lng });
+
+      if (typeof zoom === "number") {
+        // step zoom for smoother feel
+        const target = zoom;
+        const start = map.getZoom?.() ?? target;
+
+        if (start !== target) {
+          const dir = target > start ? 1 : -1;
+          let z = start;
+          const id = window.setInterval(() => {
+            z += dir;
+            map.setZoom(z);
+            if (z === target) window.clearInterval(id);
+          }, 80);
+
+          window.setTimeout(() => window.clearInterval(id), 1500); // safety
+        }
+      }
+    };
+  }, [map, flyToRef]);
+
+  useEffect(() => {
+    if (!map) return;
+
+    const onDrag = () => { userMovedRef.current = true; };
+    const onZoom = () => { userMovedRef.current = true; };
+
+    const l1 = map.addListener("dragstart", onDrag);
+    const l2 = map.addListener("zoom_changed", onZoom);
+
+    return () => {
+      l1?.remove?.();
+      l2?.remove?.();
+    };
+  }, [map]);
 
   useEffect(() => {
     if (!map) return;
@@ -49,6 +118,7 @@ function FitAndFly({ lots, flyToRef, focus }) {
       .map((l) => ({ lat: l.lat, lng: l.lng }));
 
     if (pts.length === 0) return;
+    if (userMovedRef.current) return;
 
     const g = window.google;
     if (!g?.maps?.LatLngBounds) return;
@@ -59,15 +129,6 @@ function FitAndFly({ lots, flyToRef, focus }) {
 
     didInitialFitRef.current = true;
   }, [map, lots, focus?.lat, focus?.lng]);
-
-  useEffect(() => {
-    if (!map) return;
-
-    flyToRef.current = ({ lat, lng }) => {
-      map.panTo({ lat, lng });
-      map.setZoom(16);
-    };
-  }, [map, flyToRef]);
 
   return null;
 }
@@ -90,7 +151,6 @@ function VacancyPin({ vacancy }) {
 }
 
 export default function ParkingMap({ lots, active, setActive, flyToRef, focus, setFocus }) {
-  console.log('focus:', focus);
   return (
     <div className="map-wrap">
       <Map
@@ -101,6 +161,7 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
         disableDefaultUI={false}
         mapId={import.meta.env.VITE_GOOGLE_MAP_ID}
       >
+        <CloseInfoOnMapClick setActive={setActive} />
         <FitAndFly 
           lots={lots} 
           flyToRef={flyToRef} 
@@ -112,13 +173,14 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
           <AdvancedMarker
             position={{ lat: focus.lat, lng: focus.lng }}
             zIndex={9999}
-            // Optional: click it to clear focus
-            // onClick={() => setFocus?.(null)}
+            onClick={() => {
+              flyToRef.current?.({ lat: focus.lat, lng: focus.lng, zoom: 15 });
+            }}
           >
             <div className="search-pin" aria-label="搜尋位置">
               <div className="search-pin-pulse" />
               <div className="search-pin-dot" />
-              <div className="search-pin-label">{focus?.name[0] ?? "?"}</div>
+              <div className="search-pin-label">{focus?.name?.[0] ?? "?"}</div>
             </div>
           </AdvancedMarker>
         )}
@@ -129,7 +191,14 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
             position={{ lat: l.lat, lng: l.lng }}
             onClick={() => {
               setActive?.(l);
-              setFocus?.(null);
+              flyToRef.current?.({ lat: l.lat, lng: l.lng, zoom: 15 });
+              setFocus?.({
+                name: l.name,
+                lat: l.lat,
+                lng: l.lng,
+                zoom: 17,
+                kind: "lot",
+              });
             }}
           >
             <VacancyPin vacancy={l.vacancy} active={active?.lotId === l.lotId} />
@@ -140,6 +209,8 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
           <InfoWindow
             position={{ lat: active.lat, lng: active.lng }}
             onCloseClick={() => setActive?.(null)}
+            disableAutoPan
+            options={{ disableAutoPan: true }}
           >
             <div className="iw-hero-outer">
               <div className="iw-hero">
@@ -158,15 +229,16 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
                 display: "flex", 
                 flexDirection: "column",
                 borderBottom: "1px solid #eee",
-                padding: "0px 3px 10px 3px"
+                padding: "0px 3px 10px 3px",
+                marginTop: "10px"
               }}>
                 <div style={{ 
                   display: "flex", 
                   justifyContent: "space-between", 
-                  alignItems: "center",
+                  alignItems: "flex-start",
                 }}>
                   <div style={{ 
-                    fontSize: 17, 
+                    fontSize: 15, 
                     fontWeight: 700, 
                     marginBottom: "6px",
                     marginRight: "20px" 
@@ -174,21 +246,23 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
                     {active.name}
                   </div>
                   <div style={{
-                    fontSize: "17px",
+                    fontSize: "15px",
                     fontWeight: "700",
                     color: "#317bff",
                     marginBottom: "6px",
                     flexShrink: "0"
                   }}>
                     空位：
-                    <span style={{ fontSize: 17, fontWeight: 700 }}>
+                    <span style={{ fontSize: 15, fontWeight: 700 }}>
                       {active.vacancy ?? "未知"}
                     </span>
                   </div>
                 </div>
 
                 <div>
-                  <span>{active.addressZh}</span>
+                  <span style={{
+                    fontSize: "12px"
+                  }}>{active.addressZh}</span>
                 </div>
               </div>
 

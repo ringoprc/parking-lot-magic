@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 
 export function useLots({
   apiBase = "",
-  district = "中山區",
+  district = null,
   center = null,     // { lat, lng } or null
   radiusM = 2500,
   pollMs = 15000,
@@ -14,11 +14,12 @@ export function useLots({
 
   const loadLots = useCallback(async () => {
     const qs =
-	  center?.lat != null && center?.lng != null
-	    ? `lat=${encodeURIComponent(center.lat)}&lng=${encodeURIComponent(center.lng)}&radiusM=${encodeURIComponent(radiusM)}`
-	    : `district=${encodeURIComponent(district)}`;
+      center?.lat != null && center?.lng != null
+        ? `lat=${encodeURIComponent(center.lat)}&lng=${encodeURIComponent(center.lng)}&radiusM=${encodeURIComponent(radiusM)}`
+        : (district ? `district=${encodeURIComponent(district)}` : "");
 
-	const res = await fetch(`${apiBase}/api/lots?${qs}`);
+    const url = qs ? `${apiBase}/api/lots?${qs}` : `${apiBase}/api/lots`;
+    const res = await fetch(url);
     const data = await res.json();
 
     console.log('data:', data);

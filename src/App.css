@@ -94,6 +94,12 @@ div .gm-style-iw {
   margin: 6px 6px 10px;
 }
 
+.lot-btn-list-outer {
+  height: calc(100% - 90px);
+  overflow-y: scroll;
+  border-bottom: 1px solid #eee;
+}
+
 .lot-btn-list {
   padding: 8px 15px 8px 15px;
 }
@@ -168,24 +174,30 @@ div .gm-style-iw {
 }
 
 .gm-style .gm-style-iw-c {
-  padding: 1px 20px 25px 20px !important;
+  max-height: 287px !important;
+  padding: 1px 20px 15px 20px !important;
 }
 
 .map-wrap .gm-style-iw-d{
   padding: 0 !important;
-  overflow: hidden !important; /* 把 scroll 關掉 */
+  overflow: scroll;
   max-height: none !important; /* 讓內容自然長 */
+}
+
+.map-wrap .gm-ui-hover-effect>span {
+    background-color: black;
 }
 
 /* ===== InfoWindow placeholder image ===== */
 .iw-hero-outer {
   display: flex;
   justify-content: center;
+  height: 80px;
 }
 
 .iw-hero {
   width: calc(95% - 2px);
-  height: 120px;
+  height: 80px;
   overflow: hidden;
   border-radius: 10px;
   margin-bottom: 10px;
@@ -278,13 +290,14 @@ div .gm-style-iw {
   /* make inside scrollable while wrapper animates */
   .mobile-lots-overlay-scroll {
     height: calc(100vh - (57px + 49px + 100px));
-    overflow: auto;
+    overflow: hidden;
     padding: 10px;
   }
 }
 
 .mobile-lots-overlay-list {
   max-width: 720px;
+  height: -webkit-fill-available;
   margin: 0 auto;
 }
 

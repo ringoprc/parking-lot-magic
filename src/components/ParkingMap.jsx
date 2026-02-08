@@ -153,21 +153,51 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
             </div>
 
             <div style={{ minWidth: 120 }}>
-              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>
-                {active.name}
-              </div>
-              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>
-                空位：
-                <span style={{ fontSize: 17, fontWeight: 700 }}>
-                  {active.vacancy ?? "未知"}
-                </span>
+
+              <div style={{ 
+                display: "flex", 
+                flexDirection: "column",
+                borderBottom: "1px solid #eee",
+                padding: "0px 3px 10px 3px"
+              }}>
+                <div style={{ 
+                  display: "flex", 
+                  justifyContent: "space-between", 
+                  alignItems: "center",
+                }}>
+                  <div style={{ 
+                    fontSize: 17, 
+                    fontWeight: 700, 
+                    marginBottom: "6px",
+                    marginRight: "20px" 
+                  }}>
+                    {active.name}
+                  </div>
+                  <div style={{
+                    fontSize: "17px",
+                    fontWeight: "700",
+                    color: "#317bff",
+                    marginBottom: "6px",
+                    flexShrink: "0"
+                  }}>
+                    空位：
+                    <span style={{ fontSize: 17, fontWeight: 700 }}>
+                      {active.vacancy ?? "未知"}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <span>{active.addressZh}</span>
+                </div>
               </div>
 
               <div
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  flexDirection: "column"
+                  flexDirection: "column",
+                  padding: "6px 3px 0px 6px"
                 }}
               >
                 {(() => {
@@ -213,6 +243,23 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
                     })()}
                   </div>
                 </div>
+
+                {/*
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "5px"
+                  }}
+                >
+                  <div style={{ marginTop: 6, fontSize: 10.5 }}>
+                    {active.lat}
+                  </div>
+                  <div style={{ marginTop: 6, fontSize: 10.5 }}>
+                    {active.lng}
+                  </div>
+                </div>
+                */}
+
               </div>
             </div>
           </InfoWindow>

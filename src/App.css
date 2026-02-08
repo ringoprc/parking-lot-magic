@@ -136,6 +136,8 @@ div .gm-style-iw {
 .lot-btn-sub-vacancy-count {
   font-size: 14px;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
 }
 
 .lot-btn-sub-time-ago {
@@ -166,7 +168,7 @@ div .gm-style-iw {
 }
 
 .gm-style .gm-style-iw-c {
-  padding: 1px 20px 15px 20px !important;
+  padding: 1px 20px 25px 20px !important;
 }
 
 .map-wrap .gm-style-iw-d{
@@ -213,6 +215,7 @@ div .gm-style-iw {
     height: 56px;
     padding: 4px 22px;
     border-bottom: 1px solid #e6e6e6;
+    cursor: pointer;
     background: #fff;
     flex: 0 0 auto;
   }

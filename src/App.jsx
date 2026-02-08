@@ -16,6 +16,8 @@ import "./App.css";
 
 export default function App() {
 
+  const DEFAULT_CENTER = { lat: 25.0522, lng: 121.5203 };
+
   const [active, setActive] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -24,15 +26,18 @@ export default function App() {
   const flyToRef = useRef(null);
   const [focus, setFocus] = useState(null); // { lat, lng, viewport? }
   const [searchCenter, setSearchCenter] = useState(null); // { lat, lng }
-  const [queryCenter, setQueryCenter] = useState({ lat: 25.0522, lng: 121.5203 }); // initial
+  const [queryCenter, setQueryCenter] = useState(null); // initial
 
   const RADIUS_M = 2000;
-  const { lots } = useLots({
+  const { lots, meta, reload } = useLots({
     apiBase,
+    district: "中山區",
     center: queryCenter,
     radiusM: RADIUS_M,
     pollMs: 15000,
   });
+
+  console.log('lots:', lots);
 
   const validLots = useMemo(
     () =>
@@ -40,10 +45,12 @@ export default function App() {
         (l) =>
           typeof l.lat === "number" &&
           typeof l.lng === "number" &&
-          /^ZS_\d+$/i.test(String(l.lotId || ""))
+          typeof l.lotId === "string"
       ),
     [lots]
   );
+
+  console.log('validLots:', validLots);
 
   const displayedLots = useMemo(() => {
     if (!searchCenter) return validLots;
@@ -59,15 +66,28 @@ export default function App() {
     return withDist.slice(0, 30);
   }, [validLots, searchCenter]);
 
+  console.log('displayedLots:', displayedLots);
+
   const listTitle = useMemo(() => {
-    if (!searchCenter || !focus?.name) return `所有停車場 (${displayedLots.length})`;
+
+    const totalActive = meta?.totalActive ?? displayedLots.length;
+    if (!searchCenter || !focus?.name) return `點此搜尋所有停車場 (${totalActive})`;
 
     const km = (RADIUS_M / 1000);
     const kmText = Number.isInteger(km) ? String(km) : km.toFixed(1);
 
-    return `距離 [${focus.name}] ${kmText}公里內的所有停車場 (${displayedLots.length})`;
-  }, [searchCenter, focus?.name, displayedLots.length, RADIUS_M]);
+    const suffix = totalActive != null 
+      ? ` (${displayedLots.length}/${totalActive})` 
+      : ` (${displayedLots.length})`;
+    return `距離 [${focus.name}] ${kmText}km 內${suffix}`;
+  }, [searchCenter, focus?.name, displayedLots.length, RADIUS_M, meta]);
 
+  function handleClearPick() {
+    setSearchCenter(null);     // ✅ 解除 filtered lots
+    setFocus(null);            // ✅ 地圖上那個搜尋 pin 也拿掉
+    setQueryCenter(DEFAULT_CENTER); // ✅ 排序/距離基準回中山預設
+    // setActive(null); // 可選：要不要順便關掉 info window
+  }
 
   function handlePickPlace(p) {
     // 1) move map (smoothly) — your ParkingMap already supports focus/fit viewport
@@ -112,14 +132,15 @@ export default function App() {
             open={mobileMenuOpen}
             lots={displayedLots}
             active={active}
-            onPick={(p) => {
-              handlePickPlace(p);
-            }}
             onSelect={(l) => {
               setActive(l);
               flyToRef.current?.({ lat: l.lat, lng: l.lng });
               setMobileMenuOpen(false);
             }}
+            onPick={(p) => {
+              handlePickPlace(p);
+            }}
+            onClear={handleClearPick}
           />
         </div>
 
@@ -129,12 +150,13 @@ export default function App() {
             title={listTitle}
             lots={displayedLots}
             active={active}
-            onPick={handlePickPlace}
             onSelect={(l) => {
               setActive(l);
               flyToRef.current?.({ lat: l.lat, lng: l.lng });
               setMobileMenuOpen(false);
             }}
+            onPick={handlePickPlace}
+            onClear={handleClearPick}
           />
 
           {/* Map */}

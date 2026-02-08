@@ -45,6 +45,7 @@ function classicFetchPredictions(query, opts) {
 export default function LotSearchBar({
   placeholder = "搜尋地點/地址…",
   onPick, // (place) => void
+  onClear, // () => void
 }) {
 
   const places = useMapsLibrary("places");
@@ -188,7 +189,7 @@ export default function LotSearchBar({
   async function pickSuggestion(s) {
     if (!s?.placePrediction) return;
     if (composingRef.current) return;
-    
+
     try {
       const pp = s.placePrediction;
 
@@ -331,6 +332,7 @@ export default function LotSearchBar({
 
               // 讓使用者可以立刻再輸入
               inputRef.current?.focus?.();
+              onClear?.();
             }}
           >
             <FiX size={16} />

@@ -344,22 +344,15 @@ div .gm-style-iw {
   .mobile-lots-overlay {
     display: block;
     padding: 0px 15px;
-
-    position: fixed;
+    position: relative;
     left: 0;
     right: 0;
-    top: calc(57px + 56px);
-
     z-index: 999;
     pointer-events: none;
-
-    /* keep children crisp on iOS (don’t fade subtree) */
     opacity: 1;
-    background: rgba(0, 0, 0, 0); /* closed */
-
+    background: rgba(0, 0, 0, 0);
     max-height: 0px;
     overflow: hidden;
-
     transition: max-height 160ms ease, background 160ms ease;
     border-bottom: 1px solid #e6e6e6;
   }

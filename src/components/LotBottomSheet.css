@@ -18,7 +18,7 @@
   position: absolute;
   left: 0; right: 0;
   bottom: 0;
-  height: min(80vh, 680px);
+  height: max-content;
   background: #fff;
   border-top-left-radius: 18px;
   border-top-right-radius: 18px;
@@ -76,7 +76,7 @@
 }
 
 .vl-sheet-body {
-  padding: 12px 14px 18px 14px;
+  padding: 12px 14px calc(18px + env(safe-area-inset-bottom)) 14px;
 }
 
 .vl-sheet-titleRow {
@@ -109,3 +109,12 @@
   font-size: 11px;
   color: #444;
 }
+
+@media (max-width: 430px) {
+  .vl-sheet-hero-img {
+    height: 140px;
+  }
+}
+
+
+

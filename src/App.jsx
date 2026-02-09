@@ -128,6 +128,9 @@ export default function App() {
     setQueryCenter({ lat: p.lat, lng: p.lng });
   }
 
+  const isMobile = window.matchMedia?.("(max-width: 900px)")?.matches ?? false;
+  const flyToOffset = isMobile ? -0.002 : 0.002;
+
   return (
     <APIProvider
       apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
@@ -154,13 +157,13 @@ export default function App() {
           />
           <MobileLotsOverlay
             open={mobileMenuOpen}
+            setOpen={setMobileMenuOpen}
             lots={displayedLots}
             active={active}
             onSelect={(l) => {
               setActive(l);
-              flyToRef.current?.({ lat: l.lat, lng: l.lng, zoom: 16 });
+              flyToRef.current?.({ lat: l.lat+flyToOffset, lng: l.lng, zoom: 16 });
               //setFocus({ name: l.name, lat: l.lat, lng: l.lng, zoom: 15, kind: "lot" });
-              setMobileMenuOpen(false);
               setMobileMenuOpen(false);
             }}
             onPick={(p) => {
@@ -176,10 +179,11 @@ export default function App() {
           <LotsSidebar
             title={listTitle}
             lots={displayedLots}
+            setOpen={setMobileMenuOpen}
             active={active}
             onSelect={(l) => {
               setActive(l);
-              flyToRef.current?.({ lat: l.lat, lng: l.lng, zoom: 16 });
+              flyToRef.current?.({ lat: l.lat+flyToOffset, lng: l.lng, zoom: 16 });
               //setFocus({ name: l.name, lat: l.lat, lng: l.lng, zoom: 15, kind: "lot" });
               setMobileMenuOpen(false);
               setMobileMenuOpen(false);

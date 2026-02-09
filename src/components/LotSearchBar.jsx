@@ -46,13 +46,14 @@ export default function LotSearchBar({
   placeholder = "搜尋地點/地址…",
   onPick, // (place) => void
   onClear, // () => void
+  setOpen,
 }) {
 
   const places = useMapsLibrary("places");
 
   const [q, setQ] = useState("");
   const [items, setItems] = useState([]); // suggestions
-  const [open, setOpen] = useState(false);
+  const [suggestionOpen, setSuggestionOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
   const [searchFocused, setSearchFocused] = useState(false);
 
@@ -80,19 +81,22 @@ export default function LotSearchBar({
 
       // show dropdown (with only "use my location") when focused
       if (searchFocused) {
-        setOpen(true);
+        setSuggestionOpen(true);
         setActiveIdx(0);
       } else {
-        setOpen(false);
+        setSuggestionOpen(false);
         setActiveIdx(-1);
       }
       return;
     }
 
+    console.log('HERE1', q);
+
     // ✅ selection 造成的 setQ：不要打 API，也不要改 items
     if (skipNextFetchRef.current) {
+      console.log('HERE2 skipped!');
       skipNextFetchRef.current = false;
-      setOpen(false);
+      setSuggestionOpen(false);
       setActiveIdx(-1);
       return;
     }
@@ -156,19 +160,19 @@ export default function LotSearchBar({
 
         lastFetchedQRef.current = query;
         setItems(list);
-        setOpen(list.length > 0);
+        setSuggestionOpen(list.length > 0);
         setActiveIdx(list.length ? 0 : -1);
 
       } catch (e) {
         console.error("[places] fetchAutocompleteSuggestions failed:", e);
         setItems([]);
-        setOpen(false);
+        setSuggestionOpen(false);
         setActiveIdx(-1);
       }
     }, 180);
 
     return () => clearTimeout(debounceRef.current);
-  }, [q, searchFocused]);
+  }, [q]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -181,7 +185,7 @@ export default function LotSearchBar({
       const next = e.relatedTarget;
       if (next && root.contains(next)) return;
       setSearchFocused(false);
-      setOpen(false);
+      setSuggestionOpen(false);
     }
 
     root.addEventListener("focusin", onFocusIn);
@@ -221,7 +225,7 @@ export default function LotSearchBar({
           // prevent triggering autocomplete fetch due to setQ
           skipNextFetchRef.current = true;
           setQ("使用我現在的位置");
-          setOpen(false);
+          setSuggestionOpen(false);
           setActiveIdx(-1);
 
           tokenRef.current = null;
@@ -303,7 +307,7 @@ export default function LotSearchBar({
       skipNextFetchRef.current = true;
 
       setQ(getSuggestionTitle(s));
-      setOpen(false);
+      setSuggestionOpen(false);
       setActiveIdx(-1);
 
       // reset session token after a selection
@@ -323,12 +327,12 @@ export default function LotSearchBar({
       <div className="lot-search-input-wrap">
         <input
           ref={inputRef}
-          className={`lot-search-input ${((searchFocused && q !== "使用我現在的位置") || open) ? "has-items" : ""}`}
+          className={`lot-search-input ${((searchFocused && q !== "使用我現在的位置" && !!q) || suggestionOpen) ? "has-items" : ""}`}
           value={q}
           placeholder={placeholder}
           onChange={(e) => setQ(e.target.value)}
           onFocus={() => {
-            if (items.length > 0 && q.trim()) setOpen(true);
+            if (items.length > 0 && q.trim()) setSuggestionOpen(true);
           }}
           onCompositionStart={() => {
             composingRef.current = true;
@@ -337,14 +341,14 @@ export default function LotSearchBar({
             composingRef.current = false;
           }}
           onKeyDown={(e) => {
-            if (!open) return;
+            if (!suggestionOpen) return;
             const ddLen = (items?.length || 0) + 1; // +1 for "my location"
 
             // IME composing: let Enter finish composition, don't pick suggestion
             const isComposing = e.isComposing || composingRef.current || e.keyCode === 229;
             if (isComposing) {
               // Optional: still allow Escape to close dropdown even during composition
-              if (e.key === "Escape") setOpen(false);
+              if (e.key === "Escape") setSuggestionOpen(false);
               return;
             }
 
@@ -363,7 +367,7 @@ export default function LotSearchBar({
               const chosen = items[activeIdx - 1] || items[0];
               if (chosen) pickSuggestion(chosen);
             } else if (e.key === "Escape") {
-              setOpen(false);
+              setSuggestionOpen(false);
             }
           }}
         />
@@ -380,7 +384,7 @@ export default function LotSearchBar({
             }}
             onClick={() => {
               setQ("");
-              setOpen(false);
+              setSuggestionOpen(false);
               setActiveIdx(-1);
 
               // 你現在的策略：q 清空後 items 會被 effect 清掉
@@ -399,7 +403,7 @@ export default function LotSearchBar({
         )}
       </div>
 
-      {open && (items.length > 0 || q.trim() === "") && (
+      {suggestionOpen && (items.length > 0 || q.trim() === "") && (
         <div className="lot-search-dd">
           <button
             type="button"

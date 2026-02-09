@@ -1,5 +1,5 @@
 // frontend/src/components/ParkingMap.jsx
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   APIProvider,
   Map,
@@ -19,6 +19,31 @@ function getPinColorsFromVacancy(v) {
   return { bg: "#34A853", border: "#0F7B2E", glyph: "#FFFFFF" };              // 多 = 綠
 }
 
+function getOffsetCenterLatLng(map, lat, lng, offsetYPx) {
+  const g = window.google;
+  if (!map || !g?.maps?.LatLng) return { lat, lng };
+
+  const proj = map.getProjection?.();
+  const zoom = map.getZoom?.();
+
+  // projection is not ready until after map is initialized
+  if (!proj || typeof zoom !== "number") return { lat, lng };
+
+  const scale = Math.pow(2, zoom);
+  const latLng = new g.maps.LatLng(lat, lng);
+  const worldPoint = proj.fromLatLngToPoint(latLng);
+
+  // Move the "camera center" DOWN by offsetYPx pixels (so the marker appears UP)
+  const worldPointOffset = new g.maps.Point(
+    worldPoint.x,
+    worldPoint.y + offsetYPx / scale
+  );
+
+  const newCenter = proj.fromPointToLatLng(worldPointOffset);
+  return { lat: newCenter.lat(), lng: newCenter.lng() };
+}
+
+/*
 function CloseInfoOnMapClick({ setActive }) {
   const map = useMap();
 
@@ -34,6 +59,7 @@ function CloseInfoOnMapClick({ setActive }) {
 
   return null;
 }
+*/
 
 function FitAndFly({ lots, flyToRef, focus }) {
   const map = useMap();
@@ -165,37 +191,7 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
   const adjustedForIdRef = useRef(null);
 
   const isMobile = window.matchMedia?.("(max-width: 900px)")?.matches ?? false;
-  const panUpY = isMobile ? -120 : -140; // tune
-
-  useEffect(() => {
-    console.log('HERE1');
-    if (!map) return;
-    console.log('HERE2');
-    console.log('active:', active);
-    if (!active?.lotId) return;
-    console.log('HERE3');
-
-    const activeId = active.lotId;
-    if (adjustedForIdRef.current === activeId) return;
-
-    const adjust = () => {
-      console.log('HERE4');
-      if (adjustedForIdRef.current === activeId) return;
-      //map.panBy(0, panUpY);
-      adjustedForIdRef.current = activeId;
-    };
-
-    // Wait until any pan/zoom finishes, then adjust once
-    const listener = map.addListener("idle", adjust);
-
-    // Fallback: if it’s already idle and you missed the event, still adjust once
-    const t = window.setTimeout(adjust, 250);
-
-    return () => {
-      listener?.remove?.();
-      window.clearTimeout(t);
-    };
-  }, [map, active, panUpY]);
+  const flyToOffset = isMobile ? -0.002 : 0.002;
 
   const iwOffset =
     window.google?.maps?.Size
@@ -210,9 +206,11 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
         defaultZoom={14}
         gestureHandling={"greedy"}
         disableDefaultUI={false}
+        clickableIcons={false}
+        onClick={() => setActive?.(null)}
         mapId={import.meta.env.VITE_GOOGLE_MAP_ID}
       >
-        <CloseInfoOnMapClick setActive={setActive} />
+        {/*<CloseInfoOnMapClick setActive={setActive} />*/}
         <FitAndFly 
           lots={lots} 
           flyToRef={flyToRef} 
@@ -225,7 +223,7 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
             position={{ lat: focus.lat, lng: focus.lng }}
             zIndex={9999}
             onClick={() => {
-              flyToRef.current?.({ lat: focus.lat, lng: focus.lng, zoom: 16 });
+              flyToRef.current?.({ lat: focus.lat+flyToOffset, lng: focus.lng, zoom: 16 });
             }}
           >
             <div className="search-pin" aria-label="搜尋位置">
@@ -242,24 +240,17 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
             position={{ lat: l.lat, lng: l.lng }}
             onClick={() => {
               setActive?.(l);
-              flyToRef.current?.({ lat: l.lat, lng: l.lng, zoom: 16 });
-              /*
-              setFocus?.({
-                name: l.name,
-                lat: l.lat,
-                lng: l.lng,
-                zoom: 17,
-                kind: "lot",
-              });
-              */
+
+              // tune this based on your sheet height
+              const offsetY = Math.round(window.innerHeight * 0);
+              flyToRef.current?.({ lat: l.lat+flyToOffset, lng: l.lng, zoom: 16 });
             }}
           >
             <VacancyPin vacancy={l.vacancy} active={active?.lotId === l.lotId} />
           </AdvancedMarker>
         ))}
 
-        {/*
-        {active && (
+        {!isMobile && active && (
           <InfoWindow
             position={{ lat: active.lat, lng: active.lng }}
             onCloseClick={() => setActive?.(null)}
@@ -375,31 +366,18 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
                   </div>
                 </div>
 
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "5px"
-                  }}
-                >
-                  <div style={{ marginTop: 6, fontSize: 10.5 }}>
-                    {active.lat}
-                  </div>
-                  <div style={{ marginTop: 6, fontSize: 10.5 }}>
-                    {active.lng}
-                  </div>
-                </div>
-
               </div>
             </div>
           </InfoWindow>
         )}
-        */}
 
       </Map>
-      <LotBottomSheet
-        active={active}
-        onClose={() => setActive?.(null)}
-      />
+      {isMobile && (
+        <LotBottomSheet
+          active={active}
+          onClose={() => setActive?.(null)}
+        />
+      )}
     </div>
   );
 }

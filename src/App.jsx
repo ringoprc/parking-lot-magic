@@ -14,6 +14,20 @@ import logo from "./assets/logo4.png";
 
 import "./App.css";
 
+function formatYmdHms(ts) {
+  if (!ts) return null;
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return null;
+
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+  const ss = String(d.getSeconds()).padStart(2, "0");
+  return `${yyyy}/${mm}/${dd} ${hh}:${mi}:${ss}`;
+}
+
 export default function App() {
 
   const DEFAULT_CENTER = { lat: 25.0522, lng: 121.5203 };
@@ -47,6 +61,11 @@ export default function App() {
       ),
     [lots]
   );
+
+  const sheetFetchedText = useMemo(() => {
+    const s = formatYmdHms(meta?.lastSheetFetchAt);
+    return s ? `清單最近更新時間 ${s}` : null;
+  }, [meta?.lastSheetFetchAt]);
 
   const displayedLots = useMemo(() => {
     if (!searchCenter) {
@@ -116,11 +135,12 @@ export default function App() {
     >
       <div className="app-root">
 
-        {/* Top Logo Bar */}
         <div className="title-bar">
           <div className="title-bar-inner">
-            <img src={logo} alt="logo" className="title-bar-logo-img" />
-            <div className="title">停車急管家</div>
+            <div className="title-bar-left">
+              <img src={logo} alt="logo" className="title-bar-logo-img" />
+              <div className="title">停車急管家</div>
+            </div>
           </div>
         </div>
 
@@ -147,6 +167,7 @@ export default function App() {
               handlePickPlace(p);
             }}
             onClear={handleClearPick}
+            sheetFetchedText={sheetFetchedText}
           />
         </div>
 

@@ -19,6 +19,9 @@ export default function LotsList({ lots, active, onSelect }) {
               </span>
             </div>
             <div className="lot-btn-sub">
+              <span className="lot-btn-sub-address">
+                {l.addressZh}
+              </span>
               <span className="lot-btn-sub-time-ago">
                 {minutesAgo(l.lastUpdated) != null
                   ? `更新於 ${minutesAgo(l.lastUpdated)} 分鐘前`

@@ -24,7 +24,7 @@ div .gm-style-iw {
   height: 56px;
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  padding: 0 4px;
   border-bottom: 1px solid #e6e6e6;
   background: #fff;
   flex: 0 0 auto;
@@ -34,7 +34,15 @@ div .gm-style-iw {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.3rem;
+  padding: 0px 10px;
+}
+
+.title-bar-left {
+  display: flex;
+  flex-direction: row;
+  gap: 0.3rem;
+  align-items: center;
 }
 
 .title-bar-logo-img {
@@ -101,7 +109,7 @@ div .gm-style-iw {
 }
 
 .lot-btn-list {
-  padding: 8px 12px 8px 6px;
+  padding: 3px 6px 8px 6px;
 }
 
 .lot-btn {
@@ -122,13 +130,18 @@ div .gm-style-iw {
 .lot-btn-name-div {
   display: flex;
   justify-content: space-between;
-  gap: 10px;
+  gap: 0px;
+  margin-bottom: 8px;
+  flex-direction: column;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
 }
 
 .lot-btn-name {
-  max-width: 70%;
+  max-width: 100%;
   font-weight: 700;
   margin-bottom: 6px;
+  font-size: 14.5px;
 }
 
 .lot-btn-sub {
@@ -137,17 +150,25 @@ div .gm-style-iw {
   padding: 0px 0px 0px 0px;
   font-size: 12px;
   opacity: 0.8;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
 }
 
 .lot-btn-sub-vacancy-count {
-  font-size: 14px;
+  font-size: 13.5px;
   white-space: nowrap;
   display: flex;
   align-items: center;
 }
 
+.lot-btn-sub-address {
+  font-size: 12px;
+  color: #656565;
+}
+
 .lot-btn-sub-time-ago {
-  font-size: 10px;
+  font-size: 9px;
   color: #999;
 }
 
@@ -232,7 +253,10 @@ div .gm-style-iw {
 
 .mobile-lots-bar {
   display: none; /* desktop hidden */
+  font-weight: 700;
+  font-size: 16px;
 }
+
 @media (max-width: 900px) {
   .mobile-lots-bar {
     display: flex;
@@ -240,17 +264,11 @@ div .gm-style-iw {
     gap: 10px;
     justify-content: space-between;
     height: 56px;
-    padding: 4px 22px;
+    padding: 4px 12px 4px 20px;
     border-bottom: 1px solid #e6e6e6;
     cursor: pointer;
     background: #fff;
-    flex: 0 0 auto;
   }
-}
-
-.mobile-lots-label {
-  font-weight: 700;
-  font-size: 16px;
 }
 
 .mobile-lots-toggle {
@@ -300,7 +318,7 @@ div .gm-style-iw {
     pointer-events: auto;
     border-bottom-right-radius: 16px;
     border-bottom-left-radius: 16px;
-    padding: 10px 25px;
+    padding: 10px 15px 10px 15px;
   }
 
   /* make inside scrollable while wrapper animates */
@@ -308,6 +326,10 @@ div .gm-style-iw {
     height: calc(100vh - (57px + 49px + 100px));
     max-height: 60vh;
     overflow: hidden;
+  }
+
+  .title-bar-devmeta {
+    font-size: 12px;
   }
 }
 

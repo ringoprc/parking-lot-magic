@@ -669,7 +669,7 @@ div .gm-style-iw {
   position: absolute;
   inset: -10px;
   border-radius: 999px;
-  background: rgba(26,115,232,0.22);
+  background: rgb(251 188 0);
   animation: searchPinPulse 1.2s ease-out infinite;
 }
 

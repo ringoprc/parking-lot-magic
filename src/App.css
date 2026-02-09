@@ -24,6 +24,12 @@ div .gm-style-iw {
   flex-direction: column;
 }
 
+@supports (height: 100dvh) {
+  .app-root { height: 100dvh; }
+  .mobile-lots-overlay.open { max-height: calc(100dvh - (56px + 48px)); }
+  .mobile-lots-overlay-scroll { height: calc(100dvh - (57px + 49px + 100px)); }
+}
+
 .title-bar {
   height: 56px;
   display: flex;

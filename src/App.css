@@ -106,6 +106,7 @@ div .gm-style-iw {
   height: calc(100% - 90px);
   overflow-y: scroll;
   border-bottom: 1px solid #eee;
+  scrollbar-width: thin;
 }
 
 .lot-btn-list {

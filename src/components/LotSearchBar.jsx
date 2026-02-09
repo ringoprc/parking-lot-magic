@@ -229,6 +229,9 @@ export default function LotSearchBar({
     setTimeout(() => {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
+          if (locateTimeoutRef.current) clearTimeout(locateTimeoutRef.current);
+          setLocating(false);
+
           const { latitude, longitude } = pos.coords;
 
           // reuse existing contract with parent

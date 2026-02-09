@@ -121,10 +121,18 @@ div .gm-style-iw {
 }
 
 .lot-btn-list-outer {
-  height: calc(100% - 90px);
-  overflow-y: scroll;
+  height: calc(70vh - 110px); /* overlay height minus search/header padding */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   border-bottom: 1px solid #eee;
   scrollbar-width: thin;
+}
+
+@supports (height: 100dvh) {
+  .lot-btn-list-outer {
+    height: calc(70dvh - 110px);
+  }
 }
 
 .lot-btn-list {
@@ -311,41 +319,53 @@ div .gm-style-iw {
   display: none; /* desktop hidden */
 }
 
+@supports (height: 100dvh) {
+  .mobile-lots-overlay.open {
+    max-height: 70dvh;
+  }
+}
+
 @media (max-width: 900px) {
   .mobile-lots-overlay {
     display: block;
+    padding: 10px 15px;
 
-    /*position: fixed;
+    position: fixed;
     left: 0;
-    right: 0;*/
-    /*top: calc(56px + 48px); /* title-bar + mobile-lots-bar */
-    background: #fff;
-    z-index: 999;
+    right: 0;
+    top: calc(56px + 48px); /* title-bar + mobile-lots-bar */
 
-    /* dropdown animation */
-    max-height: 0px;
-    opacity: 0;
+    z-index: 999;
     pointer-events: none;
 
+    /* keep children crisp on iOS (don’t fade subtree) */
+    opacity: 1;
+    background: rgba(0, 0, 0, 0); /* closed */
+
+    max-height: 0px;
     overflow: hidden;
-    transition: max-height 60ms ease, opacity 120ms ease;
+
+    transition: max-height 160ms ease, background 160ms ease;
     border-bottom: 1px solid #e6e6e6;
   }
 
   .mobile-lots-overlay.open {
-    position: relative;
-    opacity: 1;
-    max-height: calc(100vh - (56px + 48px));
     pointer-events: auto;
+
+    /* IMPORTANT: let map show below like Android */
+    max-height: 70vh;
+
     border-bottom-right-radius: 16px;
     border-bottom-left-radius: 16px;
-    padding: 10px 15px 10px 15px;
+    padding: 10px 15px;
+
+    background: rgba(255, 255, 255, 0.9); /* your dark overlay vibe */
+    backdrop-filter: none; /* harmless even if unsupported */
   }
 
-  /* make inside scrollable while wrapper animates */
   .mobile-lots-overlay-scroll {
-    height: calc(100vh - (57px + 49px + 100px));
-    max-height: 60vh;
+    height: 100%;
+    overflow: hidden; /* keep wrapper stable */
   }
 
   .title-bar-devmeta {
@@ -355,7 +375,7 @@ div .gm-style-iw {
 
 .mobile-lots-overlay-list {
   max-width: 720px;
-  height: -webkit-fill-available;
+  height: 100%;
   margin: 0 auto;
 }
 
@@ -468,6 +488,13 @@ div .gm-style-iw {
   border-width: thin;
 }
 
+@media (max-width: 900px) {
+  /* dropdown inside overlay should still be above overlay list */
+  .mobile-lots-overlay .lot-search-dd {
+    z-index: 2001;
+  }
+}
+
 .lot-search-dd::-webkit-scrollbar {
   width: 4px;
 }
@@ -534,17 +561,6 @@ div .gm-style-iw {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
-}
-
-@media (max-width: 900px) {
-  .mobile-lots-overlay {
-    z-index: 1500; /* your overlay already has z-index, just ensure it's high enough */
-  }
-
-  /* dropdown inside overlay should still be above overlay list */
-  .mobile-lots-overlay .lot-search-dd {
-    z-index: 2001;
-  }
 }
 
 /* custom marker pin */

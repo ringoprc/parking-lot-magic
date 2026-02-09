@@ -280,9 +280,13 @@ export default function LotSearchBar({
       );
     }, 250);
 
-    setOpen(false);
-
   }
+
+  useEffect(()=>{
+    if(!locating){
+      setOpen(false);
+    }
+  },[locating])
 
   useEffect(() => {
     return () => {

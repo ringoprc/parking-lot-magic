@@ -260,11 +260,6 @@ div .gm-style-iw {
   pointer-events: none !important;
 }
 
-/* Hide the default close button (since it won't be clickable now) */
-.gm-style .gm-ui-hover-effect {
-  display: none !important;
-}
-
 /* ===== InfoWindow placeholder image ===== */
 .iw-hero-outer {
   display: flex;

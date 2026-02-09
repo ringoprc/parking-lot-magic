@@ -243,7 +243,7 @@ export default function LotSearchBar({
 
           // prevent triggering autocomplete fetch due to setQ
           skipNextFetchRef.current = true;
-          setQ("使用我現在的位置");
+          setQ("我現在的位置");
           setSuggestionOpen(false);
           setActiveIdx(-1);
 
@@ -378,7 +378,7 @@ export default function LotSearchBar({
       <div className="lot-search-input-wrap">
         <input
           ref={inputRef}
-          className={`lot-search-input ${((suggestionOpen && q !== "使用我現在的位置" && !!q) || suggestionOpen) ? "has-items" : ""}`}
+          className={`lot-search-input ${((suggestionOpen && q !== "我現在的位置" && !!q) || suggestionOpen) ? "has-items" : ""}`}
           value={q}
           placeholder={placeholder}
           onChange={(e) => setQ(e.target.value)}

@@ -15,7 +15,7 @@ export default function LotsList({ lots, active, onSelect }) {
             <div className="lot-btn-name-div">
               <div className="lot-btn-name">{l.name}</div>
               <span className="lot-btn-sub-vacancy-count">
-                [空位：{l.vacancy ?? "未知"}]
+                [ 空位：{l.vacancy ?? "未知"} ]
               </span>
             </div>
             <div className="lot-btn-sub">

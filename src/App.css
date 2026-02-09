@@ -150,7 +150,6 @@ div .gm-style-iw {
   justify-content: space-between;
   padding: 0px 0px 0px 0px;
   font-size: 12px;
-  opacity: 0.8;
   flex-direction: column;
   gap: 4px;
   margin-top: 4px;
@@ -217,7 +216,6 @@ div .gm-style-iw {
 }
 
 .map-wrap .gm-ui-hover-effect {
-  opacity: 1;
   background-color: black;
 }
 
@@ -315,7 +313,6 @@ div .gm-style-iw {
   .mobile-lots-overlay.open {
     position: relative;
     max-height: calc(100vh - (56px + 48px));
-    opacity: 0.98;
     pointer-events: auto;
     border-bottom-right-radius: 16px;
     border-bottom-left-radius: 16px;
@@ -552,7 +549,6 @@ div .gm-style-iw {
   border-right: 7px solid transparent;
   border-top: 10px solid currentColor;
   filter: drop-shadow(0 6px 10px rgba(0,0,0,.12));
-  opacity: .7;
 }
 */
 

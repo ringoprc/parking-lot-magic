@@ -584,6 +584,16 @@ div .gm-style-iw {
   transform: translateY(-6px); /* 視覺上更像 pin */
 }
 
+/* IMPORTANT: give the pin’s colored circle its own layer above pulse */
+.vl-pin::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--pin-bg);
+  z-index: 1;
+}
+
 /*
 .vl-pin::after{
   content: "";
@@ -603,10 +613,12 @@ div .gm-style-iw {
 .vl-pin--num{
   width: 30px;
   height: 30px;
-  transform: translateY(-10px);
+  transform: translate(-50%, -50%);
 }
 
 .vl-pin-num{
+  position: relative;
+  z-index: 2;
   width: 100%;
   height: 100%;
   display: grid;
@@ -614,15 +626,16 @@ div .gm-style-iw {
   font-weight: 900;
   font-size: 13px;
   line-height: 1;
-  text-shadow: 0 1px 2px rgba(0,0,0,.25);
 }
 
 /* inner dot (optional) */
 .vl-pin-dot{
   position: absolute;
-  inset: 4px;
+  inset: 0;
   border-radius: 999px;
-  background: rgba(255,255,255,.85);
+  background: #ffdd87;         /* Google blue */
+  border: 3px solid #ffffff;   /* white ring */
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
 }
 
 .search-pin {
@@ -660,9 +673,38 @@ div .gm-style-iw {
   animation: searchPinPulse 1.2s ease-out infinite;
 }
 
+.vl-pin-pulse {
+  position: absolute;
+  z-index: 0;
+  inset: -14px;
+  border-radius: 999px;
+  background: rgb(26 115 232 / 63%);
+  animation: vlPinPulse 1.2s ease-out infinite;
+}
+
+.lot-pin-pulse-wrap{
+  position: relative;
+  width: 38px;
+  height: 38px;
+  transform: translate(-50%, -50%);
+}
+
+.lot-pin-pulse-once{
+  /* reuse the same look, but run it a few times then stop */
+  animation-iteration-count: 999;
+  animation-duration: 0.9s; /* slightly snappier for “selected” feel */
+  pointer-events: none;
+}
+
 @keyframes searchPinPulse {
   0%   { transform: scale(0.55); opacity: 0.85; }
   100% { transform: scale(1.35); opacity: 0; }
 }
+
+@keyframes vlPinPulse {
+  0%   { transform: scale(0.55); opacity: 0.85; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
 
 

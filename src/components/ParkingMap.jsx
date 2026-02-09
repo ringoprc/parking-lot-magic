@@ -168,24 +168,39 @@ function FitAndFly({ lots, flyToRef, focus }) {
   return null;
 }
 
-function VacancyPin({ vacancy }) {
+function VacancyPin({ vacancy, active, pulse }) {
   const { bg, border, glyph } = getPinColorsFromVacancy(vacancy);
 
   return (
     <div
-      className="vl-pin vl-pin--num"
+      className={"vl-pin vl-pin--num " + (pulse ? "pulse" : "")}
       style={{
-        background: bg,
+        "--pin-bg": bg,
         borderColor: border,
         color: glyph,
       }}
     >
-      <div className="vl-pin-num">{vacancy ?? "?"}</div>
+      {pulse ? (
+        <>
+          <div className="vl-pin-pulse" />
+          <div className="vl-pin-num">{vacancy ?? "?"}</div>
+        </>
+      ) : (
+        <div className="vl-pin-num">{vacancy ?? "?"}</div>
+      )}
     </div>
+
+
   );
 }
 
-export default function ParkingMap({ lots, active, setActive, flyToRef, focus, setFocus }) {
+<div className="search-pin" aria-label="搜尋位置">
+              <div className="search-pin-pulse" />
+              <div className="search-pin-dot" />
+              <div className="search-pin-label">{focus?.name?.[0] ?? "?"}</div>
+            </div>
+
+export default function ParkingMap({ lots, active, setActive, flyToRef, focus, setFocus, pulseLotId }) {
 
   const map = useMap();
   const adjustedForIdRef = useRef(null);
@@ -246,7 +261,9 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
               flyToRef.current?.({ lat: l.lat+flyToOffset, lng: l.lng, zoom: 16 });
             }}
           >
-            <VacancyPin vacancy={l.vacancy} active={active?.lotId === l.lotId} />
+            <VacancyPin vacancy={l.vacancy} active={active?.lotId === l.lotId} 
+              pulse={l.lotId === pulseLotId}
+            />
           </AdvancedMarker>
         ))}
 

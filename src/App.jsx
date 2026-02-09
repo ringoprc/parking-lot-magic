@@ -1,5 +1,5 @@
 // frontend/src/App.jsx
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLots } from "./hooks/useLots";
 import { haversineMeters } from "./utils/geo";
 
@@ -61,6 +61,24 @@ export default function App() {
       ),
     [lots]
   );
+
+  const [pulseLotId, setPulseLotId] = useState(null);
+  const pulseTimerRef = useRef(null);
+
+  function triggerLotPulse(lotId, ms = 9999999) {
+    setPulseLotId(lotId);
+    if (pulseTimerRef.current) window.clearTimeout(pulseTimerRef.current);
+    pulseTimerRef.current = window.setTimeout(() => {
+      setPulseLotId(null);
+      pulseTimerRef.current = null;
+    }, ms);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (pulseTimerRef.current) window.clearTimeout(pulseTimerRef.current);
+    };
+  }, []);
 
   const sheetFetchedText = useMemo(() => {
     const s = formatYmdHms(meta?.lastSheetFetchAt);
@@ -162,6 +180,7 @@ export default function App() {
             active={active}
             onSelect={(l) => {
               setActive(l);
+              triggerLotPulse(l.lotId);
               flyToRef.current?.({ lat: l.lat+flyToOffset, lng: l.lng, zoom: 16 });
               //setFocus({ name: l.name, lat: l.lat, lng: l.lng, zoom: 15, kind: "lot" });
               setMobileMenuOpen(false);
@@ -183,9 +202,9 @@ export default function App() {
             active={active}
             onSelect={(l) => {
               setActive(l);
+              triggerLotPulse(l.lotId);
               flyToRef.current?.({ lat: l.lat+flyToOffset, lng: l.lng, zoom: 16 });
               //setFocus({ name: l.name, lat: l.lat, lng: l.lng, zoom: 15, kind: "lot" });
-              setMobileMenuOpen(false);
               setMobileMenuOpen(false);
             }}
             onPick={handlePickPlace}
@@ -200,6 +219,7 @@ export default function App() {
             flyToRef={flyToRef}
             focus={focus}
             setFocus={setFocus}
+            pulseLotId={pulseLotId}
           />
         </div>
       </div>

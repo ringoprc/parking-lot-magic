@@ -68,6 +68,7 @@ export default function LotSearchBar({
   const skipNextFetchRef = useRef(false);
   const lastFetchedQRef = useRef(""); // 記錄上次真的打 API 的 query
   const composingRef = useRef(false);
+  const pendingPickRef = useRef(null);
 
 
   useEffect(() => {
@@ -198,7 +199,7 @@ export default function LotSearchBar({
   }, []);
 
   function pickMyLocation() {
-    if (composingRef.current) return;
+    /*if (composingRef.current) return;*/
     if (locating) return; // prevent double tap
 
     if (!navigator.geolocation) {
@@ -299,7 +300,7 @@ export default function LotSearchBar({
 
   async function pickSuggestion(s) {
     if (!s?.placePrediction) return;
-    if (composingRef.current) return;
+    /*if (composingRef.current) return;*/
 
     try {
       const pp = s.placePrediction;
@@ -373,6 +374,30 @@ export default function LotSearchBar({
     }
   }
 
+
+  function requestPickMyLocation() {
+    if (locating) return;
+
+    if (composingRef.current) {
+      pendingPickRef.current = { type: "myLocation" };
+      // 先結束輸入法狀態（有些 iOS 需要）
+      inputRef.current?.blur?.();
+      return;
+    }
+    pickMyLocation();
+  }
+
+  function requestPickSuggestion(s) {
+    if (!s?.placePrediction) return;
+
+    if (composingRef.current) {
+      pendingPickRef.current = { type: "suggestion", s };
+      inputRef.current?.blur?.();
+      return;
+    }
+    pickSuggestion(s);
+  }
+
   return (
     <div
       ref={rootRef}
@@ -397,8 +422,27 @@ export default function LotSearchBar({
           onCompositionStart={() => {
             composingRef.current = true;
           }}
-          onCompositionEnd={() => {
+          onCompositionEnd={(e) => {
             composingRef.current = false;
+
+            // 重要：iOS 有時 compositionend 才是最終字串
+            // 這行可保險（不一定每次需要，但不會害你）
+            setQ(e.target.value);
+
+            // 如果使用者剛剛是在 composing 狀態下點了 dropdown item
+            const pending = pendingPickRef.current;
+            if (pending) {
+              pendingPickRef.current = null;
+
+              // 讓 input 的 composing 真正收尾（有些 iOS 需要）
+              inputRef.current?.blur?.();
+
+              // 用 microtask 確保 blur / composition 完成後再 pick
+              Promise.resolve().then(() => {
+                if (pending.type === "myLocation") pickMyLocation();
+                else if (pending.type === "suggestion") pickSuggestion(pending.s);
+              });
+            }
           }}
           onKeyDown={(e) => {
             if (!suggestionOpen) return;
@@ -471,9 +515,15 @@ export default function LotSearchBar({
             style={{
               background: "#fff3d7"
             }}
-            onMouseDown={(e) => e.preventDefault()} // stop blur before click
             onMouseEnter={() => setActiveIdx(0)}
-            onClick={pickMyLocation}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              requestPickMyLocation();
+            }}
+            onTouchStart={(e) => {
+              e.preventDefault();
+              requestPickMyLocation();
+            }}
             disabled={locating}
           >
             <div className="lot-search-dd-lines">
@@ -489,11 +539,18 @@ export default function LotSearchBar({
             const realIdx = idx + 1;
             return (
               <button
-                key={s.placePrediction.placeId}
+                key={`${s.placePrediction.placeId}-${idx}`}
                 type="button"
                 className={`lot-search-dd-item ${realIdx === activeIdx ? "active" : ""}`}
                 onMouseEnter={() => setActiveIdx(realIdx)}
-                onClick={() => pickSuggestion(s)}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  requestPickSuggestion(s);
+                }}
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  requestPickSuggestion(s);
+                }}
               >
               {(() => {
                 const p = s.placePrediction;

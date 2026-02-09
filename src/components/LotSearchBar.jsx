@@ -76,21 +76,19 @@ export default function LotSearchBar({
 
     const query = q.trim();
     if (!query) {
-      setItems([]);
+      setItems([]);              // no place suggestions
       tokenRef.current = null;
+      lastFetchedQRef.current = "";
 
-      // show dropdown (with only "use my location") when focused
       if (searchFocused) {
-        setSuggestionOpen(true);
-        setActiveIdx(0);
+        setSuggestionOpen(true); // ✅ force dropdown open
+        setActiveIdx(0);         // ✅ highlight "my location"
       } else {
         setSuggestionOpen(false);
         setActiveIdx(-1);
       }
       return;
     }
-
-    console.log('HERE1', q);
 
     // ✅ selection 造成的 setQ：不要打 API，也不要改 items
     if (skipNextFetchRef.current) {
@@ -152,7 +150,6 @@ export default function LotSearchBar({
                 mainText: { toString: () => p.structured_formatting?.main_text || "" },
                 secondaryText: { toString: () => p.structured_formatting?.secondary_text || "" },
               },
-              // ⚠️ classic 沒有 toPlace()，pickSuggestion 也要做 fallback（下一段）
               _classic: p,
             },
           }));
@@ -337,6 +334,12 @@ export default function LotSearchBar({
           onChange={(e) => setQ(e.target.value)}
           onFocus={() => {
             if (items.length > 0 && q.trim()) setSuggestionOpen(true);
+            if (!q.trim()) {
+              setSuggestionOpen(true);   // empty → show "my location"
+              setActiveIdx(0);
+            } else if (items.length > 0) {
+              setSuggestionOpen(true);
+            }
           }}
           onCompositionStart={() => {
             composingRef.current = true;
@@ -407,7 +410,7 @@ export default function LotSearchBar({
         )}
       </div>
 
-      {suggestionOpen && (items.length > 0 || q.trim() === "") && (
+      {suggestionOpen && (
         <div className="lot-search-dd">
           <button
             type="button"

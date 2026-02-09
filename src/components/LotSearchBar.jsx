@@ -70,6 +70,10 @@ export default function LotSearchBar({
   const composingRef = useRef(false);
   const pendingPickRef = useRef(null);
 
+  const touchArmedRef = useRef(false);
+  const touchStartXYRef = useRef({ x: 0, y: 0 });
+  const TOUCH_TAP_SLOP_PX = 10; // tap tolerance
+
 
   useEffect(() => {
 
@@ -521,7 +525,28 @@ export default function LotSearchBar({
               requestPickMyLocation();
             }}
             onTouchStart={(e) => {
+              // prevent iOS from triggering blur / focusout / click synthesis
               e.preventDefault();
+              touchArmedRef.current = true;
+
+              const t = e.touches?.[0];
+              if (t) touchStartXYRef.current = { x: t.clientX, y: t.clientY };
+            }}
+            onTouchMove={(e) => {
+              // if user is scrolling, disarm
+              const t = e.touches?.[0];
+              if (!t) return;
+              const dx = Math.abs(t.clientX - touchStartXYRef.current.x);
+              const dy = Math.abs(t.clientY - touchStartXYRef.current.y);
+              if (dx > TOUCH_TAP_SLOP_PX || dy > TOUCH_TAP_SLOP_PX) {
+                touchArmedRef.current = false;
+              }
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              if (!touchArmedRef.current) return;
+              touchArmedRef.current = false;
+
               requestPickMyLocation();
             }}
             disabled={locating}
@@ -549,6 +574,25 @@ export default function LotSearchBar({
                 }}
                 onTouchStart={(e) => {
                   e.preventDefault();
+                  touchArmedRef.current = true;
+
+                  const t = e.touches?.[0];
+                  if (t) touchStartXYRef.current = { x: t.clientX, y: t.clientY };
+                }}
+                onTouchMove={(e) => {
+                  const t = e.touches?.[0];
+                  if (!t) return;
+                  const dx = Math.abs(t.clientX - touchStartXYRef.current.x);
+                  const dy = Math.abs(t.clientY - touchStartXYRef.current.y);
+                  if (dx > TOUCH_TAP_SLOP_PX || dy > TOUCH_TAP_SLOP_PX) {
+                    touchArmedRef.current = false;
+                  }
+                }}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  if (!touchArmedRef.current) return;
+                  touchArmedRef.current = false;
+
                   requestPickSuggestion(s);
                 }}
               >

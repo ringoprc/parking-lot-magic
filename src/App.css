@@ -5,6 +5,10 @@ html, body, #root {
   margin: 0;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 button {
   outline: none !important;
 }
@@ -53,6 +57,7 @@ div .gm-style-iw {
 .title {
   font-size: 20px;
   font-weight: 700;
+  color: black;
 }
 
 .content {
@@ -268,6 +273,10 @@ div .gm-style-iw {
     cursor: pointer;
     background: #fff;
   }
+}
+
+.mobile-lots-label {
+  color: black;
 }
 
 .mobile-lots-toggle {

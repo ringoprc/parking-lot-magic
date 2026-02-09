@@ -9,6 +9,8 @@ import {
 } from "@vis.gl/react-google-maps";
 
 import LotBottomSheet from "./LotBottomSheet";
+import Spinner from "react-bootstrap/Spinner";
+import { FaCircle } from "react-icons/fa";
 
 import { formatTime, minutesAgo, minSecAgo } from "../utils/time";
 
@@ -43,54 +45,62 @@ function getOffsetCenterLatLng(map, lat, lng, offsetYPx) {
   return { lat: newCenter.lat(), lng: newCenter.lng() };
 }
 
-/*
-function CloseInfoOnMapClick({ setActive }) {
-  const map = useMap();
+function MyLocationLayer({ myPos, accuracyM }) {
+  if (!myPos) return null;
 
-  useEffect(() => {
-    if (!map) return;
+  // Accuracy circle: Google-ish
+  const accStyle = {
+    width: 14,
+    height: 14,
+    borderRadius: "50%",
+    background: "rgba(66,133,244,0.18)", // Google blue-ish
+    border: "1px solid rgba(66,133,244,0.25)",
+    transform: "translate(-50%, -50%)",
+  };
 
-    const listener = map.addListener("click", () => {
-      setActive?.(null);
-    });
+  // Dot: white ring + blue core
+  const dotWrap = {
+    width: 18,
+    height: 18,
+    borderRadius: "50%",
+    background: "#fff",
+    boxShadow: "0 1px 6px rgba(0,0,0,0.25)",
+    display: "grid",
+    placeItems: "center",
+  };
 
-    return () => listener?.remove?.();
-  }, [map, setActive]);
+  const dotCore = {
+    width: 10,
+    height: 10,
+    borderRadius: "50%",
+    background: "rgb(66,133,244)",
+  };
 
-  return null;
+  // If you want the accuracy circle to match meters, you need projection math
+  // (convert meters -> pixels based on zoom/lat). For now we do a fixed "hint circle"
+  // which is what many web apps do.
+  // If you want true-size circle later, I can give you the meter->px formula.
+  return (
+    <>
+      {/* “accuracy hint circle” (fixed-size visual cue) */}
+      <AdvancedMarker position={myPos} zIndex={9998}>
+        <div style={accStyle} />
+      </AdvancedMarker>
+
+      {/* Blue dot */}
+      <AdvancedMarker position={myPos} zIndex={9999}>
+        <div style={dotWrap} aria-label="我的位置">
+          <div style={dotCore} />
+        </div>
+      </AdvancedMarker>
+    </>
+  );
 }
-*/
 
 function FitAndFly({ lots, flyToRef, focus }) {
   const map = useMap();
   const userMovedRef = useRef(false);
   const didInitialFitRef = useRef(false);
-
-  // -----------------------------------
-  // When focus changes, pan/zoom (or fit viewport)
-  // -----------------------------------
-  /*
-  useEffect(() => {
-    if (!map) return;
-    if (focus?.lat == null || focus?.lng == null) return;
-
-    map.panTo({ lat: focus.lat, lng: focus.lng });
-
-    const target = focus.zoom ?? 15;
-    const start = map.getZoom?.() ?? target;
-    if (start === target) return;
-
-    const dir = target > start ? 1 : -1;
-    let z = start;
-    const id = window.setInterval(() => {
-      z += dir;
-      map.setZoom(z);
-      if (z === target) window.clearInterval(id);
-    }, 80);
-
-    return () => window.clearInterval(id);
-  }, [map, focus?.lat, focus?.lng, focus?.zoom]);
-  */
 
   useEffect(() => {
     if (!map) return;
@@ -194,10 +204,25 @@ function VacancyPin({ vacancy, active, pulse }) {
 }
 
 
-export default function ParkingMap({ lots, active, setActive, flyToRef, focus, setFocus, pulseLotId, triggerLotPulse}) {
+export default function ParkingMap({
+  lots,
+  active,
+  setActive,
+  flyToRef,
+  focus,
+  setFocus,
+  pulseLotId,
+  triggerLotPulse,
+  locatingMe,              // boolean from parent
+  requestMyLocation,       // function from parent (does geolocation)
+  myPos,
+  myAcc,
+}) {
 
   const map = useMap();
   const adjustedForIdRef = useRef(null);
+  const [mapReady, setMapReady] = useState(false);
+  const didSetReadyRef = useRef(false);
 
   const isMobile = window.matchMedia?.("(max-width: 900px)")?.matches ?? false;
   const flyToOffset = isMobile ? -0.002 : 0.002;
@@ -217,8 +242,15 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
         disableDefaultUI={false}
         clickableIcons={false}
         onClick={() => setActive?.(null)}
+        onIdle={() => {
+          if (didSetReadyRef.current) return;
+          didSetReadyRef.current = true;
+          setMapReady(true);
+        }}
         mapId={import.meta.env.VITE_GOOGLE_MAP_ID}
       >
+        {/*<MyLocationLayer myPos={myPos} accuracyM={myAcc} />*/}
+
         {/*<CloseInfoOnMapClick setActive={setActive} />*/}
         <FitAndFly 
           lots={lots} 
@@ -383,6 +415,25 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
         )}
 
       </Map>
+
+      {/* Locate control (bottom-right) */}
+      <button
+        type="button"
+        className={"map-locate-btn " 
+          + (mapReady ? "ready " : " ")
+          + (myPos?.lat != null && myPos?.lng != null ? "active" : " ")
+        }
+        onClick={() => requestMyLocation?.()}
+        disabled={!!locatingMe}
+        aria-label="定位到我的位置"
+      >
+        {locatingMe ? (
+          <Spinner className="map-locate-spinner" animation="border" role="status" size="sm" />
+        ) : (
+          <FaCircle size={18} />
+        )}
+      </button>
+
       {isMobile && (
         <LotBottomSheet
           active={active}

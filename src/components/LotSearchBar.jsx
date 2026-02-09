@@ -47,6 +47,9 @@ export default function LotSearchBar({
   onPick, // (place) => void
   onClear, // () => void
   setOpen,
+  requestMyLocation,  // () => void
+  locatingMe,         // boolean
+  myPos,
 }) {
 
   const places = useMapsLibrary("places");
@@ -57,8 +60,8 @@ export default function LotSearchBar({
   const [activeIdx, setActiveIdx] = useState(-1);
   const [searchFocused, setSearchFocused] = useState(false);
 
-  const [locating, setLocating] = useState(false);
-  const locateTimeoutRef = useRef(null);
+  //const [locating, setLocating] = useState(false);
+  //const locateTimeoutRef = useRef(null);
 
   const rootRef = useRef(null);
   const placesLibRef = useRef(null);
@@ -76,6 +79,88 @@ export default function LotSearchBar({
   const touchStartXYRef = useRef({ x: 0, y: 0 });
   const TOUCH_TAP_SLOP_PX = 10; // tap tolerance
 
+  const prevLocatingRef = useRef(false);
+
+  useEffect(() => {
+    const was = prevLocatingRef.current;
+    const now = !!locatingMe;
+    prevLocatingRef.current = now;
+
+    // Only act on transition: true -> false
+    if (!was || now) return;
+
+    // We only auto-fix the text if we were showing "定位中…"
+    if (q !== "定位中…") return;
+
+    if (myPos?.lat != null && myPos?.lng != null) {
+      // ✅ success
+      skipNextFetchRef.current = true;
+      setQ("我現在的位置");
+      setSuggestionOpen(false);
+      setActiveIdx(-1);
+      tokenRef.current = null;
+      inputRef.current?.blur?.();
+    } else {
+      // ❌ failed / denied
+      skipNextFetchRef.current = true;
+      setQ("");
+      setSuggestionOpen(true);
+      setActiveIdx(0);
+    }
+  }, [locatingMe, myPos, q]);
+
+  /*
+  const { locating, requestMyLocation } = useMyLocationAction({
+    onStart: () => {
+      // Exactly your current “start” UI
+      skipNextFetchRef.current = true;
+      setQ("定位中…");
+      setSuggestionOpen(true);
+      setActiveIdx(0);
+
+      document.activeElement?.blur?.();
+    },
+
+    onSuccess: ({ lat, lng, accuracy }) => {
+      // publish to parent for blue dot
+      onMyLocation?.({ lat, lng, accuracy });
+
+      // reuse existing contract with parent (keeps current behavior)
+      onPick?.({
+        name: "我的位置",
+        address: "",
+        lat,
+        lng,
+        viewport: null,
+        kind: "my_location",
+      });
+
+      skipNextFetchRef.current = true;
+      setQ("我現在的位置");
+      setSuggestionOpen(false);
+      setActiveIdx(-1);
+
+      tokenRef.current = null;
+      inputRef.current?.blur?.();
+    },
+
+    onError: () => {
+      // Exactly your current “reset UI” on error
+      skipNextFetchRef.current = true;
+      setQ("");
+      setSuggestionOpen(true);
+      setActiveIdx(0);
+    },
+
+    onTimeout: () => {
+      // Exactly your current “reset UI” on hard timeout
+      skipNextFetchRef.current = true;
+      setQ("");
+      setSuggestionOpen(true);
+      setActiveIdx(0);
+    },
+  });
+  */
 
   useEffect(() => {
 
@@ -205,7 +290,7 @@ export default function LotSearchBar({
   }, []);
 
   function pickMyLocation() {
-    /*if (composingRef.current) return;*/
+    /*
     if (locating) return; // prevent double tap
 
     if (!navigator.geolocation) {
@@ -289,20 +374,33 @@ export default function LotSearchBar({
         }
       );
     }, 250);
+    */
+    if (locatingMe) return;
 
+    // UI: exactly what you already do on start
+    skipNextFetchRef.current = true;
+    setQ("定位中…");
+    setSuggestionOpen(true);
+    setActiveIdx(0);
+    document.activeElement?.blur?.();
+
+    // Call shared action
+    requestMyLocation?.();
   }
 
   useEffect(()=>{
-    if(!locating){
+    if(!locatingMe){
       setOpen(false);
     }
-  },[locating])
+  },[locatingMe])
 
+  /*
   useEffect(() => {
     return () => {
       if (locateTimeoutRef.current) clearTimeout(locateTimeoutRef.current);
     };
   }, []);
+  */
 
   useEffect(() => {
     if (!suggestionOpen) return;
@@ -411,15 +509,14 @@ export default function LotSearchBar({
 
 
   function requestPickMyLocation() {
-    if (locating) return;
+    if (locatingMe) return;
 
     if (composingRef.current) {
       pendingPickRef.current = { type: "myLocation" };
-      // 先結束輸入法狀態（有些 iOS 需要）
       inputRef.current?.blur?.();
       return;
     }
-    pickMyLocation();
+    pickMyLocation(); // 會統一走同一個 UI + props requestMyLocation()
   }
 
   function requestPickSuggestion(s) {
@@ -474,7 +571,7 @@ export default function LotSearchBar({
 
               // 用 microtask 確保 blur / composition 完成後再 pick
               Promise.resolve().then(() => {
-                if (pending.type === "myLocation") pickMyLocation();
+                if (pending.type === "myLocation") requestMyLocation();
                 else if (pending.type === "suggestion") pickSuggestion(pending.s);
               });
             }
@@ -581,14 +678,14 @@ export default function LotSearchBar({
 
               requestPickMyLocation();
             }}
-            disabled={locating}
+            disabled={locatingMe}
           >
             <div className="lot-search-dd-lines">
               <div className="lot-search-dd-title">
-                📍 {locating ? "定位中…" : "使用我現在的位置"}
+                📍 {locatingMe ? "定位中…" : "使用我現在的位置"}
               </div>
               <div className="lot-search-dd-sub">
-                {locating ? "請稍候，正在取得定位…" : "允許定位後顯示附近停車場"}
+                {locatingMe ? "請稍候，正在取得定位…" : "允許定位後顯示附近停車場"}
               </div>
             </div>
           </button>

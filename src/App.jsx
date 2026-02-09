@@ -10,6 +10,8 @@ import MobileLotsBar from "./components/MobileLotsBar";
 import MobileLotsOverlay from "./components/MobileLotsOverlay";
 import ParkingMap from "./components/ParkingMap";
 
+import { useMyLocationAction } from "./hooks/useMyLocationAction";
+
 import logo from "./assets/logo4.png";
 
 import "./App.css";
@@ -42,6 +44,10 @@ export default function App() {
   const [searchCenter, setSearchCenter] = useState(null); // { lat, lng }
   const [queryCenter, setQueryCenter] = useState(null); // initial
 
+  const [myPos, setMyPos] = useState(null); // {lat,lng}
+  const [myAcc, setMyAcc] = useState(null); // meters
+  const afterLocateRef = useRef(null);
+
   const RADIUS_M = 2000;
   const { lots, meta, reload } = useLots({
     apiBase,
@@ -61,6 +67,39 @@ export default function App() {
       ),
     [lots]
   );
+
+  const { locating: locatingMe, requestMyLocation } = useMyLocationAction({
+    onSuccess: ({ lat, lng, accuracy }) => {
+      setMyPos({ lat, lng });
+      setMyAcc(accuracy);
+
+      // run one-shot post-locate action (if any)
+      afterLocateRef.current?.({ lat, lng, accuracy });
+      afterLocateRef.current = null;
+    },
+  });
+
+  function requestMyLocationForSearch() {
+    afterLocateRef.current = ({ lat, lng }) => {
+      handlePickPlace({
+        name: "我的位置",
+        address: "",
+        lat,
+        lng,
+        viewport: null,
+        kind: "my_location",
+      });
+    };
+    requestMyLocation();
+  }
+
+  function requestMyLocationForMapFly() {
+    afterLocateRef.current = ({ lat, lng }) => {
+      flyToRef.current?.({ lat, lng, zoom: 16 });
+      setFocus({ name: "我的位置", lat, lng, kind: "my_location" });
+    };
+    requestMyLocation();
+  }
 
   const [pulseLotId, setPulseLotId] = useState(null);
   const pulseTimerRef = useRef(null);
@@ -190,6 +229,9 @@ export default function App() {
             }}
             onClear={handleClearPick}
             sheetFetchedText={sheetFetchedText}
+            locatingMe={locatingMe}
+            requestMyLocation={requestMyLocationForSearch}
+            myPos={myPos}
           />
         </div>
 
@@ -209,11 +251,14 @@ export default function App() {
             }}
             onPick={handlePickPlace}
             onClear={handleClearPick}
+            locatingMe={locatingMe}
+            requestMyLocation={requestMyLocationForSearch}
+            myPos={myPos}
           />
 
           {/* Map */}
           <ParkingMap
-            lots={validLots}       // map should still show all lots you have
+            lots={validLots}
             active={active}
             setActive={setActive}
             flyToRef={flyToRef}
@@ -221,6 +266,10 @@ export default function App() {
             setFocus={setFocus}
             pulseLotId={pulseLotId}
             triggerLotPulse={triggerLotPulse}
+            locatingMe={locatingMe}
+            requestMyLocation={requestMyLocationForMapFly}
+            myPos={myPos}
+            myAcc={myAcc}
           />
         </div>
       </div>

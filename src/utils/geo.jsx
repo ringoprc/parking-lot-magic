@@ -3,6 +3,25 @@ export function toRad(d) {
   return (d * Math.PI) / 180;
 }
 
+export function getCurrentPositionAsync(options) {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("GEOLOCATION_NOT_SUPPORTED"));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(resolve, reject, thenOptions(options));
+  });
+}
+
+function thenOptions(opts) {
+  return {
+    enableHighAccuracy: true,
+    timeout: 10000,
+    maximumAge: 30000,
+    ...(opts || {}),
+  };
+}
+
 // meters
 export function haversineMeters(a, b) {
   const R = 6371000;

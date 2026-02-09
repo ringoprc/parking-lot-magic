@@ -3,12 +3,31 @@ import LotsList from "./LotsList";
 
 import LotSearchBar from "./LotSearchBar";
 
-export default function MobileLotsOverlay({ open, setOpen, lots, active, onSelect, onPick, onClear, sheetFetchedText }) {
+export default function MobileLotsOverlay({
+  open,
+  setOpen,
+  lots,
+  active,
+  onSelect,
+  onPick,
+  onClear,
+  sheetFetchedText,
+  locatingMe,
+  requestMyLocation,
+  myPos
+}) {
   return (
     <div className={`mobile-lots-overlay ${open ? "open" : ""}`}>
       <div className="mobile-lots-overlay-scroll">
         <div className="mobile-lots-overlay-list">
-          <LotSearchBar onPick={onPick} onClear={onClear} setOpen={setOpen}/>
+          <LotSearchBar
+            onPick={onPick}
+            onClear={onClear}
+            setOpen={setOpen}
+            locatingMe={locatingMe}
+            requestMyLocation={requestMyLocation}
+            myPos={myPos}
+          />
           <div
             className="lot-btn-list-outer"
           >

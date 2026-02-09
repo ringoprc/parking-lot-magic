@@ -93,7 +93,7 @@ div .gm-style-iw {
     min-height: 0;
     min-width: 0;
     position: absolute;
-    height: calc(100% - 122px);
+    height: calc(100% - 124px);
     border-top: none;
     bottom: 0px;
   }
@@ -289,8 +289,7 @@ div .gm-style-iw {
     gap: 10px;
     justify-content: space-between;
     height: 56px;
-    padding: 4px 12px 4px 20px;
-    border-bottom: 1px solid #e6e6e6;
+    padding: 6px 12px 4px 20px;
     cursor: pointer;
     background: #fff;
   }
@@ -370,6 +369,8 @@ div .gm-style-iw {
 
   .title-bar-devmeta {
     font-size: 12px;
+    margin-top: 10px;
+    margin-left: 12px;
   }
 }
 

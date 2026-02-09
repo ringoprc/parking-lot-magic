@@ -69,6 +69,8 @@ export default function LotSearchBar({
   const lastFetchedQRef = useRef(""); // 記錄上次真的打 API 的 query
   const composingRef = useRef(false);
   const pendingPickRef = useRef(null);
+  const ddRef = useRef(null);
+  const itemRefs = useRef([]); // includes [0]=myLocation, [1..]=suggestions
 
   const touchArmedRef = useRef(false);
   const touchStartXYRef = useRef({ x: 0, y: 0 });
@@ -165,7 +167,7 @@ export default function LotSearchBar({
 
         lastFetchedQRef.current = query;
         setItems(list);
-        setSuggestionOpen(list.length > 0);
+        setSuggestionOpen(true);
         setActiveIdx(list.length ? 0 : -1);
 
       } catch (e) {
@@ -301,6 +303,35 @@ export default function LotSearchBar({
       if (locateTimeoutRef.current) clearTimeout(locateTimeoutRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!suggestionOpen) return;
+
+    const container = ddRef.current;
+    const el = itemRefs.current[activeIdx];
+    if (!container || !el) return;
+
+    // Keep active item visible inside the dropdown scroll area
+    const cTop = container.scrollTop;
+    const cBottom = cTop + container.clientHeight;
+
+    const eTop = el.offsetTop;
+    const eBottom = eTop + el.offsetHeight;
+
+    // Add a little padding so it’s not flush to edges
+    const pad = 8;
+
+    if (eTop < cTop + pad) {
+      container.scrollTop = Math.max(0, eTop - pad);
+    } else if (eBottom > cBottom - pad) {
+      container.scrollTop = eBottom - container.clientHeight + pad;
+    }
+  }, [activeIdx, suggestionOpen]);
+
+  useEffect(() => {
+    if (!suggestionOpen) return;
+    itemRefs.current = [];
+  }, [suggestionOpen, items.length]);
 
   async function pickSuggestion(s) {
     if (!s?.placePrediction) return;
@@ -512,9 +543,10 @@ export default function LotSearchBar({
       </div>
 
       {suggestionOpen && (
-        <div className="lot-search-dd">
+        <div ref={ddRef} className="lot-search-dd">
           <button
             type="button"
+            ref={(el) => (itemRefs.current[0] = el)}
             className={`lot-search-dd-item ${activeIdx === 0 ? "active" : ""}`}
             style={{
               background: "#fff3d7"
@@ -566,6 +598,7 @@ export default function LotSearchBar({
               <button
                 key={`${s.placePrediction.placeId}-${idx}`}
                 type="button"
+                ref={(el) => (itemRefs.current[realIdx] = el)}
                 className={`lot-search-dd-item ${realIdx === activeIdx ? "active" : ""}`}
                 onMouseEnter={() => setActiveIdx(realIdx)}
                 onMouseDown={(e) => {

@@ -27,13 +27,17 @@ div .gm-style-iw {
 
 .app-root {
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-sizing: border-box;
+  overflow: hidden; /* prevents the "extra bottom scroll" */
 }
 
 @supports (height: 100dvh) {
-  .app-root { height: 100dvh; }
+  .app-root { min-height: 100dvh; }
   .mobile-lots-overlay.open { max-height: calc(100dvh - (56px + 48px)); }
   .mobile-lots-overlay-scroll { height: calc(100dvh - (57px + 49px + 100px)); }
 }

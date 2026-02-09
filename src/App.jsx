@@ -220,6 +220,7 @@ export default function App() {
             focus={focus}
             setFocus={setFocus}
             pulseLotId={pulseLotId}
+            triggerLotPulse={triggerLotPulse}
           />
         </div>
       </div>

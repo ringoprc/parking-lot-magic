@@ -190,17 +190,11 @@ function VacancyPin({ vacancy, active, pulse }) {
       )}
     </div>
 
-
   );
 }
 
-<div className="search-pin" aria-label="搜尋位置">
-              <div className="search-pin-pulse" />
-              <div className="search-pin-dot" />
-              <div className="search-pin-label">{focus?.name?.[0] ?? "?"}</div>
-            </div>
 
-export default function ParkingMap({ lots, active, setActive, flyToRef, focus, setFocus, pulseLotId }) {
+export default function ParkingMap({ lots, active, setActive, flyToRef, focus, setFocus, pulseLotId, triggerLotPulse}) {
 
   const map = useMap();
   const adjustedForIdRef = useRef(null);
@@ -255,7 +249,7 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
             position={{ lat: l.lat, lng: l.lng }}
             onClick={() => {
               setActive?.(l);
-
+              triggerLotPulse(l.lotId);
               // tune this based on your sheet height
               const offsetY = Math.round(window.innerHeight * 0);
               flyToRef.current?.({ lat: l.lat+flyToOffset, lng: l.lng, zoom: 16 });

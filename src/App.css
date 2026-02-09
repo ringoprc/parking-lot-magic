@@ -9,6 +9,13 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #000000;
+    background-color: #ffffff;
+  }
+}
+
 button {
   outline: none !important;
 }

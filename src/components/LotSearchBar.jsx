@@ -57,6 +57,9 @@ export default function LotSearchBar({
   const [activeIdx, setActiveIdx] = useState(-1);
   const [searchFocused, setSearchFocused] = useState(false);
 
+  const [locating, setLocating] = useState(false);
+  const locateTimeoutRef = useRef(null);
+
   const rootRef = useRef(null);
   const placesLibRef = useRef(null);
   const tokenRef = useRef(null);
@@ -196,13 +199,32 @@ export default function LotSearchBar({
 
   function pickMyLocation() {
     if (composingRef.current) return;
+    if (locating) return; // prevent double tap
 
     if (!navigator.geolocation) {
       alert("此裝置/瀏覽器不支援定位功能");
       return;
     }
 
+    setLocating(true);
+
+    // Give immediate feedback in the input
+    skipNextFetchRef.current = true;
+    setQ("定位中…");
+    setSuggestionOpen(true);
+    setActiveIdx(0);
+
     document.activeElement?.blur?.();
+
+    // Hard timeout: if GPS is off / cannot acquire
+    if (locateTimeoutRef.current) clearTimeout(locateTimeoutRef.current);
+    locateTimeoutRef.current = setTimeout(() => {
+      setLocating(false);
+      setQ("");                 // back to empty so user sees dropdown again
+      setSuggestionOpen(true);  // show "my location" again
+      setActiveIdx(0);
+      alert("定位逾時。請開啟手機定位/GPS，或確認瀏覽器允許定位權限。");
+    }, 12000);
 
     setTimeout(() => {
       navigator.geolocation.getCurrentPosition(
@@ -229,8 +251,26 @@ export default function LotSearchBar({
           inputRef.current?.blur?.();
         },
         (err) => {
-          console.error("[geolocation] failed:", err);
-          alert("無法取得定位，請確認已允許定位權限");
+          if (locateTimeoutRef.current) clearTimeout(locateTimeoutRef.current);
+          setLocating(false);
+
+          // reset UI so user can try again
+          skipNextFetchRef.current = true;
+          setQ("");
+          setSuggestionOpen(true);
+          setActiveIdx(0);
+
+          // better message based on error type
+          const code = err?.code;
+          if (code === 1) {
+            alert("定位權限被拒絕。請到瀏覽器設定中允許定位。");
+          } else if (code === 2) {
+            alert("無法取得位置。可能是 GPS 關閉或訊號不佳，請開啟定位後再試一次。");
+          } else if (code === 3) {
+            alert("定位逾時。請確認 GPS 開啟並稍後再試。");
+          } else {
+            alert("無法取得定位，請確認已允許定位權限並開啟 GPS。");
+          }
         },
         {
           enableHighAccuracy: true,
@@ -243,6 +283,12 @@ export default function LotSearchBar({
     setOpen(false);
 
   }
+
+  useEffect(() => {
+    return () => {
+      if (locateTimeoutRef.current) clearTimeout(locateTimeoutRef.current);
+    };
+  }, []);
 
   async function pickSuggestion(s) {
     if (!s?.placePrediction) return;
@@ -421,10 +467,15 @@ export default function LotSearchBar({
             onMouseDown={(e) => e.preventDefault()} // stop blur before click
             onMouseEnter={() => setActiveIdx(0)}
             onClick={pickMyLocation}
+            disabled={locating}
           >
             <div className="lot-search-dd-lines">
-              <div className="lot-search-dd-title">📍 使用我現在的位置</div>
-              <div className="lot-search-dd-sub">允許定位後顯示附近停車場</div>
+              <div className="lot-search-dd-title">
+                📍 {locating ? "定位中…" : "使用我現在的位置"}
+              </div>
+              <div className="lot-search-dd-sub">
+                {locating ? "請稍候，正在取得定位…" : "允許定位後顯示附近停車場"}
+              </div>
             </div>
           </button>
           {items.map((s, idx) => {

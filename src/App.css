@@ -11,7 +11,8 @@ html {
 
 @media (prefers-color-scheme: light) {
   :root {
-    color: #000000;margin-top: 10px;
+    color: #000000;
+    margin-top: 0px;
     background-color: #ffffff;
   }
 }
@@ -93,7 +94,7 @@ div .gm-style-iw {
     min-height: 0;
     min-width: 0;
     position: absolute;
-    height: calc(100% - 124px);
+    height: calc(100% - 114px);
     border-top: none;
     bottom: 0px;
   }
@@ -304,7 +305,7 @@ div .gm-style-iw {
     gap: 10px;
     justify-content: space-between;
     height: 56px;
-    padding: 6px 12px 4px 20px;
+    padding: 0px 12px 0px 20px;
     cursor: pointer;
     background: #fff;
   }
@@ -342,12 +343,12 @@ div .gm-style-iw {
 @media (max-width: 900px) {
   .mobile-lots-overlay {
     display: block;
-    padding: 10px 15px;
+    padding: 0px 15px;
 
     position: fixed;
     left: 0;
     right: 0;
-    top: calc(1px + 57px + 66px);
+    top: calc(57px + 56px);
 
     z-index: 999;
     pointer-events: none;
@@ -366,12 +367,12 @@ div .gm-style-iw {
   .mobile-lots-overlay.open {
     pointer-events: auto;
 
-    /* IMPORTANT: let map show below like Android */
+    border-top: 1px solid #eee;
     max-height: 70vh;
 
     border-bottom-right-radius: 16px;
     border-bottom-left-radius: 16px;
-    padding: 10px 15px;
+    padding: 0px 15px 12px 15px;
 
     background: rgba(255, 255, 255, 0.9); /* your dark overlay vibe */
     backdrop-filter: none; /* harmless even if unsupported */
@@ -423,7 +424,7 @@ div .gm-style-iw {
 .lot-search-input {
   width: 100%;
   height: 34px;
-  margin-top: 10px;
+  margin-top: 0px;
   box-sizing: border-box;
   padding: 27px 27px;
   padding-right: 42px;

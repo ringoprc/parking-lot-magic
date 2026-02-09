@@ -100,7 +100,7 @@ export default function App() {
     const suffix = totalActive != null 
       ? ` (${displayedLots.length}/${totalActive})` 
       : ` (${displayedLots.length})`;
-    return `距離 [${focus.name}] ${kmText}km 內${suffix}`;
+    return `距離 [ ${focus.name} ] ${kmText}km 內${suffix}`;
   }, [searchCenter, focus?.name, displayedLots.length, RADIUS_M, meta]);
 
   function handleClearPick() {

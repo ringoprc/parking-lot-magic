@@ -5,25 +5,30 @@
 
 /* dark backdrop */
 .vl-sheet-layer {
-  position: absolute;
-  left: 0; right: 0; top: 0; bottom: 0;
+  position: fixed;
+  inset: 0;
   background: rgba(0,0,0,0.35);
-  z-index: 50;
-
-  /* let map still be interactive when sheet is closed (we remove layer by render logic) */
+  z-index: 9999; /* higher than map controls */
 }
 
 /* sheet */
 .vl-sheet {
-  position: absolute;
-  left: 0; right: 0;
-  bottom: 0;
-  height: max-content;
+  position: fixed;
+  left: 0;
+  right: 0;
+
+   /* key: keep it above iPhone home indicator / bottom bar */
+  bottom: env(safe-area-inset-bottom);
   background: #fff;
   border-top-left-radius: 18px;
   border-top-right-radius: 18px;
   box-shadow: 0 -10px 30px rgba(0,0,0,0.18);
   overflow: hidden;
+
+  /* give it a predictable size so it doesn't push below viewport */
+  max-height: min(70dvh, 520px);
+  height: auto;
+  /*height: max-content;*/
 
   transition: transform 160ms ease;
   will-change: transform;

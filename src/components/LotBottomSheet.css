@@ -99,7 +99,11 @@
   padding-bottom: 10px;
 }
 
-.vl-sheet-title { font-size: 16px; font-weight: 800; }
+.vl-sheet-title { 
+  font-size: 16px; 
+  font-weight: 800; 
+  color: #333;
+}
 .vl-sheet-vac { font-size: 15px; font-weight: 800; color: #317bff; white-space: nowrap; }
 .vl-sheet-vacNum { font-weight: 900; }
 

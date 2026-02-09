@@ -8,6 +8,8 @@ import {
   useMap,
 } from "@vis.gl/react-google-maps";
 
+import LotBottomSheet from "./LotBottomSheet";
+
 import { formatTime, minutesAgo, minSecAgo } from "../utils/time";
 
 function getPinColorsFromVacancy(v) {
@@ -256,6 +258,7 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
           </AdvancedMarker>
         ))}
 
+        {/*
         {active && (
           <InfoWindow
             position={{ lat: active.lat, lng: active.lng }}
@@ -372,7 +375,6 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
                   </div>
                 </div>
 
-                {/*
                 <div
                   style={{
                     display: "flex",
@@ -386,13 +388,18 @@ export default function ParkingMap({ lots, active, setActive, flyToRef, focus, s
                     {active.lng}
                   </div>
                 </div>
-                */}
 
               </div>
             </div>
           </InfoWindow>
         )}
+        */}
+
       </Map>
+      <LotBottomSheet
+        active={active}
+        onClose={() => setActive?.(null)}
+      />
     </div>
   );
 }

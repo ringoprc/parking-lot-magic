@@ -242,6 +242,9 @@ export default function LotSearchBar({
         }
       );
     }, 250);
+
+    setOpen(false);
+
   }
 
   async function pickSuggestion(s) {
@@ -309,6 +312,7 @@ export default function LotSearchBar({
       setQ(getSuggestionTitle(s));
       setSuggestionOpen(false);
       setActiveIdx(-1);
+      setOpen(false);
 
       // reset session token after a selection
       tokenRef.current = null;
@@ -327,7 +331,7 @@ export default function LotSearchBar({
       <div className="lot-search-input-wrap">
         <input
           ref={inputRef}
-          className={`lot-search-input ${((searchFocused && q !== "使用我現在的位置" && !!q) || suggestionOpen) ? "has-items" : ""}`}
+          className={`lot-search-input ${((suggestionOpen && q !== "使用我現在的位置" && !!q) || suggestionOpen) ? "has-items" : ""}`}
           value={q}
           placeholder={placeholder}
           onChange={(e) => setQ(e.target.value)}

@@ -1,8 +1,22 @@
 // frontend/src/components/LotBottomSheet.jsx
-// frontend/src/components/LotBottomSheet.jsx
 import { useEffect, useState } from "react";
 import { formatTime, minutesAgo, minSecAgo } from "../utils/time";
 import "./LotBottomSheet.css";
+
+function toVacancyNum(v) {
+  if (v === "" || v == null) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function getVacancyTextColor(v) {
+  const n = toVacancyNum(v);
+  if (n == null) return "#b6b6b6";   // unknown -> gray (pin border)
+  if (n === 0) return "#C5221F";     // 0 -> red (pin border)
+  if (n <= 5) return "#C58F00";      // low -> yellow (pin border)
+  return "#0F7B2E";                  // ok -> green (pin border)
+}
+
 
 export default function LotBottomSheet({ active, onClose }) {
   const [open, setOpen] = useState(false);
@@ -56,7 +70,9 @@ export default function LotBottomSheet({ active, onClose }) {
             <div className="vl-sheet-body">
               <div className="vl-sheet-titleRow">
                 <div className="vl-sheet-title">{active.name}</div>
-                <div className="vl-sheet-vac">
+                <div className="vl-sheet-vac"
+                  style={{ color: getVacancyTextColor(active.vacancy) }}
+                >
                   空位：
                   <span className="vl-sheet-vacNum">
                     {active.vacancy ?? "未知"}

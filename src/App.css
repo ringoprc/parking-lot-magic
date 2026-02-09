@@ -327,6 +327,7 @@ div .gm-style-iw {
 
   .mobile-lots-overlay.open {
     position: relative;
+    opacity: 1;
     max-height: calc(100vh - (56px + 48px));
     pointer-events: auto;
     border-bottom-right-radius: 16px;
@@ -338,7 +339,6 @@ div .gm-style-iw {
   .mobile-lots-overlay-scroll {
     height: calc(100vh - (57px + 49px + 100px));
     max-height: 60vh;
-    overflow: hidden;
   }
 
   .title-bar-devmeta {

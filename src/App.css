@@ -85,11 +85,11 @@ div .gm-style-iw {
 .content {
   width: 100%;
   flex: 1 1 auto;
-  display: flex;
+  display: grid;
   min-height: 0;
   min-width: 0;
   position: absolute;
-  height: calc(100% - 56px);
+  height: calc(100% - 55px);
   border-top: 1px solid #ddd;
   bottom: 0px;
 }
@@ -98,7 +98,7 @@ div .gm-style-iw {
   .content {
     width: 100%;
     flex: 1 1 auto;
-    display: flex;
+    display: grid;
     min-height: 0;
     min-width: 0;
     position: absolute;
@@ -109,7 +109,7 @@ div .gm-style-iw {
 }
 
 .side {
-  width: 360px;
+  width: 100%;
   flex: 0 0 auto;
   border-right: 1px solid #e6e6e6;
   overflow: auto;
@@ -211,6 +211,81 @@ div .gm-style-iw {
 .lot-btn-sub-time-ago {
   font-size: 9px;
   color: #999;
+}
+
+/* wrapper so we can place the resize handle on the right edge */
+.sidebar-wrap {
+  position: relative;
+  z-index: 1000;
+  min-width: 0;
+  min-height: 0;
+}
+
+@media (max-width: 900px){
+  .sidebar-wrap {
+    display: none;
+  }
+}
+
+/* drag handle: large hit area but visually subtle */
+.sidebar-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 1000;
+  touch-action: none; /* important for mobile/touch pointer events */
+  border-radius: 999px;
+}
+
+.sidebar-resize-handle:hover {
+  background: #d5d5d5;
+}
+
+/* while dragging: prevent text selection + show resize cursor */
+.content.sb-dragging {
+  user-select: none;
+  cursor: col-resize;
+}
+
+/* block map gestures while dragging so drag doesn't fight pan/zoom */
+.sb-drag-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: all;
+  background: transparent;
+  z-index: 999;
+}
+
+.sidebar-resize-handle-inner {
+  position: absolute;
+  top: 40%;
+  bottom: 40%;
+  width: 6px;
+  border-radius: 999px;
+  opacity: 0;
+  background: #9c9c9c;
+}
+
+/* show the line on hover */
+.sidebar-resize-handle:hover .sidebar-resize-handle-inner {
+  opacity: 1;
+}
+
+.sidebar-resize-handle-inner:hover {
+  background: #7a7a7a;
+}
+
+/* also show while dragging */
+.content.sb-dragging .sidebar-resize-handle-inner {
+  opacity: 1;
+}
+
+/* On mobile you already hide .side, so also hide handle */
+@media (max-width: 900px) {
+  .sidebar-resize-handle { display: none; }
 }
 
 .map-wrap {

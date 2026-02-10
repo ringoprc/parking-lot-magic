@@ -10,7 +10,9 @@ import MobileLotsBar from "./components/MobileLotsBar";
 import MobileLotsOverlay from "./components/MobileLotsOverlay";
 import ParkingMap from "./components/ParkingMap";
 
+
 import { useMyLocationAction } from "./hooks/useMyLocationAction";
+import { useMediaQuery } from "./hooks/useMediaQuery";
 
 import logo from "./assets/logo4.png";
 
@@ -53,6 +55,54 @@ export default function App() {
   const [myPos, setMyPos] = useState(null); // {lat,lng}
   const [myAcc, setMyAcc] = useState(null); // meters
   const afterLocateRef = useRef(null);
+
+
+  //-----------------------------
+  // Desktop Sidebar resize
+  //-----------------------------
+  const SIDEBAR_MIN = 280;
+  const SIDEBAR_MAX = 920;
+
+  const [sidebarW, setSidebarW] = useState(() => {
+    const v = Number(localStorage.getItem("sidebarW"));
+    return Number.isFinite(v) ? v : 360;
+  });
+  const [sbDragging, setSbDragging] = useState(false);
+
+  const sbStartXRef = useRef(0);
+  const sbStartWRef = useRef(0);
+
+  function clampSidebarW(w) {
+    return Math.max(SIDEBAR_MIN, Math.min(SIDEBAR_MAX, w));
+  }
+
+  function onSbDown(e) {
+    // mouse: only left button
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+
+    setSbDragging(true);
+    sbStartXRef.current = e.clientX;
+    sbStartWRef.current = sidebarW;
+
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  }
+
+  function onSbMove(e) {
+    if (!sbDragging) return;
+    const dx = e.clientX - sbStartXRef.current;
+    setSidebarW(clampSidebarW(sbStartWRef.current + dx));
+  }
+
+  function onSbUp() {
+    if (!sbDragging) return;
+    setSbDragging(false);
+    localStorage.setItem("sidebarW", String(sidebarW));
+  }
+
+
+  //-----------------------------
+  // Load lots
+  //-----------------------------
 
   const RADIUS_M = 2000;
   const { lots, meta, reload } = useLots({
@@ -191,7 +241,7 @@ export default function App() {
     setQueryCenter({ lat: p.lat, lng: p.lng });
   }
 
-  const isMobile = window.matchMedia?.("(max-width: 900px)")?.matches ?? false;
+  const isMobile = useMediaQuery("(max-width: 900px)");
   const flyToOffset = isMobile ? -0.002 : 0.002;
 
   return (
@@ -252,45 +302,64 @@ export default function App() {
           />
         </div>
 
-        <div className="content">
-          {/* Left list */}
-          <LotsSidebar
-            title={listTitle}
-            lots={displayedLots}
-            setOpen={setMobileMenuOpen}
-            active={active}
-            onSelect={(l) => {
-              setActive(l);
-              triggerLotPulse(l.lotId);
-              flyToRef.current?.({ lat: l.lat+flyToOffset, lng: l.lng, zoom: 16 });
-              //setFocus({ name: l.name, lat: l.lat, lng: l.lng, zoom: 15, kind: "lot" });
-              setMobileMenuOpen(false);
-            }}
-            onPick={handlePickPlace}
-            onClear={handleClearPick}
-            locatingMe={locatingMe}
-            requestMyLocation={requestMyLocationForSearch}
-            myPos={myPos}
-            showDistance={!!searchCenter}
-            formatDist={formatDist}
-            focus={focus}
-          />
+        <div
+          className={`content ${sbDragging ? "sb-dragging" : ""}`}
+          style={{ gridTemplateColumns: isMobile ? `1fr` : `${sidebarW}px 1fr` }}
+        >
+          {/* Left Sidebar (desktop) */}
+          <div className="sidebar-wrap">
+            <LotsSidebar
+              title={listTitle}
+              lots={displayedLots}
+              setOpen={setMobileMenuOpen}
+              active={active}
+              onSelect={(l) => {
+                setActive(l);
+                triggerLotPulse(l.lotId);
+                flyToRef.current?.({ lat: l.lat + flyToOffset, lng: l.lng, zoom: 16 });
+                setMobileMenuOpen(false);
+              }}
+              onPick={handlePickPlace}
+              onClear={handleClearPick}
+              locatingMe={locatingMe}
+              requestMyLocation={requestMyLocationForSearch}
+              myPos={myPos}
+              showDistance={!!searchCenter}
+              formatDist={formatDist}
+              focus={focus}
+            />
+
+            {/* resize handle */}
+            <div
+              className="sidebar-resize-handle"
+              onPointerDown={onSbDown}
+              onPointerMove={onSbMove}
+              onPointerUp={onSbUp}
+              onPointerCancel={onSbUp}
+            >
+              <div className="sidebar-resize-handle-inner"></div>
+            </div>
+          </div>
 
           {/* Map */}
-          <ParkingMap
-            lots={validLots}
-            active={active}
-            setActive={setActive}
-            flyToRef={flyToRef}
-            focus={focus}
-            setFocus={setFocus}
-            pulseLotId={pulseLotId}
-            triggerLotPulse={triggerLotPulse}
-            locatingMe={locatingMe}
-            requestMyLocation={requestMyLocationForMapFly}
-            myPos={myPos}
-            myAcc={myAcc}
-          />
+          <div className="map-wrap">
+            <ParkingMap
+              lots={validLots}
+              active={active}
+              setActive={setActive}
+              flyToRef={flyToRef}
+              focus={focus}
+              setFocus={setFocus}
+              pulseLotId={pulseLotId}
+              triggerLotPulse={triggerLotPulse}
+              locatingMe={locatingMe}
+              requestMyLocation={requestMyLocationForMapFly}
+              myPos={myPos}
+              myAcc={myAcc}
+            />
+            {sbDragging && <div className="sb-drag-overlay" />}
+          </div>
+
         </div>
       </div>
     </APIProvider>

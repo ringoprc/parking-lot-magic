@@ -17,6 +17,34 @@ function getVacancyTextColor(v) {
   return "#0F7B2E";                  // ok -> green (pin border)
 }
 
+function openGoogleNav(active) {
+  if (!active) return;
+
+  // Prefer coordinates if you have them
+  const lat = active.lat ?? active.latitude;
+  const lng = active.lng ?? active.longitude;
+
+  let url = "";
+
+  if (active.addressZh) {
+    // Fallback to address if no lat/lng
+    url =
+      `https://www.google.com/maps/dir/?api=1` +
+      `&destination=${encodeURIComponent(active.addressZh)}` +
+      `&travelmode=driving`;
+  } else if (lat != null && lng != null) {
+    const dest = `${lat},${lng}`;
+    url =
+      `https://www.google.com/maps/dir/?api=1` +
+      `&destination=${encodeURIComponent(dest)}` +
+      `&travelmode=driving`;
+  } else {
+    return;
+  }
+
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
 
 export default function LotBottomSheet({ active, onClose }) {
   const [open, setOpen] = useState(false);
@@ -60,6 +88,7 @@ export default function LotBottomSheet({ active, onClose }) {
           <div className="vl-sheet-hero">
             <img
               className="vl-sheet-hero-img"
+              onClick={() => openGoogleNav(active)}
               src="https://placehold.co/640x240/f9f9f9/999999/png?text=Parking"
               alt=""
               loading="lazy"
@@ -104,6 +133,16 @@ export default function LotBottomSheet({ active, onClose }) {
                     </div>
                   );
                 })()}
+              </div>
+
+              <div className="vl-sheet-actions">
+                <button
+                  className="vl-sheet-navBtn"
+                  onClick={() => openGoogleNav(active)}
+                  type="button"
+                >
+                  開始導航
+                </button>
               </div>
             </div>
           )}

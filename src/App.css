@@ -234,8 +234,9 @@ div .gm-style-iw {
 .map-wrap .gm-style-iw-c {
   -webkit-transform: translate3d(-50%, -120%, 0);
   transform: translate3d(-50%, -120%, 0);
-  max-height: 277px !important;
-  min-height: 277px !important;
+  max-height: 362px !important;
+  min-height: 362px !important;
+  width: 350px;
   padding: 1px 20px 25px 20px !important;
 }
 
@@ -311,22 +312,32 @@ div .gm-style-iw {
 
 /* Allow map drag gestures to pass through the InfoWindow on iOS */
 .gm-style .gm-style-iw,
-.gm-style .gm-style-iw-c,
 .gm-style .gm-style-iw-t,
 .gm-style .gm-style-iw-d {
   pointer-events: none !important;
 }
 
+.iw-actions {
+  cursor: default !important;
+  pointer-events: all !important;
+}
+
+/*
+.gm-style .gm-style-iw-c {
+  pointer-events: none !important;
+}
+*/
+
 /* ===== InfoWindow placeholder image ===== */
 .iw-hero-outer {
   display: flex;
   justify-content: center;
-  height: 80px;
+  height: 120px;
 }
 
 .iw-hero {
   width: calc(95% - 2px);
-  height: 80px;
+  height: 120px;
   overflow: hidden;
   border-radius: 10px;
   margin-bottom: 10px;
@@ -761,5 +772,23 @@ div .gm-style-iw {
   100% { transform: scale(1.35); opacity: 0; }
 }
 
+.iw-actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
 
+.iw-navBtn {
+  width: 100%;
+  padding: 12px 12px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
 
+.iw-navBtn:hover {
+  background: #2680f0;
+  color: white;
+}

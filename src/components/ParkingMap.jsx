@@ -22,6 +22,34 @@ function getPinColorsFromVacancy(v) {
   return { bg: "#34A853", border: "#0F7B2E", glyph: "#FFFFFF" };              // 多 = 綠
 }
 
+function openGoogleNavFromLot(lot) {
+  if (!lot) return;
+
+  // Prefer coordinates if you have them
+  const lat = lot.lat ?? lot.latitude;
+  const lng = lot.lng ?? lot.longitude;
+
+  let url = "";
+
+  if (lot.addressZh) {
+    // Fallback to address if no lat/lng
+    url =
+      `https://www.google.com/maps/dir/?api=1` +
+      `&destination=${encodeURIComponent(lot.addressZh)}` +
+      `&travelmode=driving`;
+  } else if (lat != null && lng != null) {
+    const dest = `${lat},${lng}`;
+    url =
+      `https://www.google.com/maps/dir/?api=1` +
+      `&destination=${encodeURIComponent(dest)}` +
+      `&travelmode=driving`;
+  } else {
+    return;
+  }
+
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
 function getOffsetCenterLatLng(map, lat, lng, offsetYPx) {
   const g = window.google;
   if (!map || !g?.maps?.LatLng) return { lat, lng };
@@ -298,120 +326,135 @@ export default function ParkingMap({
           <InfoWindow
             position={{ lat: active.lat, lng: active.lng }}
             onCloseClick={() => setActive?.(null)}
+            /*
             disableAutoPan
             options={{
               disableAutoPan: true,
               //pixelOffset: iwOffset, // <-- add this
             }}
+            */
           >
-            <div className="iw-hero-outer">
-              <div className="iw-hero">
-                <img
-                  className="iw-hero-img"
-                  src="https://placehold.co/640x240/f9f9f9/999999/png?text=Parking"
-                  alt=""
-                  loading="lazy"
-                />
+            <div className="iw-content-wrapper">
+              <div className="iw-hero-outer">
+                <div className="iw-hero">
+                  <img
+                    className="iw-hero-img"
+                    src="https://placehold.co/640x240/f9f9f9/999999/png?text=Parking"
+                    alt=""
+                    loading="lazy"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div style={{ minWidth: 120 }}>
+              <div style={{ minWidth: 120 }}>
 
-              <div style={{ 
-                display: "flex", 
-                flexDirection: "column",
-                borderBottom: "1px solid #eee",
-                padding: "0px 3px 10px 3px",
-                marginTop: "10px"
-              }}>
                 <div style={{ 
                   display: "flex", 
-                  justifyContent: "space-between", 
-                  alignItems: "flex-start",
+                  flexDirection: "column",
+                  borderBottom: "1px solid #eee",
+                  padding: "0px 3px 10px 3px",
+                  marginTop: "10px"
                 }}>
                   <div style={{ 
-                    fontSize: 15, 
-                    fontWeight: 700, 
-                    marginBottom: "6px",
-                    marginRight: "20px" 
+                    display: "flex", 
+                    justifyContent: "space-between", 
+                    alignItems: "flex-start",
                   }}>
-                    {active.name}
-                  </div>
-                  <div style={{
-                    fontSize: "15px",
-                    fontWeight: "700",
-                    color: "#317bff",
-                    marginBottom: "6px",
-                    flexShrink: "0"
-                  }}>
-                    空位：
-                    <span style={{ fontSize: 15, fontWeight: 700 }}>
-                      {active.vacancy ?? "未知"}
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <span style={{
-                    fontSize: "12px"
-                  }}>{active.addressZh}</span>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  flexDirection: "column",
-                  padding: "6px 3px 0px 6px"
-                }}
-              >
-                {(() => {
-                  const m = minutesAgo(active.lastUpdated);
-                  if (m == null) return null;
-                  if (m <= 3) return null;
-                  return (
-                    <div style={{
-                      marginTop: "6px",
-                      fontSize: "11px",
-                      color: "#ea4336",
-                      fontWeight: "900"
+                    <div style={{ 
+                      fontSize: 15, 
+                      fontWeight: 700, 
+                      marginBottom: "6px",
+                      marginRight: "20px" 
                     }}>
-                      資料可能延遲（{m} 分鐘）
+                      {active.name}
                     </div>
-                  );
-                })()}
+                    <div style={{
+                      fontSize: "15px",
+                      fontWeight: "700",
+                      color: "#317bff",
+                      marginBottom: "6px",
+                      flexShrink: "0"
+                    }}>
+                      空位：
+                      <span style={{ fontSize: 15, fontWeight: 700 }}>
+                        {active.vacancy ?? "未知"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span style={{
+                      fontSize: "12px"
+                    }}>{active.addressZh}</span>
+                  </div>
+                </div>
 
                 <div
                   style={{
                     display: "flex",
-                    gap: "5px"
+                    justifyContent: "space-between",
+                    flexDirection: "column",
+                    padding: "6px 3px 0px 6px"
                   }}
                 >
-                  <div style={{ marginTop: 6, fontSize: 10.5 }}>
-                    最近更新：{formatTime(active.lastUpdated)}
-                  </div>
-                  <div style={{ marginTop: 6, fontSize: 10.5 }}>
-                    {(() => {
-                      const ms = minSecAgo(active.lastUpdated);
-                      if (!ms) return null;
+                  {(() => {
+                    const m = minutesAgo(active.lastUpdated);
+                    if (m == null) return null;
+                    if (m <= 3) return null;
+                    return (
+                      <div style={{
+                        marginTop: "6px",
+                        fontSize: "11px",
+                        color: "#ea4336",
+                        fontWeight: "900"
+                      }}>
+                        資料可能延遲（{m} 分鐘）
+                      </div>
+                    );
+                  })()}
 
-                      // 想要永遠顯示「X 分 Y 秒前」
-                      return (
-                        <div style={{ marginTop: 0, fontSize: 10.5 }}>
-                          （{ms.min} 分 {String(ms.sec).padStart(2, "0")} 秒前）
-                        </div>
-                      );
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "5px"
+                    }}
+                  >
+                    <div style={{ marginTop: 6, fontSize: 10.5 }}>
+                      最近更新：{formatTime(active.lastUpdated)}
+                    </div>
+                    <div style={{ marginTop: 6, fontSize: 10.5 }}>
+                      {(() => {
+                        const ms = minSecAgo(active.lastUpdated);
+                        if (!ms) return null;
 
-                      // 如果你更想在 < 60 秒時顯示「Y 秒前」，用這個：
-                      // const txt = ms.min <= 0 ? `${ms.sec} 秒前` : `${ms.min} 分 ${String(ms.sec).padStart(2,"0")} 秒前`;
-                      // return <div style={{ marginTop: 6, fontSize: 10.5 }}>（{txt}）</div>;
-                    })()}
+                        // 想要永遠顯示「X 分 Y 秒前」
+                        return (
+                          <div style={{ marginTop: 0, fontSize: 10.5 }}>
+                            （{ms.min} 分 {String(ms.sec).padStart(2, "0")} 秒前）
+                          </div>
+                        );
+
+                        // 如果你更想在 < 60 秒時顯示「Y 秒前」，用這個：
+                        // const txt = ms.min <= 0 ? `${ms.sec} 秒前` : `${ms.min} 分 ${String(ms.sec).padStart(2,"0")} 秒前`;
+                        // return <div style={{ marginTop: 6, fontSize: 10.5 }}>（{txt}）</div>;
+                      })()}
+                    </div>
                   </div>
+
                 </div>
-
               </div>
             </div>
+
+            <div className="iw-actions">
+              <button
+                className="iw-navBtn"
+                onClick={() => openGoogleNavFromLot(active)}
+                type="button"
+              >
+                開始導航
+              </button>
+            </div>
+
           </InfoWindow>
         )}
 

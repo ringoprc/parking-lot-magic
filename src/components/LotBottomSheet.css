@@ -116,6 +116,27 @@
   font-weight: 900;
 }
 
+.vl-sheet-actions{
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.vl-sheet-navBtn{
+  width: 100%;
+  padding: 12px 12px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.vl-sheet-navBtn:hover {
+  background: #2680f0;
+  color: white;
+}
+
 .vl-sheet-meta {
   margin-top: 8px;
   display: flex;
@@ -127,7 +148,10 @@
 
 @media (max-width: 430px) {
   .vl-sheet-hero-img {
+    cursor: pointer;
     height: 140px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
   }
 }
 

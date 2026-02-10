@@ -28,23 +28,31 @@ export default function LotsList({ lots, active, onSelect, showDistance, formatD
             <div className="lot-btn-name-div">
               <div className="lot-btn-name">
                 <span>{l.name}</span>
-                {showDistance && l._dist != null && (
-                  <>
-                    <span className="lot-dist">{`・距離 ${focus.name} `}</span>
-                    <span style={{ fontSize: "12px", color: "#555"}}>
-                      {formatDist(l._dist)}
-                    </span>
-                  </>
-                )}
               </div>
               <span className="lot-btn-sub-vacancy-count" 
                 style={{ color: getVacancyTextColor(l.vacancy) }}
               >
+                <span
+                  style={{
+                    marginBottom: "1px",
+                    marginRight: "3px",
+                    fontWeight: "700"
+                  }}
+                >
                 [空位：
                 <b>
                   {l.vacancy ?? "未知"}
                 </b>
                 ]
+                </span>
+                {showDistance && l._dist != null && (
+                  <>
+                    <span className="lot-dist">{`距離 ${focus.name} `}</span>
+                    <span style={{ marginLeft: "6px", fontSize: "13.5px", color: "#333", fontWeight: "900"}}>
+                      {formatDist(l._dist)}
+                    </span>
+                  </>
+                )}
               </span>
             </div>
             <div className="lot-btn-sub">

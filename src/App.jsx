@@ -32,8 +32,8 @@ function formatYmdHms(ts) {
 
 function formatDist(m) {
   if (m == null || !Number.isFinite(m)) return "";
-  if (m < 1000) return `${Math.round(m)}m`;
-  return `${(m / 1000).toFixed(m < 10000 ? 1 : 0)}km`;
+  if (m < 1000) return `${Math.round(m)} 公尺`;
+  return `${(m / 1000).toFixed(m < 10000 ? 1 : 0)} 公里`;
 }
 
 export default function App() {

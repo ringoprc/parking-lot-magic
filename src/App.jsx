@@ -200,9 +200,9 @@ export default function App() {
             <div className="title-bar-left">
               <img src={logo} alt="logo" className="title-bar-logo-img" />
               <div className="title">
-                <span>停車</span>
+                <span style={{ marginLeft: "6px" }}>停車</span>
                 <span className="title-hightlight-span">急</span>
-                <span style={{ marginRight: "12px" }}>管家</span>
+                <span style={{ marginRight: "10px" }}>管家</span>
                 <span style={{ fontSize: "18px" }}>Parking</span>
                 <span className="title-hightlight-span"
                   style={{ fontSize: "20px" }}

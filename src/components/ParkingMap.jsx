@@ -11,6 +11,7 @@ import {
 import LotBottomSheet from "./LotBottomSheet";
 import Spinner from "react-bootstrap/Spinner";
 import { FaCircle } from "react-icons/fa";
+import { TiLocationArrow } from "react-icons/ti";
 
 import { formatTime, minutesAgo, minSecAgo } from "../utils/time";
 
@@ -430,7 +431,7 @@ export default function ParkingMap({
         {locatingMe ? (
           <Spinner className="map-locate-spinner" animation="border" role="status" size="sm" />
         ) : (
-          <FaCircle size={18} />
+          <TiLocationArrow size={32} />
         )}
       </button>
 

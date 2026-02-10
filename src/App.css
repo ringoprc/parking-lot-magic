@@ -281,7 +281,7 @@ div .gm-style-iw {
   transition-timing-function: ease, ease-in;
   transition-delay: 0s, 0.8s; /* ✅ color delay 0, opacity delay 1s */
 
-  padding: 0.1px 0px 0px 0.1px;
+  padding: 0px 0px 0px 3px;
   color: #666666;
   z-index: 990;
   pointer-events: none;

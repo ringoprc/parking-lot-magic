@@ -126,8 +126,10 @@
   width: 100%;
   padding: 12px 12px;
   border-radius: 12px;
-  border: 1px solid #ccc;
+  border: 1px solid #2680f0;
   font-weight: 800;
+  background: #2680f0;
+  color: white;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
 }
@@ -135,6 +137,7 @@
 .vl-sheet-navBtn:hover {
   background: #2680f0;
   color: white;
+  border: 1px solid #2680f0; !important;
 }
 
 .vl-sheet-meta {

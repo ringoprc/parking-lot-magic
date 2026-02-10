@@ -505,7 +505,7 @@ export default function ParkingMap({
         aria-label="定位到我的位置"
       >
         {locatingMe ? (
-          <Spinner className="map-locate-spinner" animation="border" role="status" size="sm" />
+          <Spinner className="map-locate-spinner" animation="grow" role="status" size="sm" />
         ) : (
           <TiLocationArrow size={32} />
         )}

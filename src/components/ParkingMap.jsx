@@ -313,7 +313,17 @@ export default function ParkingMap({
               triggerLotPulse(l.lotId);
               // tune this based on your sheet height
               const offsetY = Math.round(window.innerHeight * 0);
-              flyToRef.current?.({ lat: l.lat+flyToOffset, lng: l.lng, zoom: 16 });
+              const zRaw = map?.getZoom?.();
+              const curZ = Number.isFinite(zRaw) ? zRaw : null;
+
+              // Only zoom in when they are clearly far (e.g. < 15)
+              const shouldZoomIn = curZ == null || curZ < 15;
+
+              flyToRef.current?.({
+                lat: l.lat + flyToOffset,
+                lng: l.lng,
+                ...(shouldZoomIn ? { zoom: 16 } : {}),
+              });
             }}
           >
             <VacancyPin vacancy={l.vacancy} active={active?.lotId === l.lotId} 

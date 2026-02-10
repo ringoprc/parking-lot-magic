@@ -308,6 +308,10 @@ div .gm-style-iw {
   border: none;
 }
 
+.map-locate-btn.locating {
+  padding: 0;
+}
+
 .map-locate-btn.active {
   color: #2196f3;
 }

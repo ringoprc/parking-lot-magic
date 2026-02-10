@@ -499,6 +499,7 @@ export default function ParkingMap({
         className={"map-locate-btn " 
           + (mapReady ? "ready " : " ")
           + (myPos?.lat != null && myPos?.lng != null ? "active" : " ")
+          + (locatingMe ? "locating " : " ")
         }
         onClick={() => requestMyLocation?.()}
         disabled={!!locatingMe}

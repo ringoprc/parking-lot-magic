@@ -93,10 +93,17 @@
 .vl-sheet-titleRow {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 0px;
   align-items: flex-start;
   border-bottom: 1px solid #eee;
   padding-bottom: 10px;
+}
+
+.vl-sheet-titleRow-inner {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  padding: 0px 10px 0px 0px;
 }
 
 .vl-sheet-title { 

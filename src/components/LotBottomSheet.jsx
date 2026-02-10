@@ -97,19 +97,20 @@ export default function LotBottomSheet({ active, onClose }) {
 
           {active && (
             <div className="vl-sheet-body">
-              <div className="vl-sheet-titleRow">
-                <div className="vl-sheet-title">{active.name}</div>
-                <div className="vl-sheet-vac"
-                  style={{ color: getVacancyTextColor(active.vacancy) }}
-                >
-                  空位：
-                  <span className="vl-sheet-vacNum">
-                    {active.vacancy ?? "未知"}
-                  </span>
+              <div className="vl-sheet-titleRow" style={{ display:"flex", flexDirection: "column" }}>
+                <div className="vl-sheet-titleRow-inner">
+                  <div className="vl-sheet-title">{active.name}</div>
+                  <div className="vl-sheet-vac"
+                    style={{ color: getVacancyTextColor(active.vacancy) }}
+                  >
+                    空位：
+                    <span className="vl-sheet-vacNum">
+                      {active.vacancy ?? "未知"}
+                    </span>
+                  </div>
                 </div>
+                <div className="vl-sheet-addr">{active.addressZh}</div>
               </div>
-
-              <div className="vl-sheet-addr">{active.addressZh}</div>
 
               {(() => {
                 const m = minutesAgo(active.lastUpdated);

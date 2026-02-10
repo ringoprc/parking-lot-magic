@@ -319,8 +319,13 @@ export default function ParkingMap({
               // Only zoom in when they are clearly far (e.g. < 15)
               const shouldZoomIn = curZ == null || curZ < 15;
 
+              const z = curZ ?? 16;
+              const baseOffset = 0.002;
+              const offset = baseOffset * Math.pow(2, 16 - z);
+              const flyToOffsetZoom = isMobile ? -offset : offset;
+
               flyToRef.current?.({
-                lat: l.lat + flyToOffset,
+                lat: l.lat + flyToOffsetZoom,
                 lng: l.lng,
                 ...(shouldZoomIn ? { zoom: 16 } : {}),
               });

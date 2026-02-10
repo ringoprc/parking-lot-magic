@@ -205,7 +205,7 @@ export default function App() {
                 <span style={{ marginRight: "10px" }}>管家</span>
                 <span style={{ fontSize: "18px" }}>Parking</span>
                 <span className="title-hightlight-span"
-                  style={{ fontSize: "20px" }}
+                  style={{ fontSize: "20px", color: "#f0c35b" }}
                 >Ji</span>
               </div>
             </div>

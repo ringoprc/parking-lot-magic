@@ -202,7 +202,7 @@ export default function App() {
               <div className="title">
                 <span>停車</span>
                 <span className="title-hightlight-span">急</span>
-                <span style={{ marginRight: "6px" }}>管家</span>
+                <span style={{ marginRight: "12px" }}>管家</span>
                 <span style={{ fontSize: "18px" }}>Parking</span>
                 <span className="title-hightlight-span"
                   style={{ fontSize: "20px" }}

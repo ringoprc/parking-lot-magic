@@ -78,6 +78,10 @@ div .gm-style-iw {
   color: black;
 }
 
+.title-hightlight-span {
+  color: #e5ae2e;
+}
+
 .content {
   width: 100%;
   flex: 1 1 auto;

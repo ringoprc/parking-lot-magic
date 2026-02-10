@@ -199,7 +199,13 @@ export default function App() {
           <div className="title-bar-inner">
             <div className="title-bar-left">
               <img src={logo} alt="logo" className="title-bar-logo-img" />
-              <div className="title">停車急管家</div>
+              <div className="title">
+                <span>停車</span>
+                <span className="title-hightlight-span">急</span>
+                <span>管家 </span>
+                <span>Parking</span>
+                <span className="title-hightlight-span">Ji</span>
+              </div>
             </div>
           </div>
         </div>

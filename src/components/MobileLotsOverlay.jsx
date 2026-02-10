@@ -14,7 +14,10 @@ export default function MobileLotsOverlay({
   sheetFetchedText,
   locatingMe,
   requestMyLocation,
-  myPos
+  myPos,
+  showDistance,
+  formatDist,
+  focus
 }) {
   return (
     <div className={`mobile-lots-overlay ${open ? "open" : ""}`}>
@@ -35,6 +38,9 @@ export default function MobileLotsOverlay({
               lots={lots}
               active={active}
               onSelect={(l) => onSelect?.(l)}
+              showDistance={showDistance}
+              formatDist={formatDist}
+              focus={focus}
             />
           </div>
         </div>
@@ -45,3 +51,4 @@ export default function MobileLotsOverlay({
     </div>
   );
 }
+

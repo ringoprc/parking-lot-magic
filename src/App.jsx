@@ -30,6 +30,12 @@ function formatYmdHms(ts) {
   return `${yyyy}/${mm}/${dd} ${hh}:${mi}:${ss}`;
 }
 
+function formatDist(m) {
+  if (m == null || !Number.isFinite(m)) return "";
+  if (m < 1000) return `${Math.round(m)}m`;
+  return `${(m / 1000).toFixed(m < 10000 ? 1 : 0)}km`;
+}
+
 export default function App() {
 
   const DEFAULT_CENTER = { lat: 25.0522, lng: 121.5203 };
@@ -240,6 +246,9 @@ export default function App() {
             locatingMe={locatingMe}
             requestMyLocation={requestMyLocationForSearch}
             myPos={myPos}
+            showDistance={!!searchCenter}
+            formatDist={formatDist}
+            focus={focus}
           />
         </div>
 
@@ -262,6 +271,9 @@ export default function App() {
             locatingMe={locatingMe}
             requestMyLocation={requestMyLocationForSearch}
             myPos={myPos}
+            showDistance={!!searchCenter}
+            formatDist={formatDist}
+            focus={focus}
           />
 
           {/* Map */}

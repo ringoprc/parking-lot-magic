@@ -240,10 +240,11 @@ div .gm-style-iw {
   padding: 1px 20px 25px 20px !important;
 }
 
+/* The small bottom triangle */
 .map-wrap .gm-style-iw-tc {
   -webkit-transform: translate3d(-50%, -400%, 0);
   transform: translate3d(-50%, -310%, 0);
-  top: -18px;
+  top: -35px;
 }
 
 .map-wrap .gm-style-iw-d {
@@ -791,4 +792,11 @@ div .gm-style-iw {
 .iw-navBtn:hover {
   background: #2680f0;
   color: white;
+}
+
+.lot-dist{
+  font-size: 12px;
+  font-weight: 700;
+  color: #666;
+  margin-left: 6px;
 }

@@ -22,6 +22,20 @@ function getPinColorsFromVacancy(v) {
   return { bg: "#34A853", border: "#0F7B2E", glyph: "#FFFFFF" };              // 多 = 綠
 }
 
+function toVacancyNum(v) {
+  if (v === "" || v == null) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function getVacancyTextColor(v) {
+  const n = toVacancyNum(v);
+  if (n == null) return "#b6b6b6";   // unknown -> gray (pin border)
+  if (n === 0) return "#C5221F";     // 0 -> red (pin border)
+  if (n <= 5) return "#C58F00";      // low -> yellow (pin border)
+  return "#0F7B2E";                  // ok -> green (pin border)
+}
+
 function openGoogleNavFromLot(lot) {
   if (!lot) return;
 
@@ -321,8 +335,11 @@ export default function ParkingMap({
 
               const z = curZ ?? 16;
               const baseOffset = 0.002;
-              const offset = baseOffset * Math.pow(2, 16 - z);
+              const offset = baseOffset * Math.pow((curZ < 16 ? 1 : 2), 16 - z);
               const flyToOffsetZoom = isMobile ? -offset : offset;
+
+              //console.log('z:', z);
+              //console.log('flyToOffsetZoom:', flyToOffsetZoom);
 
               flyToRef.current?.({
                 lat: l.lat + flyToOffsetZoom,
@@ -383,10 +400,11 @@ export default function ParkingMap({
                     }}>
                       {active.name}
                     </div>
-                    <div style={{
+                    <div
+                    style={{
                       fontSize: "15px",
                       fontWeight: "700",
-                      color: "#317bff",
+                      color: getVacancyTextColor(active.vacancy),
                       marginBottom: "6px",
                       flexShrink: "0"
                     }}>

@@ -14,7 +14,7 @@ function getVacancyTextColor(v) {
   return "#0F7B2E";                  // ok -> green (pin border)
 }
 
-export default function LotsList({ lots, active, onSelect }) {
+export default function LotsList({ lots, active, onSelect, showDistance, formatDist, focus }) {
   return (
     <>
       <div className="lot-btn-list">
@@ -26,7 +26,17 @@ export default function LotsList({ lots, active, onSelect }) {
             type="button"
           >
             <div className="lot-btn-name-div">
-              <div className="lot-btn-name">{l.name}</div>
+              <div className="lot-btn-name">
+                <span>{l.name}</span>
+                {showDistance && l._dist != null && (
+                  <>
+                    <span className="lot-dist">{`・距離 ${focus.name} `}</span>
+                    <span style={{ fontSize: "12px", color: "#555"}}>
+                      {formatDist(l._dist)}
+                    </span>
+                  </>
+                )}
+              </div>
               <span className="lot-btn-sub-vacancy-count" 
                 style={{ color: getVacancyTextColor(l.vacancy) }}
               >
@@ -53,3 +63,6 @@ export default function LotsList({ lots, active, onSelect }) {
     </>
   );
 }
+
+
+

@@ -13,7 +13,10 @@ export default function LotsSidebar({
   setOpen,
   locatingMe,
   requestMyLocation,
-  myPos
+  myPos,
+  showDistance,
+  formatDist,
+  focus
 }) {
   return (
     <div className="side">
@@ -26,7 +29,14 @@ export default function LotsSidebar({
         requestMyLocation={requestMyLocation}
         myPos={myPos}
       />
-      <LotsList lots={lots} active={active} onSelect={onSelect} />
+      <LotsList 
+        lots={lots} 
+        active={active} 
+        onSelect={onSelect} 
+        showDistance={showDistance}
+        formatDist={formatDist}
+        focus={focus}
+      />
     </div>
   );
 }

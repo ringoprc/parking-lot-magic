@@ -1,0 +1,107 @@
+/* frontend/src/pages/AdminLotsPage.css */
+
+.admin-lot-action-outer-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+@media (max-width: 600px) {
+  .admin-lot-action-outer-row {
+    flex-direction: column
+  }
+}
+
+.admin-lot-password-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex: 1 1 0%;
+}
+
+@media (max-width: 600px) {
+  .admin-lot-password-row {
+    flex-direction: column
+  }
+}
+
+.admin-lot-action-row {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  align-items: center;
+}
+
+@media (max-width: 600px) {
+  .admin-lot-action-row {
+    flex-direction: column
+  }
+}
+
+.admin-lot-action-btn {
+  padding: 8px 10px;
+  border-radius: 6px;
+}
+
+.admin-lot-action-btn:hover {
+  border: 1px solid #2196f3;
+}
+
+.admin-lot-action-btn.should-save {
+  background: #FF9800;
+  color: white;
+  font-weight: 700;
+}
+
+.admin-lot-action-btn.should-save:hover {
+  border: 1px solid orange;
+}
+
+.admin-lot-border-right-td{
+  position: sticky;           /* you already have this */
+  background: #fff;           /* IMPORTANT: cover cells behind */
+  z-index: 20;                 /* higher than normal cells */
+  box-shadow: inset -1px 0 0 #e5e6e5;  /* the border line */
+}
+
+.admin-lot-copy-btn {
+  padding: 6px 10px;
+  width: 80px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 13.5px;
+}
+
+.admin-lot-copy-btn:hover {
+  border: 1px solid #2196f3;
+}
+
+.admin-lot-delete-btn {
+  padding: 6px 6px;
+  width: 36px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  border: 1px solid #FF5722;
+  background: white;
+  color: #FF5722;
+  transition: background 0.3s ease, border 0.3s ease;
+}
+
+.admin-lot-delete-btn:hover {
+  background: #FF5722;
+  color: white;
+  border: 1px solid #FF5722;
+}
+
+.admin-lot-td-input {
+  border-radius: 6px;
+  font-size: 15px;
+  border: 1px solid #aaa;
+  padding: 5px 12px 5px 10px;
+}
+
+.admin-lot-td-select {
+  border-radius: 16px;
+  padding: 3px 0px 3px 6px;
+  font-size: 13px;
+}

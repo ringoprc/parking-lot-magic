@@ -10,6 +10,7 @@ import MobileLotsBar from "./components/MobileLotsBar";
 import MobileLotsOverlay from "./components/MobileLotsOverlay";
 import ParkingMap from "./components/ParkingMap";
 
+import AdminLotsPage from "./pages/AdminLotsPage";
 
 import { useMyLocationAction } from "./hooks/useMyLocationAction";
 import { useMediaQuery } from "./hooks/useMediaQuery";
@@ -62,9 +63,14 @@ export default function App() {
   //-----------------------------
 
   const showOcr = new URLSearchParams(window.location.search).get("ocr") === "1";
-  if (showOcr) {
-    return <DigitOcrTest />;
-  }
+  if (showOcr) { return <DigitOcrTest />; }
+
+
+  //-----------------------------
+  // Admin
+  //-----------------------------
+  const showAdmin = new URLSearchParams(window.location.search).get("admin") === "1";
+  if (showAdmin) return <AdminLotsPage apiBase={apiBase} />;
 
 
   //-----------------------------

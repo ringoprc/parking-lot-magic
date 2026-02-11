@@ -336,12 +336,12 @@ export default function ParkingMap({
               const shouldZoomIn = curZ == null || curZ < 15;
 
               const z = curZ ?? 16;
-              const baseOffset = 0.002;
+              const baseOffset = 0.003;
               const offset = baseOffset * Math.pow((curZ < 16 ? 1 : 2), 16 - z);
               const flyToOffsetZoom = isMobile ? -offset : offset;
 
-              //console.log('z:', z);
-              //console.log('flyToOffsetZoom:', flyToOffsetZoom);
+              console.log('z:', z);
+              console.log('flyToOffsetZoom:', flyToOffsetZoom);
 
               flyToRef.current?.({
                 lat: l.lat + flyToOffsetZoom,

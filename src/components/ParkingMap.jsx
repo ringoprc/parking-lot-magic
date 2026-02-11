@@ -251,6 +251,8 @@ export default function ParkingMap({
   lots,
   active,
   setActive,
+  lastSheetFetchAt,
+  lastFrontendFetchAt,
   flyToRef,
   focus,
   setFocus,
@@ -515,7 +517,9 @@ export default function ParkingMap({
       {isMobile && (
         <LotBottomSheet
           active={active}
-          onClose={() => setActive?.(null)}
+          onClose={() => setActive(null)}
+          lastSheetFetchAt={lastSheetFetchAt}
+          lastFrontendFetchAt={lastFrontendFetchAt}
         />
       )}
     </div>

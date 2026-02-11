@@ -46,7 +46,12 @@ function openGoogleNav(active) {
 }
 
 
-export default function LotBottomSheet({ active, onClose }) {
+export default function LotBottomSheet({ 
+  active, 
+  onClose, 
+  lastSheetFetchAt,
+  lastFrontendFetchAt 
+}) {
   const [open, setOpen] = useState(false);
 
   // open when active exists, close when active is null
@@ -123,18 +128,51 @@ export default function LotBottomSheet({ active, onClose }) {
                 );
               })()}
 
-              <div className="vl-sheet-meta">
-                <div>最近更新：{formatTime(active.lastUpdated)}</div>
-                {(() => {
-                  const ms = minSecAgo(active.lastUpdated);
-                  if (!ms) return null;
-                  return (
-                    <div>
-                      （{ms.min} 分 {String(ms.sec).padStart(2, "0")} 秒前）
-                    </div>
-                  );
-                })()}
+              <div>
+                <div className="vl-sheet-meta">
+                  <div>空位數字最近更新（Google 表單上數字）：{formatTime(active.lastUpdated)}</div>
+                  {(() => {
+                    const ms = minSecAgo(active.lastUpdated);
+                    if (!ms) return null;
+                    return (
+                      <div>
+                        （{ms.min} 分 {String(ms.sec).padStart(2, "0")} 秒前）
+                      </div>
+                    );
+                  })()}
+                </div>
+                {lastSheetFetchAt ? (
+                  <div className="vl-sheet-meta-sheet-fetch">
+                    最近後台抓取 Google 表單資料時間：{formatTime(lastSheetFetchAt)}
+                    {(() => {
+                      const ms = minSecAgo(lastSheetFetchAt);
+                      if (!ms) return null;
+                      return (
+                        <span>
+                          {" "}
+                          （{ms.min} 分 {String(ms.sec).padStart(2, "0")} 秒前）
+                        </span>
+                      );
+                    })()}
+                  </div>
+                ) : null}
+                {lastFrontendFetchAt ? (
+                  <div className="vl-sheet-meta-frontend-fetch">
+                    最近抓取後台資料時間：{formatTime(lastFrontendFetchAt)}
+                    {(() => {
+                      const ms = minSecAgo(lastFrontendFetchAt);
+                      if (!ms) return null;
+                      return (
+                        <span>
+                          {" "}
+                          （{ms.min} 分 {String(ms.sec).padStart(2, "0")} 秒前）
+                        </span>
+                      );
+                    })()}
+                  </div>
+                ) : null}
               </div>
+
 
               <div className="vl-sheet-actions">
                 <button

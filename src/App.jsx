@@ -57,7 +57,6 @@ export default function App() {
   const [myAcc, setMyAcc] = useState(null); // meters
   const afterLocateRef = useRef(null);
 
-
   //-----------------------------
   // OCR
   //-----------------------------
@@ -116,7 +115,7 @@ export default function App() {
   //-----------------------------
 
   const RADIUS_M = 2000;
-  const { lots, meta, reload } = useLots({
+  const { lots, meta, lastFrontendFetchAt, reload } = useLots({
     apiBase,
     district: null,
     center: queryCenter,
@@ -274,6 +273,7 @@ export default function App() {
                 <span className="title-hightlight-span"
                   style={{ fontSize: "20px", color: "#f0c35b" }}
                 >Ji</span>
+                <span style={{ fontSize: "13px" }}>.com</span>
               </div>
             </div>
           </div>
@@ -358,6 +358,8 @@ export default function App() {
               lots={validLots}
               active={active}
               setActive={setActive}
+              lastSheetFetchAt={meta?.lastSheetFetchAt}
+              lastFrontendFetchAt={lastFrontendFetchAt}
               flyToRef={flyToRef}
               focus={focus}
               setFocus={setFocus}

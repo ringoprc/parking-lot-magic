@@ -14,6 +14,21 @@ function padBox(box, pad, W, H) {
   return { x: x0, y: y0, w: Math.max(1, x1 - x0), h: Math.max(1, y1 - y0) };
 }
 
+function isLedRedByDominance(r, g, b, p) {
+  // p: params from sliders
+  // Strong red dominance + some brightness
+  if (r < p.rMin) return false;
+  if (r - g < p.rgMin) return false;
+  if (r - b < p.rbMin) return false;
+
+  // avoid white/gray: if g and b are also high, it's likely not LED
+  if (g > p.gMax) return false;
+  if (b > p.bMax) return false;
+
+  return true;
+}
+
+
 function rgbToHsv(r, g, b) {
   r /= 255;
   g /= 255;
@@ -222,11 +237,12 @@ export default function DigitOcrTest() {
   const [pad, setPad] = useState(10);
   const [step, setStep] = useState(2);
 
-  // HSV threshold controls
-  const [hueCenter, setHueCenter] = useState(0); // 0 = red
-  const [hueRange, setHueRange] = useState(18);
-  const [satMin, setSatMin] = useState(0.45);
-  const [valMin, setValMin] = useState(0.22);
+  // threshold controls
+  const [rMin, setRMin] = useState(239);
+  const [rgMin, setRgMin] = useState(55);
+  const [rbMin, setRbMin] = useState(55);
+  const [gMax, setGMax] = useState(170);
+  const [bMax, setBMax] = useState(170);
 
   // Mask cleanup
   const [speckleFilterIters, setSpeckleFilterIters] = useState(0);
@@ -284,6 +300,24 @@ export default function DigitOcrTest() {
     setDebugInfo("");
   }
 
+  function onPickRoiCenter(e) {
+    const img = imgRef.current;
+    if (!img) return;
+
+    const rect = img.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width;   // 0..1
+    const py = (e.clientY - rect.top) / rect.height;   // 0..1
+
+    const x = Math.floor(px * W);
+    const y = Math.floor(py * H);
+
+    setRoi((r) => ({
+      ...r,
+      x: clamp(x - Math.floor(r.w / 2), 0, W - r.w),
+      y: clamp(y - Math.floor(r.h / 2), 0, H - r.h),
+    }));
+  }
+
   function hsvIsRedish(h, s, v) {
     // center/range in degrees
     const d = Math.min(
@@ -338,10 +372,14 @@ export default function DigitOcrTest() {
           g = data[i + 1],
           b = data[i + 2];
 
-        const { h, s: ss, v } = rgbToHsv(r, g, b);
-        mask[idx++] = hsvIsRedish(h, ss, v) ? 1 : 0;
+        const on = isLedRedByDominance(r, g, b, { rMin, rgMin, rbMin, gMax, bMax });
+        mask[idx++] = on ? 1 : 0;
       }
     }
+
+    let onCount = 0;
+    for (let i = 0; i < mask.length; i++) onCount += mask[i];
+    const coverage = onCount / mask.length;
 
     if (speckleFilterIters > 0) {
       mask = blur3x3BinaryMask(mask, mw, mh, speckleFilterIters);
@@ -422,8 +460,7 @@ export default function DigitOcrTest() {
       const r = od2[i],
         g = od2[i + 1],
         b = od2[i + 2];
-      const { h, s: ss, v } = rgbToHsv(r, g, b);
-      const on = hsvIsRedish(h, ss, v);
+      const on = isLedRedByDominance(r, g, b, { rMin, rgMin, rbMin, gMax, bMax });
 
       // white digit on black background
       let vout = on ? 255 : 0;
@@ -445,8 +482,9 @@ export default function DigitOcrTest() {
           ).toFixed(3)}, ar=${(best.bw / best.bh).toFixed(3)}`
         : `best: (none)`,
       tightBox ? `tight: x=${tightBox.x},y=${tightBox.y},w=${tightBox.w},h=${tightBox.h}` : `tight: (none)`,
-      `HSV: center=${hueCenter}°, range=±${hueRange}°, satMin=${satMin.toFixed(2)}, valMin=${valMin.toFixed(2)}`,
+      `RGBdom: rMin=${rMin}, rgMin=${rgMin}, rbMin=${rbMin}, gMax=${gMax}, bMax=${bMax}`,
       `OCR: invert=${invertForOcr}, psm=${psm}`,
+      `mask coverage: ${(coverage * 100).toFixed(2)}%`,
     ].join("\n");
     setDebugInfo(dbg);
   }
@@ -468,10 +506,11 @@ export default function DigitOcrTest() {
     scale,
     pad,
     step,
-    hueCenter,
-    hueRange,
-    satMin,
-    valMin,
+    rMin,
+    rgMin,
+    rbMin,
+    gMax,
+    bMax,
     speckleFilterIters,
     minAreaFrac,
     maxAreaFrac,
@@ -614,11 +653,13 @@ export default function DigitOcrTest() {
                 src={imgUrl}
                 alt=""
                 onLoad={onImgLoad}
+                onClick={onPickRoiCenter}
                 style={{
                   width: "100%",
                   borderRadius: 10,
                   border: "1px solid #ddd",
                   display: "block",
+                  cursor: "crosshair",
                 }}
               />
               {roiStyle && <div style={roiStyle} />}
@@ -732,53 +773,33 @@ export default function DigitOcrTest() {
                 </label>
 
                 <label>
-                  HSV hue center: {hueCenter}°
-                  <input
-                    type="range"
-                    min={0}
-                    max={359}
-                    value={hueCenter}
-                    onChange={(e) => setHueCenter(Number(e.target.value))}
-                    style={{ width: "100%" }}
-                  />
+                  rMin: {rMin}
+                  <input type="range" min={0} max={255} value={rMin}
+                    onChange={(e)=>setRMin(Number(e.target.value))} style={{width:"100%"}} />
                 </label>
 
                 <label>
-                  hue range: ±{hueRange}°
-                  <input
-                    type="range"
-                    min={1}
-                    max={60}
-                    value={hueRange}
-                    onChange={(e) => setHueRange(Number(e.target.value))}
-                    style={{ width: "100%" }}
-                  />
+                  r-g min: {rgMin}
+                  <input type="range" min={0} max={200} value={rgMin}
+                    onChange={(e)=>setRgMin(Number(e.target.value))} style={{width:"100%"}} />
                 </label>
 
                 <label>
-                  sat min: {satMin.toFixed(2)}
-                  <input
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={satMin}
-                    onChange={(e) => setSatMin(Number(e.target.value))}
-                    style={{ width: "100%" }}
-                  />
+                  r-b min: {rbMin}
+                  <input type="range" min={0} max={200} value={rbMin}
+                    onChange={(e)=>setRbMin(Number(e.target.value))} style={{width:"100%"}} />
                 </label>
 
                 <label>
-                  val min: {valMin.toFixed(2)}
-                  <input
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={valMin}
-                    onChange={(e) => setValMin(Number(e.target.value))}
-                    style={{ width: "100%" }}
-                  />
+                  gMax: {gMax}
+                  <input type="range" min={0} max={255} value={gMax}
+                    onChange={(e)=>setGMax(Number(e.target.value))} style={{width:"100%"}} />
+                </label>
+
+                <label>
+                  bMax: {bMax}
+                  <input type="range" min={0} max={255} value={bMax}
+                    onChange={(e)=>setBMax(Number(e.target.value))} style={{width:"100%"}} />
                 </label>
               </div>
 

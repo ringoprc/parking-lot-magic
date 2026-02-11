@@ -11,6 +11,7 @@ export function useLots({
 
   const [lots, setLots] = useState([]);
   const [meta, setMeta] = useState(null);
+  const [lastFrontendFetchAt, setLastFrontendFetchAt] = useState(null);
 
   const loadLots = useCallback(async () => {
     const qs =
@@ -26,6 +27,7 @@ export function useLots({
 
     setLots(data.results || []);
     setMeta(data.meta || null);
+    setLastFrontendFetchAt(new Date().toISOString());
   }, [apiBase, district, center?.lat, center?.lng, radiusM]);
 
   useEffect(() => {
@@ -34,5 +36,5 @@ export function useLots({
     return () => clearInterval(t);
   }, [loadLots, pollMs]);
 
-  return { lots, meta, reload: loadLots };
+  return { lots, meta, lastFrontendFetchAt, reload: loadLots };
 }

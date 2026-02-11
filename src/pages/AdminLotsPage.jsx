@@ -328,7 +328,7 @@ export default function AdminLotsPage({ apiBase }) {
           >
             <p className="mb-0">管理員密碼：</p>
             <input
-              placeholder="Admin key (saved in localStorage)"
+              placeholder="輸入密碼 (自動儲存於主機上)"
               value={adminKey}
               onChange={(e) => {
                 setAdminKey(e.target.value);
@@ -343,7 +343,7 @@ export default function AdminLotsPage({ apiBase }) {
           <button className="admin-lot-action-btn"
             onClick={load}
           >
-            Reload
+            重新讀取 / 確認密碼
           </button>
           <button 
             className={`admin-lot-action-btn ` 
@@ -352,12 +352,12 @@ export default function AdminLotsPage({ apiBase }) {
             onClick={saveAll} 
             disabled={!dirtyIds.size} 
           >
-            Save ({dirtyIds.size})
+            儲存變更 ({dirtyIds.size})
           </button>
           <button className="admin-lot-action-btn"
             onClick={addRow} 
           >
-            + Add
+            + 新增
           </button>
         </div>
       </div>
@@ -371,7 +371,7 @@ export default function AdminLotsPage({ apiBase }) {
         </select>
 
         <input
-          placeholder="search (lotId/name/address/note)"
+          placeholder="搜尋 (lotId/停車場名稱/地址/備註)"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => {
@@ -384,7 +384,7 @@ export default function AdminLotsPage({ apiBase }) {
         />
 
         <button onClick={() => { setPage(1); load(); }} style={{ padding: "8px 10px" }}>
-          Search
+          開始搜尋
         </button>
 
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
@@ -407,7 +407,38 @@ export default function AdminLotsPage({ apiBase }) {
           scrollbarWidth: "thin"
         }}
       >
-        <table style={{ borderCollapse: "collapse", width: "max-content", minWidth: "100%" }}>
+        <table
+          style={{
+            /*borderCollapse: "separate",*/
+            borderSpacing: 0,
+            tableLayout: "fixed",
+            width: "max-content",
+            minWidth: "100%",
+          }}
+        >
+
+          <colgroup>
+            {/* sticky left 3 cols */}
+            <col style={{ width: STICKY_COL_W.copy }} />
+            <col style={{ width: STICKY_COL_W.lotId }} />
+            <col style={{ width: STICKY_COL_W.name }} />
+
+            {/* the rest (match your input widths / intended widths) */}
+            <col style={{ width: 340 }} /> {/* addressZh */}
+            <col style={{ width: 120 }} /> {/* district */}
+            <col style={{ width: 140 }} /> {/* lat */}
+            <col style={{ width: 140 }} /> {/* lng */}
+            <col style={{ width: 100 }} /> {/* vacancy */}
+            <col style={{ width: 70 }} />  {/* yyyy */}
+            <col style={{ width: 60 }} />  {/* mm */}
+            <col style={{ width: 60 }} />  {/* dd */}
+            <col style={{ width: 60 }} />  {/* hh */}
+            <col style={{ width: 60 }} />  {/* min */}
+            <col style={{ width: 90 }} />  {/* status */}
+            <col style={{ width: 200 }} /> {/* note */}
+            <col style={{ width: 120 }} /> {/* showOnMap */}
+            <col style={{ width: 90 }} />  {/* delete */}
+          </colgroup>
 
           <thead style={{ position: "sticky", 
             top: "-1px", background: "#f7f7f7", zIndex: "30", 
@@ -415,7 +446,7 @@ export default function AdminLotsPage({ apiBase }) {
           }}>
             <tr>
               {[
-                "複製","lotId","name","addressZh","district","lat","lng","空位數",
+                "複製","lotId","停車場名稱","地址","區域","lat 緯度","lng 經度","空位數",
                 "年","月","日","時","分","狀態","備註","顯示於地圖", "刪除"
               ].map((h, idx) => (
                 <th key={h} 
@@ -575,6 +606,13 @@ export default function AdminLotsPage({ apiBase }) {
                 </tr>
               );
             })}
+            {!loading && rows.length === 0 && (
+              <tr>
+                <td colSpan={7} style={{ padding: 16, color: "#666", textAlign: "center" }}>
+                  {adminKey ? "No rows found." : "輸入管理員密碼"}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

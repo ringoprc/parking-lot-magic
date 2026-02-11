@@ -156,6 +156,12 @@
   color: #444;
 }
 
+@media (max-width: 600px){
+  .vl-sheet-meta {
+    font-size: 9px;
+  }
+}
+
 .vl-sheet-meta-sheet-fetch {
   margin-top: 2px;
   display: flex;
@@ -165,6 +171,12 @@
   color: #444;
 }
 
+@media (max-width: 600px){
+  .vl-sheet-meta-sheet-fetch {
+    font-size: 9px;
+  }
+}
+
 .vl-sheet-meta-frontend-fetch {
   margin-top: 2px;
   display: flex;
@@ -172,6 +184,12 @@
   flex-wrap: wrap;
   font-size: 11px;
   color: #444;
+}
+
+@media (max-width: 600px){
+  .vl-sheet-meta-frontend-fetch {
+    font-size: 9px;
+  }
 }
 
 @media (max-width: 430px) {

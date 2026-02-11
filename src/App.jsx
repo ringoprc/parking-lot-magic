@@ -15,6 +15,7 @@ import { useMyLocationAction } from "./hooks/useMyLocationAction";
 import { useMediaQuery } from "./hooks/useMediaQuery";
 
 import logo from "./assets/logo4.png";
+import DigitOcrTest from "./pages/DigitOcrTest";
 
 import "./App.css";
 
@@ -55,6 +56,16 @@ export default function App() {
   const [myPos, setMyPos] = useState(null); // {lat,lng}
   const [myAcc, setMyAcc] = useState(null); // meters
   const afterLocateRef = useRef(null);
+
+
+  //-----------------------------
+  // OCR
+  //-----------------------------
+
+  const showOcr = new URLSearchParams(window.location.search).get("ocr") === "1";
+  if (showOcr) {
+    return <DigitOcrTest />;
+  }
 
 
   //-----------------------------

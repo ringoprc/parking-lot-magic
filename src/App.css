@@ -217,7 +217,7 @@ div .gm-style-iw {
 .sidebar-wrap {
   position: relative;
   z-index: 1000;
-  min-width: 0;
+  min-width: 280px;
   min-height: 0;
 }
 

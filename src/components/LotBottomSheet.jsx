@@ -105,7 +105,7 @@ export default function LotBottomSheet({
               />
             </div>
             <div className="vl-sheet-sponsor-img-div">
-              <div>
+              <div style={{ position: "relative" }}>
                 <img
                   className="vl-sheet-sponsor-img"
                   //src="https://placehold.co/340x340/f9f9f9/999999/png?text=Sponsor"
@@ -113,7 +113,7 @@ export default function LotBottomSheet({
                   alt=""
                   loading="lazy"
                 />
-                <span>範例</span>
+                <span className="vl-sheet-sponsor-example-label">範例</span>
               </div>
               <div className="vl-sheet-sponsor-distance-label-div">
                 <p className="mb-0">店家步行距離：10m 內</p>

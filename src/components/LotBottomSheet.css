@@ -89,7 +89,7 @@
   flex-grow: 1;
 }
 
-@media (max-width: 430px) {
+@media (max-width: 900px) {
   .vl-sheet-hero-img-div {
     height: 140px;
   }
@@ -103,7 +103,7 @@
   opacity: 0.8;
 }
 
-@media (max-width: 430px) {
+@media (max-width: 900px) {
   .vl-sheet-hero-img {
     cursor: pointer;
     height: 140px;
@@ -118,7 +118,7 @@
   height: 180px;
 }
 
-@media (max-width: 430px) {
+@media (max-width: 900px) {
   .vl-sheet-sponsor-img-div {
     height: 140px;
   }
@@ -132,7 +132,7 @@
   opacity: 0.2;
 }
 
-@media (max-width: 430px) {
+@media (max-width: 900px) {
   .vl-sheet-sponsor-img {
     cursor: pointer;
     height: 110px;

@@ -158,7 +158,8 @@
   align-items: center;
   color: #808080;
   padding-left: 2px;
-  font-weight: 700;
+  font-weight: 600;
+  padding-top: 3px;
 }
 
 .vl-sheet-body {

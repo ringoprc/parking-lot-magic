@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { formatTime, minutesAgo, minSecAgo } from "../utils/time";
 import "./LotBottomSheet.css";
 
+import lotImage from "../assets/lots_demo_img.jpg";
+import sponsorImage from "../assets/sponser_demo_img.jpeg";
+
 function toVacancyNum(v) {
   if (v === "" || v == null) return null;
   const n = Number(v);
@@ -91,13 +94,31 @@ export default function LotBottomSheet({
           onTouchMove={stopMapGesture}
         >
           <div className="vl-sheet-hero">
-            <img
-              className="vl-sheet-hero-img"
-              onClick={() => openGoogleNav(active)}
-              src="https://placehold.co/640x240/f9f9f9/999999/png?text=Parking"
-              alt=""
-              loading="lazy"
-            />
+            <div className="vl-sheet-hero-img-div">
+              <img
+                className="vl-sheet-hero-img"
+                onClick={() => openGoogleNav(active)}
+                //src="https://placehold.co/340x240/f9f9f9/999999/png?text=Parking"
+                src={lotImage}
+                alt=""
+                loading="lazy"
+              />
+            </div>
+            <div className="vl-sheet-sponsor-img-div">
+              <div>
+                <img
+                  className="vl-sheet-sponsor-img"
+                  //src="https://placehold.co/340x340/f9f9f9/999999/png?text=Sponsor"
+                  src={sponsorImage}
+                  alt=""
+                  loading="lazy"
+                />
+                <span>範例</span>
+              </div>
+              <div className="vl-sheet-sponsor-distance-label-div">
+                <p className="mb-0">店家步行距離：10m 內</p>
+              </div>
+            </div>
           </div>
 
           {active && (
@@ -130,7 +151,7 @@ export default function LotBottomSheet({
 
               <div>
                 <div className="vl-sheet-meta">
-                  <div>空位數字最近更新（Google 表單上數字）：{formatTime(active.lastUpdated)}</div>
+                  <div>空位數字最近更新時間：{formatTime(active.lastUpdated)}</div>
                   {(() => {
                     const ms = minSecAgo(active.lastUpdated);
                     if (!ms) return null;
@@ -141,6 +162,7 @@ export default function LotBottomSheet({
                     );
                   })()}
                 </div>
+                {/*
                 {lastSheetFetchAt ? (
                   <div className="vl-sheet-meta-sheet-fetch">
                     最近後台抓取 Google 表單資料時間：{formatTime(lastSheetFetchAt)}
@@ -171,6 +193,7 @@ export default function LotBottomSheet({
                     })()}
                   </div>
                 ) : null}
+                */}
               </div>
 
 

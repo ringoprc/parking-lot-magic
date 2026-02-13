@@ -75,15 +75,90 @@
 }
 
 .vl-sheet-hero {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
   padding: 0px 20px;
 }
 
 /* internal layout */
+.vl-sheet-hero-img-div {
+  display: block;
+  width: 60%;
+  height: 180px;
+  flex-grow: 1;
+}
+
+@media (max-width: 430px) {
+  .vl-sheet-hero-img-div {
+    height: 140px;
+  }
+}
+
 .vl-sheet-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.8;
+}
+
+@media (max-width: 430px) {
+  .vl-sheet-hero-img {
+    cursor: pointer;
+    height: 140px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+  }
+}
+
+.vl-sheet-sponsor-img-div {
+  display: block;
+  width: 110px;
+  height: 180px;
+}
+
+@media (max-width: 430px) {
+  .vl-sheet-sponsor-img-div {
+    height: 140px;
+  }
+}
+
+.vl-sheet-sponsor-img {
   width: 100%;
   height: 180px;
   object-fit: cover;
   display: block;
+  opacity: 0.2;
+}
+
+@media (max-width: 430px) {
+  .vl-sheet-sponsor-img {
+    cursor: pointer;
+    height: 110px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+  }
+}
+
+.vl-sheet-sponsor-example-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: transform 200ms ease;
+  font-weight: 900;
+  color: #4f4f4f;
+}
+
+.vl-sheet-sponsor-distance-label-div {
+  height: 30px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  color: #808080;
+  padding-left: 2px;
+  font-weight: 700;
 }
 
 .vl-sheet-body {
@@ -190,15 +265,6 @@
 @media (max-width: 600px){
   .vl-sheet-meta-frontend-fetch {
     font-size: 9px;
-  }
-}
-
-@media (max-width: 430px) {
-  .vl-sheet-hero-img {
-    cursor: pointer;
-    height: 140px;
-    border-radius: 10px;
-    border: 1px solid #ddd;
   }
 }
 

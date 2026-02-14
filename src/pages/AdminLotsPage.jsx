@@ -1,6 +1,7 @@
 // frontend/src/pages/AdminLotsPage.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import * as XLSX from "xlsx";
 
 import { FiTrash2 } from "react-icons/fi";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
@@ -293,6 +294,90 @@ export default function AdminLotsPage({ apiBase }) {
     return String(v).replace(/\t/g, " ").replace(/\r?\n/g, " ");
   }
 
+
+  //--------------------------------
+  // Excel Export
+  //--------------------------------
+  async function exportToExcel() {
+    if (!adminKey) {
+      toast.error("請先輸入管理員密碼");
+      return;
+    }
+
+    try {
+      toast.loading("匯出中...");
+
+      let allRows = [];
+      let pageNum = 1;
+      const pageSize = 500; // use backend max
+      let total = 0;
+
+      while (true) {
+        const qs = new URLSearchParams({
+          page: String(pageNum),
+          pageSize: String(pageSize),
+          district,
+          search,
+        });
+
+        const res = await fetch(`${apiBase}/api/admin/lots?${qs.toString()}`, {
+          headers: { "x-admin-key": adminKey },
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data?.error || "匯出失敗");
+        }
+
+        allRows = [...allRows, ...(data.rows || [])];
+        total = data.meta?.total ?? data.total ?? 0;
+
+        if (allRows.length >= total) break;
+        pageNum++;
+      }
+
+      if (!allRows.length) {
+        toast.dismiss();
+        toast.error("沒有資料可匯出");
+        return;
+      }
+
+      // format data for excel
+      const exportData = allRows.map(r => ({
+        lotId: r.lotId,
+        name: r.name,
+        addressZh: r.addressZh,
+        district: r.district,
+        lat: r.location?.coordinates?.[1],
+        lng: r.location?.coordinates?.[0],
+        vacancy: r.vacancy,
+        status: r.status,
+        lastUpdated: r.lastUpdated,
+        note: r.note,
+        isActive: r.isActive ? "TRUE" : "FALSE",
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Lots");
+
+      XLSX.writeFile(workbook, "parking-lots.xlsx");
+
+      toast.dismiss();
+      toast.success(`已匯出 ${exportData.length} 筆資料`);
+
+    } catch (err) {
+      toast.dismiss();
+      toast.error("匯出失敗");
+      console.error(err);
+    }
+  }
+
+  //--------------------------------
+  // Copy Row Data
+  //--------------------------------
+
   function rowToTsv(r) {
     // keep same order as your columns
     const cells = [
@@ -405,6 +490,11 @@ export default function AdminLotsPage({ apiBase }) {
               onClick={addRow} 
             >
               + 新增
+            </button>
+            <button className="admin-lot-action-btn"
+              onClick={exportToExcel}
+            >
+              匯出 Excel
             </button>
           </div>
         </div>

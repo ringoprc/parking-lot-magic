@@ -129,6 +129,7 @@
 @media (max-width: 600px) {
   .admin-lot-action-row {
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
     width: 100%;
     padding-left: 10px;
@@ -232,6 +233,7 @@
 
 .admin-lot-page-navigate {
   display: flex;
+  min-width: 150px;
   gap: 8px;
   align-items: center;
 }

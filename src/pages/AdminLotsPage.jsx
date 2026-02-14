@@ -1,6 +1,10 @@
 // frontend/src/pages/AdminLotsPage.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
+
 import { FiTrash2 } from "react-icons/fi";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
+
 import './AdminLotsPage.css';
 
 const PAGE_SIZE = 200;
@@ -52,6 +56,7 @@ function toLocalParts(d) {
 
 export default function AdminLotsPage({ apiBase }) {
   const [adminKey, setAdminKey] = useState(() => localStorage.getItem("adminKey") || "");
+  const [isAdminConfirmed, setIsAdminConfirmed] = useState(false);
   const [page, setPage] = useState(1);
   const [district, setDistrict] = useState("all");
   const [search, setSearch] = useState("");
@@ -72,7 +77,12 @@ export default function AdminLotsPage({ apiBase }) {
   }, [rows]);
 
   async function load() {
-    if (!adminKey) return;
+
+    if (!adminKey) {
+      toast.error("請先輸入管理員密碼");
+      return;
+    }
+
     setLoading(true);
     try {
       const qs = new URLSearchParams({
@@ -84,8 +94,21 @@ export default function AdminLotsPage({ apiBase }) {
       const res = await fetch(`${apiBase}/api/admin/lots?${qs.toString()}`, {
         headers: { "x-admin-key": adminKey },
       });
+
+      console.log('res:', res);
+      console.log('res.ok:', res.ok);
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "load failed");
+
+      if (!res.ok) {
+        toast.error(data?.error || "密碼不正確");
+        setIsAdminConfirmed(false);
+        throw new Error(data?.error || "load failed");
+      }
+
+      toast.success((isAdminConfirmed ? "已套用條件" : "密碼正確"));
+
+      setIsAdminConfirmed(true);
 
       // normalize + add yyyy/mm/dd/hh/min columns for editing
       const normalized = (data.rows || []).map((r) => {
@@ -108,6 +131,8 @@ export default function AdminLotsPage({ apiBase }) {
       const m = new Map();
       for (const r of normalized) m.set(r._id, JSON.stringify(r));
       originalRef.current = m;
+    } catch(e) {
+
     } finally {
       setLoading(false);
     }
@@ -170,7 +195,7 @@ export default function AdminLotsPage({ apiBase }) {
     const lotId = String(addForm.lotId || "").trim();
     const name = String(addForm.name || "").trim();
     if (!lotId || !name) {
-      alert("lotId and name are required");
+      toast.error("lotId 和 停車場名稱 是必填欄位");
       return;
     }
 
@@ -196,12 +221,13 @@ export default function AdminLotsPage({ apiBase }) {
 
     const data = await res.json();
     if (!res.ok) {
-      alert(data?.error || "create failed");
+      toast.error(data?.error || "新增停車場資料失敗");
       return;
     }
 
     closeAddModal();
     await load();
+    toast.success("新增成功");
   }
 
   function updateCell(id, key, value) {
@@ -226,10 +252,11 @@ export default function AdminLotsPage({ apiBase }) {
 
     const data = await res.json();
     if (!res.ok) {
-      alert(data?.error || "save failed");
+      toast.error(data?.error || "更新資料失敗");
       return;
     }
     await load();
+    toast.success(`已儲存 ${dirty.length} 筆變更`);
   }
 
   async function addRow() {
@@ -245,11 +272,20 @@ export default function AdminLotsPage({ apiBase }) {
       headers: { "x-admin-key": adminKey },
     });
     const data = await res.json();
-    if (!res.ok) return alert(data?.error || "delete failed");
+    if (!res.ok) return toast.error(data?.error || "刪除停車場資料失敗");
     await load();
+    toast.success("已刪除");
   }
 
   const totalPages = Math.max(1, Math.ceil((meta.total || 0) / PAGE_SIZE));
+  const shownCount = rows.length;
+  const matchedTotal = meta.total || 0;
+  const totalAll = meta.totalAll ?? null;
+
+  const isFiltering = district !== "all" || !!search.trim();
+  const showingLabel = isFiltering
+    ? `顯示中 ${shownCount}（符合條件 ${matchedTotal}${totalAll != null ? ` / 全部 ${totalAll}` : ""}）`
+    : `顯示中 ${shownCount} / ${matchedTotal}`;
 
   function tsvCell(v) {
     if (v == null) return "";
@@ -297,116 +333,157 @@ export default function AdminLotsPage({ apiBase }) {
     }
   }
 
-  return (
-    <div
-      style={{
-        padding: 16,
-        fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-        height: "100vh",
-        boxSizing: "border-box",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-      }}
-    >
-      <div className="admin-lot-action-outer-row"
-        style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}
-      >
+  const districtOptions = useMemo(() => {
+    return (meta?.allDistricts || []);
+  }, [meta]);
 
-        <div className="admin-lot-password-row">
-          <div style={{ fontWeight: 700 }}>管理停車場資訊</div>
-          <div
-            style={{
-              display: "flex",
-              flex: "1 1 0%",
-              alignItems: "center",
-              margin: "0px 10px 0px 10px",
-              padding: "0px 10px 0px 10px",
-              borderLeft: "1px solid #ccc",
-              borderRight: "1px solid #ccc"
-            }}
-          >
-            <p className="mb-0">管理員密碼：</p>
-            <input
-              placeholder="輸入密碼 (自動儲存於主機上)"
-              value={adminKey}
-              onChange={(e) => {
-                setAdminKey(e.target.value);
-                localStorage.setItem("adminKey", e.target.value);
-              }}
-              style={{ flex: 1, padding: "8px 10px", border: "1px solid #ddd", borderRadius: 8 }}
-            />
+  const colWidths = useMemo(() => ([
+    STICKY_COL_W.copy,
+    STICKY_COL_W.lotId,
+    STICKY_COL_W.name,
+    340, // addressZh
+    120, // district
+    140, // lat
+    140, // lng
+    100, // vacancy
+    70,  // yyyy
+    60,  // mm
+    60,  // dd
+    60,  // hh
+    60,  // min
+    90,  // status
+    200, // note
+    120, // showOnMap
+    90,  // delete
+  ]), []);
+
+  return (
+    <div className="admin-lot-outer-div">
+
+      <div className="admin-lot-action-outer-row">
+
+        <div className="admin-lot-title-row">
+          <div className="admin-lot-title">
+            管理停車場資訊
           </div>
         </div>
 
-        <div className="admin-lot-action-row">
-          <button className="admin-lot-action-btn"
-            onClick={load}
-          >
-            重新讀取 / 確認密碼
-          </button>
-          <button 
-            className={`admin-lot-action-btn ` 
-              + (dirtyIds.size>0 ? "should-save ": " ")
-            }
-            onClick={saveAll} 
-            disabled={!dirtyIds.size} 
-          >
-            儲存變更 ({dirtyIds.size})
-          </button>
-          <button className="admin-lot-action-btn"
-            onClick={addRow} 
-          >
-            + 新增
-          </button>
+        <div className="admin-lot-password-outer-div">
+          <div className="admin-lot-password-row">
+            <div>
+              <p className="mb-0 admin-lot-password-label">管理員密碼：</p>
+            </div>
+            <div style={{ maxWidth: "calc(100% - 90px)" }}>
+              <input className="admin-lot-password-input"
+                placeholder="輸入密碼 (自動儲存於主機上)"
+                value={adminKey}
+                onChange={(e) => {
+                  setAdminKey(e.target.value);
+                  setIsAdminConfirmed(false);
+                  localStorage.setItem("adminKey", e.target.value);
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="admin-lot-action-row">
+            <button className="admin-lot-action-btn"
+              onClick={load}
+            >
+              {isAdminConfirmed ? "重新讀取" : "確認密碼"}
+            </button>
+            <button 
+              className={`admin-lot-action-btn ` 
+                + (dirtyIds.size>0 ? "should-save ": " ")
+              }
+              onClick={saveAll} 
+              disabled={!dirtyIds.size} 
+            >
+              儲存變更 ({dirtyIds.size})
+            </button>
+            <button className="admin-lot-action-btn"
+              onClick={addRow} 
+            >
+              + 新增
+            </button>
+          </div>
         </div>
+
       </div>
 
-      <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-        <select value={district} onChange={(e) => setDistrict(e.target.value)} style={{ padding: "8px 10px" }}>
-          <option value="all">所有區域</option>
-          <option value="大同區">大同區</option>
-          <option value="中山區">中山區</option>
-          {/* add more as needed */}
-        </select>
+      <div className="admin-lot-search-outer-row">
 
-        <input
-          placeholder="搜尋 (lotId/停車場名稱/地址/備註)"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              setPage(1);
-              load();
-            }
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "10px",
+            alignItems: "center"
           }}
-          style={{ flex: 1, padding: "8px 10px", border: "1px solid #ddd", borderRadius: 8 }}
-        />
+        >
+          <div>
+            <select
+              className="admin-lot-search-district-select"
+              value={district}
+              onChange={(e) => setDistrict(e.target.value)}
+            >
+              <option value="all">所有區域</option>
+              {districtOptions.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </div>
 
-        <button onClick={() => { setPage(1); load(); }} style={{ padding: "8px 10px" }}>
-          開始搜尋
-        </button>
+          <div className="admin-lot-input-div"
+            style={{ display: "flex", gap: "10px" }}
+          >
+            <input
+              className="admin-lot-search-input"
+              placeholder="搜尋 (lotId/停車場名稱/地址/備註)"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setPage(1);
+                  load();
+                }
+              }}
+            />
 
-        <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
-          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>‹</button>
-          <div>{page} / {totalPages}</div>
-          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>›</button>
+            <button className="admin-lot-search-btn"
+              onClick={() => { setPage(1); load(); }} 
+            >
+              搜尋
+            </button>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            style={{
+              fontSize: 13,
+              color: "#666",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {isFiltering ? showingLabel : null}
+          </div>
+
+          <div className="admin-lot-page-navigate">
+            <button className="admin-lot-navigate-btn"
+              onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>
+              <FaChevronLeft size={18} />
+            </button>
+            <div className="admin-lot-navigate-label">{page} / {totalPages}</div>
+            <button className="admin-lot-navigate-btn"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
+              <FaChevronRight size={18} />
+            </button>
+          </div>
         </div>
       </div>
 
-      {loading && <div style={{ padding: 8 }}>Loading...</div>}
-
-      <div
-        style={{
-          flex: 1,
-          overflow: "auto",
-          border: "1px solid #e6e6e6",
-          borderTop: "none",
-          borderLeft: "1px solid #c3c2c3",
-          borderRight: "3px solid #c3c2c3",
-          scrollbarWidth: "thin"
-        }}
-      >
+      <div className="admin-lot-table-outer-div">
         <table
           style={{
             /*borderCollapse: "separate",*/
@@ -418,26 +495,9 @@ export default function AdminLotsPage({ apiBase }) {
         >
 
           <colgroup>
-            {/* sticky left 3 cols */}
-            <col style={{ width: STICKY_COL_W.copy }} />
-            <col style={{ width: STICKY_COL_W.lotId }} />
-            <col style={{ width: STICKY_COL_W.name }} />
-
-            {/* the rest (match your input widths / intended widths) */}
-            <col style={{ width: 340 }} /> {/* addressZh */}
-            <col style={{ width: 120 }} /> {/* district */}
-            <col style={{ width: 140 }} /> {/* lat */}
-            <col style={{ width: 140 }} /> {/* lng */}
-            <col style={{ width: 100 }} /> {/* vacancy */}
-            <col style={{ width: 70 }} />  {/* yyyy */}
-            <col style={{ width: 60 }} />  {/* mm */}
-            <col style={{ width: 60 }} />  {/* dd */}
-            <col style={{ width: 60 }} />  {/* hh */}
-            <col style={{ width: 60 }} />  {/* min */}
-            <col style={{ width: 90 }} />  {/* status */}
-            <col style={{ width: 200 }} /> {/* note */}
-            <col style={{ width: 120 }} /> {/* showOnMap */}
-            <col style={{ width: 90 }} />  {/* delete */}
+            {colWidths.map((w, i) => (
+              <col key={i} style={{ width: w }} />
+            ))}
           </colgroup>
 
           <thead style={{ position: "sticky", 
@@ -608,8 +668,9 @@ export default function AdminLotsPage({ apiBase }) {
             })}
             {!loading && rows.length === 0 && (
               <tr>
-                <td colSpan={7} style={{ padding: 16, color: "#666", textAlign: "center" }}>
-                  {adminKey ? "No rows found." : "輸入管理員密碼"}
+                {/* colSpan={7} is correct visually */}
+                <td colSpan={7} className="admin-lot-td-no-data">
+                  {isAdminConfirmed ? "沒有資料" : "輸入管理員密碼"}
                 </td>
               </tr>
             )}
@@ -769,8 +830,8 @@ export default function AdminLotsPage({ apiBase }) {
         </div>
       )}
 
-      <div style={{ marginTop: 10, color: "#666", flex: "0 0 auto" }}>
-        Tip: open <code>?admin=1</code> to access this page. Press Enter in search box to run search.
+      <div className="admin-lot-tip-div">
+        提示：主網址後方加上<code>?admin=1</code>為管理後台。可使用搜尋功能。
       </div>
     </div>
   );

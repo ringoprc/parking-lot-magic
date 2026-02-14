@@ -1,27 +1,121 @@
 /* frontend/src/pages/AdminLotsPage.css */
+.admin-lot-outer-div {
+  padding: 16px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
 .admin-lot-action-outer-row {
   display: flex;
+  padding-left: 15px;
   flex-direction: row;
   align-items: center;
+  margin-bottom: 10px;
 }
 
 @media (max-width: 600px) {
   .admin-lot-action-outer-row {
+    flex-direction: column;
+    align-items: flex-start;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #7aa6c8;
+    margin-bottom: 15px;
+    padding-left: 0px;
+  }
+}
+
+.admin-lot-title-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .admin-lot-title-row {
+    width: 100%;
+    align-items: flex-start;
     flex-direction: column
+  }
+}
+
+.admin-lot-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .admin-lot-title {
+    padding-left: 12px;
+    margin-bottom: 10px;
+    width: 100%;
+    border-bottom: 1px solid #7aa6c8;
+    padding-bottom: 8px;
+  }
+}
+
+.admin-lot-password-outer-div {
+  display: flex;
+  gap: 10px;
+  margin-left: 20px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .admin-lot-password-outer-div {
+    margin-left: 0px;
+    gap: 5px;
+    flex-direction: column;
   }
 }
 
 .admin-lot-password-row {
   display: flex;
-  flex-direction: row;
-  align-items: center;
   flex: 1 1 0%;
+  align-items: center;
+  margin: 0px 10px;
+  padding: 0px 20px 0px 15px;
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  margin-left: 14px;
 }
 
 @media (max-width: 600px) {
   .admin-lot-password-row {
-    flex-direction: column
+    max-width: calc(100vw - 69px);
+    padding-left: 0px;
+    border-left: none;
+    border-right: none;
+    margin-bottom: 5px;
+    gap: 5px;
+  }
+}
+
+.admin-lot-password-label {
+
+}
+
+@media (max-width: 600px) {
+  .admin-lot-password-label {
+    font-size: 14px;
+    min-width: 85px;
+  }
+}
+
+.admin-lot-password-input {
+  padding: 8px 10px;
+  border: 1px solid rgb(221, 221, 221);
+  border-radius: 10px;
+  max-width: 100%;
+}
+
+@media (max-width: 600px) {
+  .admin-lot-password-input {
+    font-size: 14px;
   }
 }
 
@@ -34,13 +128,24 @@
 
 @media (max-width: 600px) {
   .admin-lot-action-row {
-    flex-direction: column
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    padding-left: 10px;
   }
 }
 
 .admin-lot-action-btn {
-  padding: 8px 10px;
-  border-radius: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+@media (max-width: 600px) {
+  .admin-lot-action-btn {
+    font-size: 12px;
+  }
 }
 
 .admin-lot-action-btn:hover {
@@ -57,7 +162,121 @@
   border: 1px solid orange;
 }
 
-.admin-lot-border-right-td{
+.admin-lot-search-outer-row {
+  display: flex;
+  gap: 10px;
+  padding-left: 15px;
+  margin-bottom: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 20px;
+}
+
+@media (max-width: 600px) {
+  .admin-lot-search-outer-row {
+    flex-direction: column;
+    align-items: flex-start;
+    padding-left: 8px;
+  }
+}
+
+.admin-lot-search-district-select {
+  padding: 5px 10px;
+  border: 1px solid #7aa5c7;
+  border-radius: 10px;
+  color: #2d71a7;
+  font-size: 15px;
+  outline: none;
+}
+
+@media (max-width: 600px) {
+  .admin-lot-search-district-select {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+}
+
+.admin-lot-input-div {
+  display: flex;
+  gap: 10px;
+}
+
+@media (max-width: 600px) {
+  .admin-lot-input-div {
+    width: 100%;
+  }
+}
+
+.admin-lot-search-input {
+  flex: 1 1 0%;
+  padding: 8px 12px;
+  border: 1px solid rgb(221, 221, 221);
+  border-radius: 8px;
+  font-size: 14px;
+  min-width: 350px;
+}
+
+@media (max-width: 600px) {
+  .admin-lot-search-input {
+    font-size: 12px;
+    min-width: unset;
+  }
+}
+
+.admin-lot-search-btn {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.admin-lot-page-navigate {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 600px) {
+  .admin-lot-page-navigate {
+    margin-left: unset;
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+.admin-lot-navigate-label {
+  margin: 0px 8px;
+  font-size: 16px;
+}
+
+.admin-lot-navigate-btn {
+  border-radius: 5px;
+  padding: 5px 10px 8px 10px;
+  border: 1px solid #ccc;
+  color: #777;
+}
+
+@media (max-width: 600px) {
+  .admin-lot-navigate-btn {
+    border-radius: 10px;
+    padding: 3px 7px 5px 7px;
+    border: 1px solid #ccc;
+  }
+}
+
+.admin-lot-table-outer-div {
+  flex: 1 1 0%;
+  padding-bottom: 10px;
+  overflow: auto;
+  border-top: none;
+  border-right: 3px solid rgb(195, 194, 195);
+  border-bottom: 1px solid rgb(230, 230, 230);
+  border-left: 1px solid rgb(195, 194, 195);
+  border-image: initial;
+  scrollbar-width: thin;
+}
+
+.admin-lot-border-right-td {
   position: sticky;           /* you already have this */
   background: #fff;           /* IMPORTANT: cover cells behind */
   z-index: 20;                 /* higher than normal cells */
@@ -93,11 +312,20 @@
   border: 1px solid #FF5722;
 }
 
+.admin-lot-td-no-data {
+  padding: 16px;
+  color: rgb(102, 102, 102);
+  text-align: left;
+  padding-left: 35vw;
+  padding-top: 10vh;
+}
+
 .admin-lot-td-input {
   border-radius: 6px;
   font-size: 15px;
   border: 1px solid #aaa;
   padding: 5px 12px 5px 10px;
+  background-color: #fdfdfd;
 }
 
 .admin-lot-td-select {
@@ -105,3 +333,18 @@
   padding: 3px 0px 3px 6px;
   font-size: 13px;
 }
+
+.admin-lot-tip-div {
+  margin-top: 10px;
+  color: rgb(102, 102, 102);
+  flex: 0 0 auto;
+}
+
+@media (max-width: 600px) {
+  .admin-lot-tip-div {
+    font-size: 13.5px;
+    padding-left: 10px;
+  }
+}
+
+

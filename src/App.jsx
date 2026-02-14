@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLots } from "./hooks/useLots";
 import { haversineMeters } from "./utils/geo";
 
+import { Toaster } from "react-hot-toast";
 import { APIProvider } from "@vis.gl/react-google-maps";
 
 import LotsSidebar from "./components/LotsSidebar";
@@ -57,21 +58,6 @@ export default function App() {
   const [myPos, setMyPos] = useState(null); // {lat,lng}
   const [myAcc, setMyAcc] = useState(null); // meters
   const afterLocateRef = useRef(null);
-
-  //-----------------------------
-  // OCR
-  //-----------------------------
-
-  const showOcr = new URLSearchParams(window.location.search).get("ocr") === "1";
-  if (showOcr) { return <DigitOcrTest />; }
-
-
-  //-----------------------------
-  // Admin
-  //-----------------------------
-  const showAdmin = new URLSearchParams(window.location.search).get("admin") === "1";
-  if (showAdmin) return <AdminLotsPage apiBase={apiBase} />;
-
 
   //-----------------------------
   // Desktop Sidebar resize
@@ -260,7 +246,23 @@ export default function App() {
   const isMobile = useMediaQuery("(max-width: 900px)");
   const flyToOffset = isMobile ? -0.002 : 0.002;
 
-  return (
+
+
+  //-----------------------------
+  // OCR
+  //-----------------------------
+
+  const showOcr = new URLSearchParams(window.location.search).get("ocr") === "1";
+
+  //-----------------------------
+  // Admin
+  //-----------------------------
+  const showAdmin = new URLSearchParams(window.location.search).get("admin") === "1";
+
+  let page = null;
+  if (showOcr) page = <DigitOcrTest />;
+  else if (showAdmin) page = <AdminLotsPage apiBase={apiBase} />;
+  else page = (
     <APIProvider
       apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
       libraries={["places", "marker"]}
@@ -388,7 +390,15 @@ export default function App() {
 
         </div>
       </div>
+      <Toaster position="top-center" toastOptions={{ duration: 2000 }} />
     </APIProvider>
+  );
+
+  return (
+    <>
+      {page}
+      <Toaster position="top-center" toastOptions={{ duration: 2000 }} />
+    </>
   );
 }
 

@@ -107,13 +107,13 @@
 }
 
 .al-select {
-  width: 100%;
   padding: 8px 44px 8px 10px;   /* extra right padding for the arrow */
   border: 1px solid #7aa5c7;
   border-radius: 10px;
   color: #2d71a7;
   font-size: 14px;
   outline: none;
+  width: 100%;
 
   appearance: none;
   -webkit-appearance: none;
@@ -122,6 +122,7 @@
 
 .al-select-div {
   position: relative;
+  width: -webkit-fill-available;
 }
 
 /* custom "V" */
@@ -163,6 +164,7 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
+  scrollbar-width: thin;
   padding: 20px;
   padding-right: 30px;
 }
@@ -190,6 +192,20 @@
 
 .al-item.sel {
   border-color:#2196f3;
+  background: #03A9F4;
+}
+
+.al-item.sel .al-item-title {
+  color: white;
+}
+
+.al-item.sel .al-item-sub {
+  color: white;
+}
+
+.al-item.sel .al-item-device-count {
+  color: white;
+  font-weight: 600;
 }
 
 .al-item-main {
@@ -254,19 +270,25 @@
   color: #2196F3;
 }
 
-.al-empty{
+.al-empty {
   padding: 12px;
-  color:#888;
+  color: #888;
+  text-align: center;
   font-size: 13px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .al-center {
   padding: 14px;
   display: flex;
-  align-items:center;
+  align-items: center;
   gap: 8px;
   color: #007eb6;
   font-size: 13px;
+  justify-content: center;
 }
 
 .al-custom-spinner {
@@ -280,6 +302,10 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  height: 77px;
+  padding: 10px 6px 10px 10px;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 16px;
 }
 
 .al-lotname {
@@ -303,11 +329,13 @@
   max-height: 200px;
   overflow: auto;
   border-radius: 12px;
-  padding: 6px 10px;
+  padding: 10px 14px;
   background: #f7f7f7;
+  min-height: 100px;
 }
 
-.al-suggest-item{
+.al-suggest-item {
+  width: 100%;
   text-align: left;
   border: 1px solid #ccc;
   background:#fff;
@@ -315,11 +343,33 @@
   padding: 8px 10px;
   cursor: pointer;
 }
-.al-suggest-item:hover{ border-color:#2196f3; }
-.al-suggest-id{ font-weight: 800; font-size: 13px; color:#222; }
-.al-suggest-sub{ font-size: 12px; color:#777; margin-top: 2px; }
+.al-suggest-item:hover { 
+  border-color:#2196f3; 
+}
+.al-suggest-id { 
+  font-weight: 800; 
+  font-size: 13px; 
+  color:#222; 
+}
+.al-suggest-sub { 
+  font-size: 12px; 
+  color:#777; 
+  margin-top: 2px; 
+}
 
-/* modal */
+.al-suggest-loading {
+  display: flex;
+  padding: 12px;
+  color: #888;
+  font-size: 13px;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---------------------------- */
+/*   modal                      */
+/* ---------------------------- */
 .al-modal-backdrop{
   position: fixed;
   inset: 0;
@@ -329,22 +379,39 @@
   justify-content:center;
   z-index: 9999;
 }
-.al-modal{
+
+.al-modal {
   width: min(520px, calc(100vw - 24px));
   background:#fff;
   border-radius: 14px;
   border: 1px solid #eee;
   padding: 14px;
 }
+
 .al-modal-title{
   font-weight: 900;
   font-size: 16px;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 6px;
+  padding-left: 6px;
+  margin-bottom: 12px;
 }
+
 .al-modal-body{
   margin-top: 10px;
   font-size: 14px;
   color:#333;
+  padding-left: 10px;
 }
+
+.al-new-group-name-input-div {
+  padding: 10px 20px;
+}
+
+.al-new-group-name-input-div .al-input {
+  width: 100%;
+}
+
 .al-modal-actions{
   margin-top: 14px;
   display:flex;

@@ -28,6 +28,11 @@ export default function AdminLinkagePage({ apiBase }) {
     localStorage.setItem("adminKey", v);
   }
 
+
+  //--------------------------------------------
+  // States
+  //--------------------------------------------
+
   // ===== Left: groups + lots in selected group
   const [groups, setGroups] = useState([]);
   const [groupId, setGroupId] = useState("all");
@@ -48,6 +53,21 @@ export default function AdminLinkagePage({ apiBase }) {
   const [deviceQuery, setDeviceQuery] = useState("");
   const [deviceSuggestions, setDeviceSuggestions] = useState([]);
   const [loadingSuggest, setLoadingSuggest] = useState(false);
+  const [deviceSuggestionsLoaded, setDeviceSuggestionsLoaded] = useState(false);
+
+  //--------------------------------------------
+  // Modals
+  //--------------------------------------------
+  // create group modal
+  const [createGroupModal, setCreateGroupModal] = useState({
+    open: false,
+    name: "",
+  });
+
+  // delete group modal
+  const [deleteGroupModal, setDeleteGroupModal] = useState({
+    open: false,
+  });
 
   // relink confirm modal
   const [relinkModal, setRelinkModal] = useState({
@@ -62,6 +82,10 @@ export default function AdminLinkagePage({ apiBase }) {
     open: false,
     deviceId: "",
   });
+
+
+
+
 
   function headersJson() {
     return {
@@ -147,12 +171,7 @@ export default function AdminLinkagePage({ apiBase }) {
   async function suggestDevices(q) {
     if (!adminKey) return;
     const query = q.trim();
-    /*
-    if (!query) {
-      setDeviceSuggestions([]);
-      return;
-    }
-    */
+    setDeviceSuggestionsLoaded(false);
 
     setLoadingSuggest(true);
     try {
@@ -168,9 +187,80 @@ export default function AdminLinkagePage({ apiBase }) {
       setDeviceSuggestions([]);
     } finally {
       setLoadingSuggest(false);
+      setDeviceSuggestionsLoaded(true);
     }
   }
 
+
+  //--------------------------------------------
+  // Add and Delete Lot Groups
+  //--------------------------------------------
+
+  async function createGroup(name) {
+    if (!adminKey) return;
+    const n = String(name ?? "").trim();
+    if (!n) return toast.error("請輸入群組名稱");
+
+    try {
+      const res = await fetch(`${apiBase}/api/admin/parking-lot-groups`, {
+        method: "POST",
+        headers: headersJson(),
+        body: JSON.stringify({ name: n }),
+      });
+      const data = await safeJson(res);
+      if (!res.ok) throw new Error(data?.error || "create group failed");
+
+      toast.success("已新增群組");
+      await fetchGroups();               // refresh list
+      const newId = data?.row?._id;
+      if (newId) setGroupId(String(newId)); // auto-select new group
+      setCreateGroupModal({ open: false, name: "" });
+    } catch (e) {
+      toast.error(String(e?.message || e));
+    }
+  }
+
+  async function deleteGroup() {
+    if (!adminKey) return;
+    if (!groupId || groupId === "all") return toast.error("請先選擇一個群組");
+
+    try {
+      const res = await fetch(`${apiBase}/api/admin/parking-lot-groups/${groupId}`, {
+        method: "DELETE",
+        headers: headersAuth(),
+      });
+      const data = await safeJson(res);
+      if (!res.ok) throw new Error(data?.error || "delete group failed");
+
+      toast.success("已刪除群組");
+
+      // reset left
+      setGroupId("all");
+      setGroupLots([]);
+
+      // reset right (so you don’t keep editing devices for a stale context)
+      setSelectedLot(null);
+      setLotDevices([]);
+      setLoadingLotDevices(false);
+
+      setDeviceQuery("");
+      setDeviceSuggestions([]);
+      setLoadingSuggest(false);
+
+      setRelinkModal({ open: false, deviceId: "", currentLotId: "", currentLotName: "" });
+      setUnlinkModal({ open: false, deviceId: "" });
+
+      await fetchGroups();
+      setDeleteGroupModal({ open: false });
+    } catch (e) {
+      toast.error(String(e?.message || e));
+    }
+  }
+
+
+  //--------------------------------------------
+  // Add and Delete Lots in Groups
+  //--------------------------------------------
   async function addLotToGroup(lot) {
     if (!adminKey) return;
     if (!groupId || groupId === "all") {
@@ -243,6 +333,11 @@ export default function AdminLinkagePage({ apiBase }) {
     }
   }
 
+
+  //--------------------------------------------
+  // Link and Unlink Device 
+  //--------------------------------------------
+
   async function linkDeviceToLot(deviceId, force = false) {
     if (!adminKey) return;
     if (!selectedLot?._id) {
@@ -289,43 +384,69 @@ export default function AdminLinkagePage({ apiBase }) {
     }
   }
 
-  // ===== Initial loads
+
+  function onPickLot(lot) {
+    setSelectedLot(lot);
+    setLotDevices([]);
+    setDeviceQuery("");
+    setDeviceSuggestions([]);
+    setDeviceSuggestionsLoaded(false);
+    fetchLotDevices(lot);
+    suggestDevices(deviceQuery);
+  }
+
+  function onDragEnd(result) {
+    const { source, destination } = result;
+    if (!destination) return;
+
+    // Drag from allLots -> groupLots (add to group)
+    if (source.droppableId === "allLots" && destination.droppableId === "groupLots") {
+      const lot = visibleLots[source.index];
+      if (!lot) return;
+      addLotToGroup(lot);
+      return;
+    }
+
+    // Reorder inside group list
+    if (source.droppableId === "groupLots" && destination.droppableId === "groupLots") {
+      const next = reorder(groupLots, source.index, destination.index);
+      setGroupLots(next);
+      persistGroupOrder(next);
+      return;
+    }
+
+  }
+
+
+  //----------------------------------------
+  // Initial loads
+  //----------------------------------------
+  // Fetch Groups
   useEffect(() => {
     if (!adminKey) return;
     fetchGroups().catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminKey]);
 
+  // Fetch Lots in Groups
   useEffect(() => {
     if (!adminKey) return;
     fetchGroupLots(groupId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminKey, groupId]);
 
-
-  //--------------------------------
-  // lots search (debounced)
-  //--------------------------------
-  /*
+  // Fetch All Lots
   useEffect(() => {
     if (!adminKey) return;
-    const t = setTimeout(() => {
-      fetchAllLots();
-    }, 250);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adminKey, lotSearch]);
-  */
-  // Fetch all lots once (or when adminKey changes)
-  useEffect(() => {
-    if (!adminKey) return;
-    fetchAllLots(); // loads the big list once
+    fetchAllLots();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminKey]);
 
 
+  //------------------------------------------
+  // Debounced device suggestions
+  //------------------------------------------
 
-  // device suggestions (debounced)
   useEffect(() => {
     if (!adminKey) return;
     const t = setTimeout(() => suggestDevices(deviceQuery), 180);
@@ -333,8 +454,22 @@ export default function AdminLinkagePage({ apiBase }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminKey, deviceQuery]);
 
-  // derived
-  const groupLotIdSet = useMemo(() => new Set(groupLots.map((x) => String(x._id))), [groupLots]);
+  const filteredDeviceSuggestions = useMemo(() => {
+    if (!selectedLot?._id) return deviceSuggestions;
+
+    return deviceSuggestions.filter(
+      (d) => !(d.parkingLotId._id && String(d.parkingLotId._id) === String(selectedLot._id))
+    );
+  }, [deviceSuggestions, selectedLot?._id]);
+
+
+  //---------------------------------------------
+  // Derived
+  //---------------------------------------------
+
+  const groupLotIdSet = useMemo(() => 
+    new Set(groupLots.map((x) => String(x._id)))
+  , [groupLots]);
 
   const visibleLots = useMemo(() => {
     const q = lotSearch.trim().toLowerCase();
@@ -347,43 +482,11 @@ export default function AdminLinkagePage({ apiBase }) {
     });
   }, [allLots, lotSearch]);
 
-  const filteredDeviceSuggestions = useMemo(() => {
-    if (!selectedLot?._id) return deviceSuggestions;
+  
 
-    return deviceSuggestions.filter(
-      (d) => !(d.parkingLotId && String(d.parkingLotId) === String(selectedLot._id))
-    );
-  }, [deviceSuggestions, selectedLot?._id]);
-
-  function onPickLot(lot) {
-    setSelectedLot(lot);
-    setLotDevices([]);
-    setDeviceQuery("");
-    setDeviceSuggestions([]);
-    fetchLotDevices(lot);
-  }
-
-  function onDragEnd(result) {
-    const { source, destination } = result;
-    if (!destination) return;
-
-    // reorder inside group list
-    if (source.droppableId === "groupLots" && destination.droppableId === "groupLots") {
-      const next = reorder(groupLots, source.index, destination.index);
-      setGroupLots(next);
-      persistGroupOrder(next);
-      return;
-    }
-
-    // drag from allLots -> groupLots (add)
-    if (source.droppableId === "allLots" && destination.droppableId === "groupLots") {
-      const lot = visibleLots[source.index];
-      if (!lot) return;
-      addLotToGroup(lot);
-      return;
-    }
-  }
-
+  //---------------------------------------------
+  // Return
+  //---------------------------------------------
   return (
     <div className="al-outer">
       {/* Top admin key bar */}
@@ -419,24 +522,62 @@ export default function AdminLinkagePage({ apiBase }) {
 
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="al-cols">
+
           {/* ============ LEFT: group lots ============ */}
           <div className="al-col">
             <div className="al-colhdr">
-              <div className="al-select-div">
-                <select
-                  className="al-select"
-                  value={groupId}
-                  onChange={(e) => setGroupId(e.target.value)}
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: "30px"
+                }}
+              >
+                <div className="al-select-div">
+                  <select
+                    className="al-select"
+                    value={groupId}
+                    onChange={(e) => setGroupId(e.target.value)}
+                  >
+                    <option value="all">選擇群組…</option>
+                    {groups.map((g) => (
+                      <option key={g._id} value={g._id}>
+                        {g.name || String(g._id)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "4px"
+                  }}
                 >
-                  <option value="all">選擇群組…</option>
-                  {groups.map((g) => (
-                    <option key={g._id} value={g._id}>
-                      {g.name || String(g._id)}
-                    </option>
-                  ))}
-                </select>
+                  <button
+                    className="al-btn"
+                    onClick={() => setCreateGroupModal({ open: true, name: "" })}
+                    title="新增群組"
+                  >
+                    新增
+                  </button>
+
+                  <button
+                    className="al-btn danger"
+                    disabled={!groupId || groupId === "all"}
+                    onClick={() => setDeleteGroupModal({ open: true })}
+                    title="刪除此群組"
+                  >
+                    刪除
+                  </button>
+                </div>
               </div>
-              <div className="al-hint">拖曳中間停車場到這裡加入群組</div>
+
+              <div className="al-hint">
+                <span>拖曳中間停車場到這裡加入群組</span>
+                <span>・{groupLots.length} 個停車場</span>
+              </div>
             </div>
 
             <div className="al-scroll">
@@ -459,7 +600,8 @@ export default function AdminLinkagePage({ apiBase }) {
                               ref={p.innerRef}
                               {...p.draggableProps}
                               {...p.dragHandleProps}
-                              className="al-item"
+                              className={`al-item ${selectedLot && String(selectedLot._id) === String(l._id) ? "sel" : ""}`}
+                              onClick={() => onPickLot(l)}
                             >
                               <div className="al-item-main">
                                 <div className="al-item-title">
@@ -473,7 +615,10 @@ export default function AdminLinkagePage({ apiBase }) {
                               <button
                                 className="al-xbtn"
                                 title="移除"
-                                onClick={() => removeLotFromGroup(l._id)}
+                                onClick={() => {
+                                  e.stopPropagation();
+                                  removeLotFromGroup(l._id)
+                                }}
                               >
                                 ×
                               </button>
@@ -540,7 +685,7 @@ export default function AdminLinkagePage({ apiBase }) {
                                   </div>
                                 </div>
 
-                                {inGroup ? <div className="al-badge">in group</div> : null}
+                                {inGroup ? <div className="al-badge">群組</div> : null}
 
                                 <div>
                                   <span className={"al-item-device-count " + (l?.deviceCount > 0 ? "has-device" : " ")}>
@@ -587,52 +732,63 @@ export default function AdminLinkagePage({ apiBase }) {
                     />
                   </div>
 
-                  <div className="al-suggest-title-label-div">
-                    <p className="mb-0">可選擇的裝置列表</p>
-                  </div>
-
-                  {loadingSuggest ? (
-                    <div className="al-suggest al-center">
-                      <Spinner className="al-custom-spinner" size="sm" /> 正在載入
-                    </div>
-                  ) : filteredDeviceSuggestions.length ? (
-                    <div className="al-suggest">
-                      {filteredDeviceSuggestions.slice(0, 10).map((d) => (
-                        <button
-                          key={d.deviceId}
-                          className="al-suggest-item"
-                          onClick={() => {
-                            const cur = d.parkingLotId;
-                            if (cur && String(cur) !== String(selectedLot._id)) {
-                              setRelinkModal({
-                                open: true,
-                                deviceId: d.deviceId,
-                                currentLotId: String(cur),
-                                currentLotName: d.currentLotName || "",
-                              });
-                              return;
-                            }
-                            linkDeviceToLot(d.deviceId, false);
-                          }}
-                        >
-                          <div className="al-suggest-id">{d.deviceId}</div>
-                          {d.parkingLotId ? (
-                            <div className="al-suggest-sub">已連結到：{String(d.currentLotName)}</div>
-                          ) : (
-                            <div className="al-suggest-sub">not linked</div>
+                  {(deviceSuggestionsLoaded || loadingSuggest) && (
+                    <>
+                      <div className="al-suggest-title-label-div">
+                        <p className="mb-0">可選擇的裝置列表 ({filteredDeviceSuggestions?.length || 0})</p>
+                      </div>
+                   
+                      <div className="al-suggest">
+                        {filteredDeviceSuggestions.length ? (
+                          <div>
+                            {filteredDeviceSuggestions.slice(0, 10).map((d) => (
+                              <button
+                                key={d.deviceId}
+                                className="al-suggest-item"
+                                onClick={() => {
+                                  const cur = d.parkingLotId;
+                                  if (cur && String(cur) !== String(selectedLot._id)) {
+                                    setRelinkModal({
+                                      open: true,
+                                      deviceId: d.deviceId,
+                                      currentLotId: String(cur),
+                                      currentLotName: d.currentLotName || "",
+                                    });
+                                    return;
+                                  }
+                                  linkDeviceToLot(d.deviceId, false);
+                                }}
+                              >
+                                <div className="al-suggest-id">{d.deviceId}</div>
+                                {d.parkingLotId ? (
+                                  <div className="al-suggest-sub">已連結到：{String(d.currentLotName)}</div>
+                                ) : (
+                                  <div className="al-suggest-sub">not linked</div>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          !loadingSuggest ? (
+                            <div className="al-suggest-loading">
+                              <Spinner className="al-custom-spinner" size="sm" /> 正在載入
+                            </div>
+                          ) : 
+                            <div className="al-empty">沒有可新增的裝置</div>
                           )}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
+                      </div>
+                    </>
+                  )}
+
                 </>
+
               ) : (
-                <div className="al-empty">沒有可新增的裝置</div>
+                <div className="al-empty">請先選擇停車場</div>
               )}
             </div>
 
             <div className="al-scroll">
-              {!selectedLot ? null : loadingLotDevices ? (
+              {!selectedLot ? null : (loadingLotDevices && false) ? (
                 <div className="al-center">
                   <Spinner className="al-custom-spinner" size="sm" /> 正在載入
                 </div>
@@ -665,6 +821,73 @@ export default function AdminLinkagePage({ apiBase }) {
           </div>
         </div>
       </DragDropContext>
+
+      {/* Create group modal */}
+      {createGroupModal.open ? (
+        <div
+          className="al-modal-backdrop"
+          onMouseDown={() => setCreateGroupModal({ open: false, name: "" })}
+        >
+          <div className="al-modal" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="al-modal-title">新增群組</div>
+            <div className="al-modal-body">
+              <div className="al-label" style={{ marginBottom: 6 }}>群組名稱</div>
+              <div className="al-new-group-name-input-div">
+                <input
+                  className="al-input"
+                  value={createGroupModal.name}
+                  onChange={(e) => setCreateGroupModal((p) => ({ ...p, name: e.target.value }))}
+                  placeholder="例如：中山區 A 組"
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="al-modal-actions">
+              <button className="al-btn" onClick={() => setCreateGroupModal({ open: false, name: "" })}>
+                取消
+              </button>
+              <button className="al-btn danger" onClick={() => createGroup(createGroupModal.name)}>
+                建立
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Delete group modal */}
+      {deleteGroupModal.open ? (
+        <div
+          className="al-modal-backdrop"
+          onMouseDown={() => setDeleteGroupModal({ open: false })}
+        >
+          <div className="al-modal" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="al-modal-title">確認刪除群組</div>
+            <div className="al-modal-body">
+              <div>
+                確定要刪除群組 [
+                <b>{groups.find((g) => String(g._id) === String(groupId))?.name || ""}</b>] 嗎？
+              </div>
+              <div style={{ marginTop: 8, opacity: 0.8 }}>
+                群組內的停車場不會被刪除，但會被移出群組。
+              </div>
+            </div>
+            <div className="al-modal-actions">
+              <button className="al-btn" onClick={() => setDeleteGroupModal({ open: false })}>
+                取消
+              </button>
+              <button
+                className="al-btn danger"
+                onClick={() => {
+                  setDeleteGroupModal({ open: false });
+                  deleteGroup();
+                }}
+              >
+                確認刪除
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* Unlink confirm modal */}
       {unlinkModal.open ? (

@@ -113,7 +113,7 @@ export default function AdminLinkagePage({ apiBase }) {
     if (!adminKey) return;
     setLoadingLots(true);
     try {
-      const qs = new URLSearchParams({ search: lotSearch.trim(), pageSize: "5000", page: "1" });
+      const qs = new URLSearchParams({ pageSize: "10000", page: "1" });
       const res = await fetch(`${apiBase}/api/admin/lots?${qs.toString()}`, {
         headers: headersAuth(),
       });
@@ -302,7 +302,11 @@ export default function AdminLinkagePage({ apiBase }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminKey, groupId]);
 
+
+  //--------------------------------
   // lots search (debounced)
+  //--------------------------------
+  /*
   useEffect(() => {
     if (!adminKey) return;
     const t = setTimeout(() => {
@@ -311,6 +315,15 @@ export default function AdminLinkagePage({ apiBase }) {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminKey, lotSearch]);
+  */
+  // Fetch all lots once (or when adminKey changes)
+  useEffect(() => {
+    if (!adminKey) return;
+    fetchAllLots(); // loads the big list once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adminKey]);
+
+
 
   // device suggestions (debounced)
   useEffect(() => {
@@ -380,6 +393,8 @@ export default function AdminLinkagePage({ apiBase }) {
         <div className="al-adminkey">
           <div className="al-label">管理員密碼</div>
           <input
+            type="text"
+            spellcheck="false"
             className="al-input"
             style={{ minWidth: 360 }}
             value={adminKey}
@@ -528,7 +543,7 @@ export default function AdminLinkagePage({ apiBase }) {
                                 {inGroup ? <div className="al-badge">in group</div> : null}
 
                                 <div>
-                                  <span className="al-item-device-count">
+                                  <span className={"al-item-device-count " + (l?.deviceCount > 0 ? "has-device" : " ")}>
                                     {`${Number.isFinite(Number(l.deviceCount)) ? l.deviceCount : 0}`}
                                   </span>
                                 </div>

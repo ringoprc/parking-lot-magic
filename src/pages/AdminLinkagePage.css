@@ -1,5 +1,5 @@
 /* frontend/src/pages/AdminLinkagePage.css */
-.al-outer{
+.al-outer {
   padding: 14px;
   height: 100vh;
   box-sizing: border-box;
@@ -12,7 +12,8 @@
 .al-topbar {
   display: flex;
   align-items: center;
-  gap: 50px;
+  row-gap: 10px;
+  column-gap: 50px;
   padding-left: 10px;
   flex-wrap: wrap;
   flex-shrink: 0;
@@ -43,6 +44,11 @@
   flex: 1 1 auto;
   min-width: 0;
   text-overflow: ellipsis;
+  outline: none;
+}
+
+.al-input:focus {
+  border: 1px solid #2196f3;
 }
 
 .al-btn {
@@ -59,23 +65,28 @@
   border-color:#2196f3; 
 }
 
-.al-btn.danger{
+.al-btn.danger {
   border-color:#EA4335;
   color:#C5221F;
 }
-.al-btn.danger:hover{ background:#fff0f0; }
+
+.al-btn.danger:hover { 
+  background: #fff0f0; 
+}
 
 .al-cols{
   margin-top: 12px;
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
-  grid-template-columns: 1fr 1.2fr 1fr;
-  gap: 25px;
+  grid-template-columns: 1.2fr 1.2fr 1fr;
+  gap: 20px;
 }
 
 @media (max-width: 600px){
-  .al-cols{ grid-template-columns: 1fr; }
+  .al-cols{ 
+    grid-template-columns: 1fr; 
+  }
 }
 
 .al-col {
@@ -168,21 +179,25 @@
   padding: 12px 16px 12px 16px;
   display:flex;
   align-items:center;
-  gap: 10px;
+  gap: 16px;
   background:#fff;
   cursor: pointer;
+}
+
+.al-item:hover {
+  background: #f8f8f8;
 }
 
 .al-item.sel {
   border-color:#2196f3;
 }
 
-.al-item-main{
+.al-item-main {
   flex: 1 1 auto;
   min-width: 0;
 }
 
-.al-item-title{
+.al-item-title {
   font-weight: 800;
   font-size: 14px;
   color:#222;
@@ -234,6 +249,11 @@
   color: #6f6f6f;
 }
 
+.al-item-device-count.has-device {
+  font-size: 20px;
+  color: #2196F3;
+}
+
 .al-empty{
   padding: 12px;
   color:#888;
@@ -250,9 +270,9 @@
 }
 
 .al-custom-spinner {
-  --bs-spinner-width: 18px;
-  --bs-spinner-height: 18px;
-  --bs-spinner-border-width: 1px;
+  --bs-spinner-width: 18px !important;
+  --bs-spinner-height: 18px !important;
+  --bs-spinner-border-width: 1px !important;
   margin-right: 6px;
 }
 

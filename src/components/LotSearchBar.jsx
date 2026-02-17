@@ -41,7 +41,6 @@ function classicFetchPredictions(query, opts) {
 }
 
 
-
 export default function LotSearchBar({
   placeholder = "搜尋地點/地址…",
   onPick, // (place) => void

@@ -43,13 +43,20 @@ div .gm-style-iw {
 }
 
 .title-bar {
-  height: 56px;
+  height: 76px;
   display: flex;
   align-items: center;
-  padding: 0 4px;
+  padding: 0 5px;
   border-bottom: 1px solid #e6e6e6;
   background: #fff;
   flex: 0 0 auto;
+}
+
+@media (max-width: 900px) {
+  .title-bar {
+    height: 56px;
+    padding: 0 4px;
+  }
 }
 
 .title-bar-inner {
@@ -63,8 +70,14 @@ div .gm-style-iw {
 .title-bar-left {
   display: flex;
   flex-direction: row;
-  gap: 0.3rem;
+  gap: 10px;
   align-items: center;
+}
+
+@media (max-width: 900px) {
+  .title-bar-left {
+    gap: 0.3rem;
+  }
 }
 
 .title-bar-logo-img {
@@ -73,9 +86,15 @@ div .gm-style-iw {
 }
 
 .title {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   color: black;
+}
+
+@media (max-width: 900px) {
+  .title {
+    font-size: 20px;
+  }
 }
 
 @media (max-width: 310px) {
@@ -90,10 +109,22 @@ div .gm-style-iw {
 
 .subtitle {
   display: flex;
-  font-size: 8.5px;
+  font-size: 11.5px;
   padding-left: 5px;
   color: #676767;
   letter-spacing: 0.7px;
+}
+
+@media (max-width: 900px) {
+  .subtitle {
+    font-size: 9.5px;
+  }
+}
+
+@media (max-width: 310px) {
+  .subtitle {
+    font-size: 8.5px;
+  }
 }
 
 .content {
@@ -103,7 +134,7 @@ div .gm-style-iw {
   min-height: 0;
   min-width: 0;
   position: absolute;
-  height: calc(100% - 55px);
+  height: calc(100% - 75px);
   border-top: 1px solid #ddd;
   bottom: 0px;
 }
@@ -124,9 +155,10 @@ div .gm-style-iw {
 
 .side {
   width: 100%;
+  height: 100%;
   flex: 0 0 auto;
   border-right: 1px solid #e6e6e6;
-  overflow: auto;
+  overflow: hidden;
   padding: 10px;
   background: #fff;
 }
@@ -140,7 +172,7 @@ div .gm-style-iw {
 
 .side-title {
   font-weight: 700;
-  margin: 6px 6px 10px;
+  margin: 6px 6px 10px 12px;
 }
 
 .lot-btn-list-outer {
@@ -160,7 +192,13 @@ div .gm-style-iw {
 }
 
 .lot-btn-list {
-  padding: 8px 6px 8px 6px;
+  position: relative;
+  height: calc(100% - 100px);
+  overflow-y: scroll;
+}
+
+.lot-btn-list-inner {
+  padding: 8px 10px 20px 10px;
 }
 
 .lot-btn {
@@ -328,10 +366,10 @@ div .gm-style-iw {
 .map-wrap .gm-style-iw-c {
   -webkit-transform: translate3d(-50%, -120%, 0);
   transform: translate3d(-50%, -120%, 0);
-  max-height: 362px !important;
-  min-height: 362px !important;
+  max-height: 352px !important;
+  min-height: 352px !important;
   width: 350px;
-  padding: 1px 20px 25px 20px !important;
+  padding: 1px 20px 10px 20px !important;
 }
 
 /* The small bottom triangle */
@@ -419,6 +457,21 @@ div .gm-style-iw {
 .iw-actions {
   cursor: default !important;
   pointer-events: all !important;
+}
+
+.map-wrap .gm-style-iw-chr {
+  height: 40px;
+}
+
+/* top right X */
+.gm-ui-hover-effect {
+  width: 30px !important;
+  height: 30px !important;
+}
+
+.gm-ui-hover-effect span {
+  width: 20px !important;
+  height: 20px !important;
 }
 
 /*
@@ -563,8 +616,10 @@ div .gm-style-iw {
    ========================= */
 
 .lot-search {
-  position: relative; /* for absolute dropdown */
-  margin: 10px 0 12px;
+  position: relative;
+  margin: 10px 10px 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #ddd;
 }
 
 .lot-search gmp-place-autocomplete {
@@ -583,18 +638,16 @@ div .gm-style-iw {
 
 /* input */
 .lot-search-input {
-  width: 100%;
-  height: 34px;
-  margin-top: 0px;
+  width: calc(100% - 0px);
+  height: 30px;
   box-sizing: border-box;
-  padding: 27px 27px;
+  padding: 22px 27px;
   padding-right: 42px;
   border-radius: 999px;
   border: 1px solid #949494;
   outline: none;
   line-height: 1;
   background: #fff;
-
   font-size: 16px;
   font-weight: 800;
   color: #111;
@@ -861,7 +914,7 @@ div .gm-style-iw {
 }
 
 .iw-actions {
-  margin-top: 20px;
+  margin-top: 15px;
   display: flex;
   gap: 10px;
 }

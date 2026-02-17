@@ -1,10 +1,19 @@
 // frontend/src/components/LotBottomSheet.jsx
 import { useEffect, useState } from "react";
-import { formatTime, minutesAgo, minSecAgo } from "../utils/time";
-import "./LotBottomSheet.css";
+import { 
+  formatTime, 
+  formatTimeYYYYMMDD_HHMMSS, 
+  minutesAgo, 
+  minSecAgo 
+} from "../utils/time";
+import toast from "react-hot-toast";
+
+import { MdDirectionsWalk, MdContentCopy } from "react-icons/md";
 
 import lotImage from "../assets/lots_demo_img.jpg";
 import sponsorImage from "../assets/sponser_demo_img.jpeg";
+
+import "./LotBottomSheet.css";
 
 function toVacancyNum(v) {
   if (v === "" || v == null) return null;
@@ -46,6 +55,38 @@ function openGoogleNav(active) {
   }
 
   window.open(url, "_blank", "noopener,noreferrer");
+}
+
+async function copyToClipboard(text) {
+  if (text == null) return;
+  const value = String(text).trim();
+  if (!value) return;
+
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      toast.success("已成功複製資訊");
+      return;
+    }
+  } catch (_) {
+    // fall through to legacy approach
+  }
+
+  // Legacy fallback (older iOS / insecure context)
+  const ta = document.createElement("textarea");
+  ta.value = value;
+  ta.setAttribute("readonly", "");
+  ta.style.position = "fixed";
+  ta.style.top = "-9999px";
+  ta.style.left = "-9999px";
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand("copy");
+    toast.success("已成功複製資訊");
+  } finally {
+    document.body.removeChild(ta);
+  }
 }
 
 
@@ -116,7 +157,11 @@ export default function LotBottomSheet({
                 <span className="vl-sheet-sponsor-example-label">範例</span>
               </div>
               <div className="vl-sheet-sponsor-distance-label-div">
-                <p className="mb-0">店家步行距離：10m 內</p>
+                <MdDirectionsWalk size={18} />
+                <div className="vl-sheet-sponsor-meta-div">
+                  <span style={{ fontSize: "9px" }}>店家步行距離</span>
+                  <span style={{ fontSize: "12px" }}>10m 內</span>
+                </div>
               </div>
             </div>
           </div>
@@ -125,17 +170,41 @@ export default function LotBottomSheet({
             <div className="vl-sheet-body">
               <div className="vl-sheet-titleRow" style={{ display:"flex", flexDirection: "column" }}>
                 <div className="vl-sheet-titleRow-inner">
-                  <div className="vl-sheet-title">{active.name}</div>
-                  <div className="vl-sheet-vac"
+                  {/* 台灣聯通停車場-晴光商圈場 */}
+                  <div className={"vl-sheet-title " 
+                    + (active.name.length > 9 ? "is-long-name" : "")}
+                  >
+                    <div
+                      className="vl-copyBtn"
+                      aria-label="複製停車場名稱"
+                      title="複製停車場名稱"
+                      onClick={() => copyToClipboard(active.name)}
+                    >
+                      <MdContentCopy size={14} />
+                    </div>
+                    <span>{active.name}</span>
+                  </div>
+                  {/* 空位：10 */}
+                  <div className={"vl-sheet-vac "
+                    + (active.name.length > 9 ? "is-long-name" : "")}
                     style={{ color: getVacancyTextColor(active.vacancy) }}
                   >
                     空位：
-                    <span className="vl-sheet-vacNum">
-                      {active.vacancy ?? "未知"}
-                    </span>
+                    <span className="vl-sheet-vacNum">{active.vacancy ?? "未知"}</span>
                   </div>
                 </div>
-                <div className="vl-sheet-addr">{active.addressZh}</div>
+                {/* 臺北市中山區林森北路538號 */}
+                <div className="vl-sheet-addr">
+                  <div
+                    className="vl-copyBtn"
+                    aria-label="複製停車場名稱"
+                    title="複製停車場名稱"
+                    onClick={() => copyToClipboard(active.addressZh)}
+                  >
+                    <MdContentCopy size={12} />
+                  </div>
+                  <span>{active.addressZh}</span>
+                </div>
               </div>
 
               {(() => {
@@ -151,7 +220,7 @@ export default function LotBottomSheet({
 
               <div>
                 <div className="vl-sheet-meta">
-                  <div>空位數字最近更新時間：{formatTime(active.lastUpdated)}</div>
+                  <div>空位數字最近更新：{formatTimeYYYYMMDD_HHMMSS(active.lastUpdated)}</div>
                   {(() => {
                     const ms = minSecAgo(active.lastUpdated);
                     if (!ms) return null;
@@ -162,38 +231,6 @@ export default function LotBottomSheet({
                     );
                   })()}
                 </div>
-                {/*
-                {lastSheetFetchAt ? (
-                  <div className="vl-sheet-meta-sheet-fetch">
-                    最近後台抓取 Google 表單資料時間：{formatTime(lastSheetFetchAt)}
-                    {(() => {
-                      const ms = minSecAgo(lastSheetFetchAt);
-                      if (!ms) return null;
-                      return (
-                        <span>
-                          {" "}
-                          （{ms.min} 分 {String(ms.sec).padStart(2, "0")} 秒前）
-                        </span>
-                      );
-                    })()}
-                  </div>
-                ) : null}
-                {lastFrontendFetchAt ? (
-                  <div className="vl-sheet-meta-frontend-fetch">
-                    最近抓取後台資料時間：{formatTime(lastFrontendFetchAt)}
-                    {(() => {
-                      const ms = minSecAgo(lastFrontendFetchAt);
-                      if (!ms) return null;
-                      return (
-                        <span>
-                          {" "}
-                          （{ms.min} 分 {String(ms.sec).padStart(2, "0")} 秒前）
-                        </span>
-                      );
-                    })()}
-                  </div>
-                ) : null}
-                */}
               </div>
 
 

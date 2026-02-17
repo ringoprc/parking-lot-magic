@@ -10,12 +10,12 @@ import './AdminLotsPage.css';
 
 const PAGE_SIZE = 200;
 
-function cellStyle(isDirty, editableColor) {
+function cellStyle(isDirty, isActive, editableColor) {
   return {
     border: "1px solid #e6e6e6",
     padding: "6px 8px",
     minWidth: 90,
-    background: isDirty ? "#ffc56f" : (editableColor || "#fff"),
+    background: isDirty ? "#ffc56f" : (isActive ? (editableColor || "#fff") : "#888"),
   };
 }
 
@@ -38,7 +38,8 @@ function stickyLeftStyle(colIndex, isHeader = false) {
     left,
     zIndex: isHeader ? 20 : 10,
     background: isHeader ? "#f7f7f7" : "#fff",
-    boxShadow: colIndex === 2 ? "6px 0 0 rgba(0,0,0,0.03)" : undefined, // subtle divider
+    /*boxShadow: colIndex === 2 ? "6px 0 0 rgba(0,0,0,0.03)" : undefined, // subtle divider*/
+    boxShadow: "none",
   };
 }
 
@@ -635,7 +636,7 @@ export default function AdminLotsPage({ apiBase }) {
                 <tr key={r._id}>
 
                   {/* copy */}
-                  <td style={{ ...cellStyle(false, "#fff"), ...stickyLeftStyle(0, false) }}
+                  <td style={{ ...stickyLeftStyle(0, false), ...cellStyle(isDirty, !!r.isActive, "#e3e3e3") }}
                     className="admin-lot-border-right-td" 
                   >
                     <button className="admin-lot-copy-btn" 
@@ -647,7 +648,7 @@ export default function AdminLotsPage({ apiBase }) {
                   </td>
 
                   {/* lotId (editable: light blue like your note) */}
-                  <td style={{ ...cellStyle(isDirty, "#e3e3e3"), ...stickyLeftStyle(1, false) }}
+                  <td style={{ ...stickyLeftStyle(1, false), ...cellStyle(isDirty, !!r.isActive, "#e3e3e3") }}
                     className="admin-lot-border-right-td" 
                   >
                     <input className="admin-lot-td-input" 
@@ -657,7 +658,7 @@ export default function AdminLotsPage({ apiBase }) {
                     />
                   </td>
 
-                  <td style={{ ...cellStyle(isDirty, "#e3e3e3"), ...stickyLeftStyle(2, false) }}
+                  <td style={{ ...stickyLeftStyle(2, false), ...cellStyle(isDirty, !!r.isActive, "#e3e3e3") }}
                     className="admin-lot-border-right-td" 
                   >
                     <input className="admin-lot-td-input" 
@@ -747,15 +748,16 @@ export default function AdminLotsPage({ apiBase }) {
                   </td>
 
                   <td style={{...cellStyle(false, "#fff"), ...{textAlign: "center"}}}>
-                  <button className="admin-lot-delete-btn" 
-                    onClick={() => delRow(r._id)}
-                  >
-                    <FiTrash2 size={17} />
-                  </button>
+                    <button className="admin-lot-delete-btn" 
+                      onClick={() => delRow(r._id)}
+                    >
+                      <FiTrash2 size={17} />
+                    </button>
                   </td>
                 </tr>
               );
             })}
+
             {!loading && rows.length === 0 && (
               <tr>
                 {/* colSpan={7} is correct visually */}

@@ -155,6 +155,7 @@
 
 .admin-lot-action-btn.should-save {
   background: #FF9800;
+  border: 1px solid #FF9800;
   color: white;
   font-weight: 700;
 }

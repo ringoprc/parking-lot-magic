@@ -6,6 +6,22 @@ export function formatTime(d) {
   return dt.toLocaleString();
 }
 
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+export function formatTimeYYYYMMDD_HHMMSS(d) {
+  if (!d) return "";
+  const dt = typeof d === "string" ? new Date(d) : d;
+  const yyyy = dt.getFullYear();
+  const mm = pad2(dt.getMonth() + 1);
+  const dd = pad2(dt.getDate());
+  const hh = pad2(dt.getHours());
+  const mi = pad2(dt.getMinutes());
+  const ss = pad2(dt.getSeconds());
+  return `${yyyy}/${mm}/${dd} ${hh}:${mi}`;
+}
+
 export function minSecAgo(v) {
   if (!v) return null;
   const t = v instanceof Date ? v.getTime() : new Date(v).getTime();

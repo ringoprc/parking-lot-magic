@@ -57,6 +57,12 @@ export default function AdminLinkagePage({ apiBase }) {
     currentLotName: "",
   });
 
+  // unlink confirm modal
+  const [unlinkModal, setUnlinkModal] = useState({
+    open: false,
+    deviceId: "",
+  });
+
   function headersJson() {
     return {
       "Content-Type": "application/json",
@@ -107,7 +113,6 @@ export default function AdminLinkagePage({ apiBase }) {
     if (!adminKey) return;
     setLoadingLots(true);
     try {
-      // You can later swap this to your real endpoint.
       const qs = new URLSearchParams({ search: lotSearch.trim(), pageSize: "5000", page: "1" });
       const res = await fetch(`${apiBase}/api/admin/lots?${qs.toString()}`, {
         headers: headersAuth(),
@@ -142,10 +147,12 @@ export default function AdminLinkagePage({ apiBase }) {
   async function suggestDevices(q) {
     if (!adminKey) return;
     const query = q.trim();
+    /*
     if (!query) {
       setDeviceSuggestions([]);
       return;
     }
+    */
 
     setLoadingSuggest(true);
     try {
@@ -255,6 +262,7 @@ export default function AdminLinkagePage({ apiBase }) {
       setDeviceQuery("");
       setDeviceSuggestions([]);
       fetchLotDevices(selectedLot);
+      fetchAllLots();
     } catch (e) {
       toast.error(String(e?.message || e));
     }
@@ -325,6 +333,14 @@ export default function AdminLinkagePage({ apiBase }) {
       return s.includes(q);
     });
   }, [allLots, lotSearch]);
+
+  const filteredDeviceSuggestions = useMemo(() => {
+    if (!selectedLot?._id) return deviceSuggestions;
+
+    return deviceSuggestions.filter(
+      (d) => !(d.parkingLotId && String(d.parkingLotId) === String(selectedLot._id))
+    );
+  }, [deviceSuggestions, selectedLot?._id]);
 
   function onPickLot(lot) {
     setSelectedLot(lot);
@@ -480,7 +496,9 @@ export default function AdminLinkagePage({ apiBase }) {
 
             <div className="al-scroll">
               {loadingLots ? (
-                <div className="al-center"><Spinner size="sm" /> Loading…</div>
+                <div className="al-center">
+                  <Spinner className="al-custom-spinner" size="sm" /> 正在載入
+                </div>
               ) : (
                 <Droppable droppableId="allLots">
                   {(provided) => (
@@ -508,6 +526,12 @@ export default function AdminLinkagePage({ apiBase }) {
                                 </div>
 
                                 {inGroup ? <div className="al-badge">in group</div> : null}
+
+                                <div>
+                                  <span className="al-item-device-count">
+                                    {`${Number.isFinite(Number(l.deviceCount)) ? l.deviceCount : 0}`}
+                                  </span>
+                                </div>
                               </div>
                             )}
                           </Draggable>
@@ -540,16 +564,25 @@ export default function AdminLinkagePage({ apiBase }) {
                     <input
                       className="al-input"
                       value={deviceQuery}
+                      onFocus={() => {
+                        suggestDevices("");
+                      }}
                       onChange={(e) => setDeviceQuery(e.target.value)}
                       placeholder="輸入裝置 deviceId（部分字串）"
                     />
                   </div>
 
+                  <div className="al-suggest-title-label-div">
+                    <p className="mb-0">可選擇的裝置列表</p>
+                  </div>
+
                   {loadingSuggest ? (
-                    <div className="al-suggest al-center"><Spinner size="sm" /> Searching…</div>
-                  ) : deviceSuggestions.length ? (
+                    <div className="al-suggest al-center">
+                      <Spinner className="al-custom-spinner" size="sm" /> 正在載入
+                    </div>
+                  ) : filteredDeviceSuggestions.length ? (
                     <div className="al-suggest">
-                      {deviceSuggestions.slice(0, 10).map((d) => (
+                      {filteredDeviceSuggestions.slice(0, 10).map((d) => (
                         <button
                           key={d.deviceId}
                           className="al-suggest-item"
@@ -569,7 +602,7 @@ export default function AdminLinkagePage({ apiBase }) {
                         >
                           <div className="al-suggest-id">{d.deviceId}</div>
                           {d.parkingLotId ? (
-                            <div className="al-suggest-sub">linked: {String(d.parkingLotId).slice(0, 6)}…</div>
+                            <div className="al-suggest-sub">已連結到：{String(d.currentLotName)}</div>
                           ) : (
                             <div className="al-suggest-sub">not linked</div>
                           )}
@@ -579,13 +612,15 @@ export default function AdminLinkagePage({ apiBase }) {
                   ) : null}
                 </>
               ) : (
-                <div className="al-empty">請先在中間點選一個停車場</div>
+                <div className="al-empty">沒有可新增的裝置</div>
               )}
             </div>
 
             <div className="al-scroll">
               {!selectedLot ? null : loadingLotDevices ? (
-                <div className="al-center"><Spinner size="sm" /> Loading…</div>
+                <div className="al-center">
+                  <Spinner className="al-custom-spinner" size="sm" /> 正在載入
+                </div>
               ) : (
                 <div className="al-list">
                   {lotDevices.map((d) => (
@@ -596,14 +631,18 @@ export default function AdminLinkagePage({ apiBase }) {
                           {d.status ? `status: ${d.status}` : ""}
                         </div>
                       </div>
-                      <button className="al-xbtn" title="移除" onClick={() => unlinkDeviceFromLot(d.deviceId)}>
-                        ×
+                      <button
+                        className="al-xbtn"
+                        title="移除"
+                        onClick={() => setUnlinkModal({ open: true, deviceId: d.deviceId })}
+                      >
+                        -
                       </button>
                     </div>
                   ))}
 
                   {!lotDevices.length ? (
-                    <div className="al-empty">此停車場目前沒有連結裝置</div>
+                    <div className="al-empty">此停車場目前沒有已連結的裝置</div>
                   ) : null}
                 </div>
               )}
@@ -612,15 +651,52 @@ export default function AdminLinkagePage({ apiBase }) {
         </div>
       </DragDropContext>
 
+      {/* Unlink confirm modal */}
+      {unlinkModal.open ? (
+        <div
+          className="al-modal-backdrop"
+          onMouseDown={() => setUnlinkModal({ open: false, deviceId: "" })}
+        >
+          <div className="al-modal" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="al-modal-title">確認移除裝置連結</div>
+            <div className="al-modal-body">
+              <div>
+                你確定要移除裝置 <b>{unlinkModal.deviceId}</b> 的連結嗎？
+              </div>
+            </div>
+            <div className="al-modal-actions">
+              <button
+                className="al-btn"
+                onClick={() => setUnlinkModal({ open: false, deviceId: "" })}
+              >
+                取消
+              </button>
+              <button
+                className="al-btn danger"
+                onClick={() => {
+                  const deviceId = unlinkModal.deviceId;
+                  setUnlinkModal({ open: false, deviceId: "" });
+                  unlinkDeviceFromLot(deviceId);
+                }}
+              >
+                確認移除
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {/* Relink confirm modal */}
       {relinkModal.open ? (
         <div className="al-modal-backdrop" onMouseDown={() => setRelinkModal({ open: false, deviceId: "", currentLotId: "", currentLotName: "" })}>
           <div className="al-modal" onMouseDown={(e) => e.stopPropagation()}>
-            <div className="al-modal-title">裝置已連結到其他停車場</div>
+            <div className="al-modal-title">
+              裝置已連結到 {relinkModal.currentLotName ? `[${relinkModal.currentLotName}]` : "其他停車場"}
+            </div>
             <div className="al-modal-body">
               <div>deviceId: <b>{relinkModal.deviceId}</b></div>
               <div style={{ marginTop: 8 }}>
-                你要把它改連結到目前選擇的停車場嗎？
+                要改為連結到 [{selectedLot.name}] 嗎？
               </div>
             </div>
             <div className="al-modal-actions">
@@ -635,7 +711,7 @@ export default function AdminLinkagePage({ apiBase }) {
                   linkDeviceToLot(deviceId, true);
                 }}
               >
-                重新連結
+                改為連結到此停車場
               </button>
             </div>
           </div>

@@ -1,8 +1,15 @@
 // frontend/src/pages/AdminDevicesPage.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
 import "./AdminDevicesPage.css";
+
+import { 
+  formatTime, 
+  formatTimeYYYYMMDD_HHMMSS, 
+  minutesAgo, 
+  minSecAgo 
+} from "../utils/time";
 
 import { FaCheck } from "react-icons/fa6";
 
@@ -27,6 +34,16 @@ export default function AdminDevicesPage({ apiBase }) {
   const [groups, setGroups] = useState([]);
   const [groupId, setGroupId] = useState("all");
   const [search, setSearch] = useState("");
+
+  // search box text vs applied search (so typing won’t change the auto-refresh query)
+  const [appliedSearch, setAppliedSearch] = useState("");
+
+  // last fetch info
+  const [lastFetchAt, setLastFetchAt] = useState(null); // number (ms)
+  const [lastFetchError, setLastFetchError] = useState("");
+
+  // prevent overlapping fetches (interval + manual actions)
+  const inFlightRef = useRef(false);
 
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState([]);
@@ -70,19 +87,32 @@ export default function AdminDevicesPage({ apiBase }) {
   //-----------------------------
   // Fetch Filtered Lots
   //-----------------------------
-  async function load() {
+  async function load(opts = {}) {
+    const {
+      silent = false,
+      searchOverride,
+      pageOverride,
+      groupIdOverride,
+    } = opts;
+
+    const effSearch = (searchOverride ?? appliedSearch);
+    const effPage = (pageOverride ?? page);
+    const effGroupId = (groupIdOverride ?? groupId);
+
     if (!adminKey) {
-      toast.error("請先輸入管理員密碼");
+      if (!silent) toast.error("請先輸入管理員密碼");
       return;
     }
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
 
     setLoading(true);
     try {
       const qs = new URLSearchParams({
-        page: String(page),
+        page: String(effPage),
         pageSize: String(PAGE_SIZE),
-        groupId,
-        search: search.trim(),
+        groupId: effGroupId,
+        search: effSearch,
       });
 
       const res = await fetch(`${apiBase}/api/admin/devices/phones?${qs.toString()}`, {
@@ -97,6 +127,9 @@ export default function AdminDevicesPage({ apiBase }) {
         setIsAdminConfirmed(false);
         throw new Error(data?.error || "load failed");
       }
+
+      setLastFetchAt(Date.now());
+      setLastFetchError("");
 
       // Confirm Admin Status
       if (!isAdminConfirmed) toast.success("密碼正確");
@@ -123,9 +156,22 @@ export default function AdminDevicesPage({ apiBase }) {
       // ignore
     } finally {
       setLoading(false);
+      inFlightRef.current = false;
     }
   }
 
+  // Auto refresh every 30 seconds (after admin is confirmed)
+  useEffect(() => {
+    if (!adminKey) return;
+    if (!isAdminConfirmed) return;
+
+    const t = setInterval(() => {
+      load({ silent: true });
+    }, 10_000);
+
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adminKey, isAdminConfirmed, page, groupId, appliedSearch]);
 
   
   //-----------------------------
@@ -178,10 +224,14 @@ export default function AdminDevicesPage({ apiBase }) {
   }, [meta]);
 
   function onSearchSubmit() {
+    const s = search.trim();
+    setAppliedSearch(s);
     setPage(1);
-    load();
+    load({ searchOverride: s, pageOverride: 1 });
   }
 
+
+  const ago = lastFetchAt ? minSecAgo(new Date(lastFetchAt)) : null;
 
   //-----------------------------
   // Return JSX
@@ -201,8 +251,15 @@ export default function AdminDevicesPage({ apiBase }) {
             onChange={(e) => persistAdminKey(e.target.value)}
             placeholder="admin key"
           />
-          <button className="admin-dev-btn" onClick={() => { setPage(1); load(); }}>
-            進入
+          <button className="admin-dev-btn" 
+            onClick={() => {
+              const s = search.trim();
+              setAppliedSearch(s);
+              setPage(1);
+              load({ searchOverride: s, pageOverride: 1 });
+            }}
+          >
+            重新載入
           </button>
         </div>
       </div>
@@ -235,6 +292,27 @@ export default function AdminDevicesPage({ apiBase }) {
           <button className="admin-dev-btn" onClick={onSearchSubmit}>
             搜尋
           </button>
+        </div>
+
+        <div style={{ marginLeft: "auto", color: "#777", fontSize: 13 }}>
+          <span style={{ marginRight: 10 }}>
+            最近更新圖像：{" "}
+            {lastFetchAt ? formatTimeYYYYMMDD_HHMMSS(new Date(lastFetchAt)) : "—"}
+            {(() => {
+              const ms = minSecAgo(new Date(lastFetchAt));
+              if (!ms) return null;
+              return (
+                ago 
+                ? (<span>（{ago.min} 分 {String(ago.sec).padStart(2,"0")} 秒前）</span>) 
+                : null
+              );
+            })()}
+          </span>
+          {lastFetchError ? (
+            <span style={{ color: "#c0392b" }}>
+              (failed: {lastFetchError})
+            </span>
+          ) : null}
         </div>
 
         {/* Pagination */}
@@ -285,14 +363,18 @@ export default function AdminDevicesPage({ apiBase }) {
               return (
                 <div key={deviceId} className="admin-dev-card">
                   <div className="admin-dev-card-title">
-                    {r?.lot?.name || r?.lot?.lotId ? (
-                      <div className="admin-dev-lotmeta">
-                        {r?.lot?.name ? r.lot.name : ""}{r?.lot?.name && r?.lot?.lotId ? " · " : ""}
-                        {r?.lot?.lotId ? r.lot.lotId : ""}
-                      </div>
-                    ) : null}
+
+                    <div className="admin-dev-lotmeta">
+                      <span style={{ fontSize: "9.5px", color: r?.lot?.name ? "#333" : "#999" }}>
+                        [{r?.lot?.lotId ? r.lot.lotId : "-"}]{" "}
+                      </span>
+                      <span style={{ fontSize: "13.5px", color: r?.lot?.name ? "#333" : "#999" }}>
+                        {r?.lot?.name ? r.lot.name : "還未設定連結停車場"}
+                      </span>
+                    </div>
+
                     <div className="admin-dev-deviceid">
-                      <span>{deviceId}</span>
+                      <span style={{ fontSize: "10px" }}>裝置 ID：{deviceId}</span>
                     </div>
                   </div>
                   
@@ -307,12 +389,12 @@ export default function AdminDevicesPage({ apiBase }) {
                   <div className="admin-dev-bottom">
                     <div className="admin-dev-vrow">
                       <div className="admin-dev-vlabel">
-                        <span style={{ marginRight: "8px" }}>{String(vacancy)}</span>
+                        <span style={{ marginRight: "8px" }}>{String(vacancy) || "-"}</span>
                         <span>→{" "}</span>
                       </div>
                       <input
                         className="admin-dev-vinput"
-                        value={edited}
+                        value={edited || "-"}
                         onChange={(e) =>
                           setEditMap((prev) => ({ ...prev, [deviceId]: e.target.value }))
                         }

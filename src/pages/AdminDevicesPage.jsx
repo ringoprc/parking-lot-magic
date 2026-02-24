@@ -358,6 +358,7 @@ export default function AdminDevicesPage({ apiBase }) {
             <div className="admin-dev-grid">
             {rows.map((r) => {
               const deviceId = r.deviceId;
+              const lastUploadAt = r.phone.lastUploadAt;
               const vacancy = r?.lot?.vacancy ?? "";
               const edited = editMap[deviceId] ?? "";
               return (
@@ -365,16 +366,24 @@ export default function AdminDevicesPage({ apiBase }) {
                   <div className="admin-dev-card-title">
 
                     <div className="admin-dev-lotmeta">
-                      <span style={{ fontSize: "9.5px", color: r?.lot?.name ? "#333" : "#999" }}>
-                        [{r?.lot?.lotId ? r.lot.lotId : "-"}]{" "}
-                      </span>
+                      <div>
+                        <span style={{ fontSize: "9.5px", color: r?.lot?.name ? "#333" : "#999", marginRight: "8px" }}>
+                          [{r?.lot?.lotId ? r.lot.lotId : "-"}]{" "}
+                        </span>
+                        <span style={{ fontSize: "9.5px", color: r?.lot?.name ? "#333" : "#999" }}>
+                          裝置 ID：{deviceId}
+                        </span>
+                      </div>
                       <span style={{ fontSize: "13.5px", color: r?.lot?.name ? "#333" : "#999" }}>
                         {r?.lot?.name ? r.lot.name : "還未設定連結停車場"}
+                      </span>
+                      <span style={{ fontSize: "8px", marginTop: "1.5px", color: r?.lot?.name ? "#333" : "#999" }}>
+                        最近更新：{formatTimeYYYYMMDD_HHMMSS(new Date(lastUploadAt))}
                       </span>
                     </div>
 
                     <div className="admin-dev-deviceid">
-                      <span style={{ fontSize: "10px" }}>裝置 ID：{deviceId}</span>
+                      
                     </div>
                   </div>
                   

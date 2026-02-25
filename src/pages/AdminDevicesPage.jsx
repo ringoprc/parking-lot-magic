@@ -356,47 +356,50 @@ export default function AdminDevicesPage({ apiBase }) {
           ) : null}
         </div>
 
-        <button
-          className="admin-dev-confirm-all-button"
-          style={{ marginLeft: 10, padding: "6px 10px" }}
-          disabled={confirmAllLoading || rows.length === 0}
-          onClick={confirmAllOnPage}
-          title="Confirm all on this page"
-        >
-          {confirmAllLoading ? (
-            <Spinner color="primary" />
-            ) : (
-            <>
-              <FaCheck size={19} />
-              <span>確認本頁全部空位</span>
-            </>
-          )}
-        </button>
-
-        {/* Pagination */}
-        <div className="admin-dev-page">
+        <div className="admin-dev-pagination-div">
           <button
-            className="admin-dev-navbtn"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            title="Prev"
+            className="admin-dev-confirm-all-button"
+            style={{ marginLeft: 10, padding: "6px 10px" }}
+            disabled={confirmAllLoading || rows.length === 0}
+            onClick={confirmAllOnPage}
+            title="Confirm all on this page"
           >
-            <FaChevronLeft />
+            {confirmAllLoading ? (
+              <Spinner color="primary" />
+              ) : (
+              <>
+                <FaCheck size={19} />
+                <span>確認本頁全部空位</span>
+              </>
+            )}
           </button>
 
-          <div className="admin-dev-pagelabel">
-            Page {page} / {pageCount} ({meta?.total ?? 0})
+          {/* Pagination */}
+          <div className="admin-dev-page">
+            <button
+              className="admin-dev-navbtn"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              title="Prev"
+            >
+              <FaChevronLeft />
+            </button>
+
+            <div className="admin-dev-pagelabel">
+              Page {page} / {pageCount} ({meta?.total ?? 0})
+            </div>
+
+            <button
+              className="admin-dev-navbtn"
+              disabled={page >= pageCount}
+              onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+              title="Next"
+            >
+              <FaChevronRight />
+            </button>
           </div>
-
-          <button
-            className="admin-dev-navbtn"
-            disabled={page >= pageCount}
-            onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-            title="Next"
-          >
-            <FaChevronRight />
-          </button>
         </div>
+
       </div>
 
       {/* Grid */}
@@ -466,20 +469,24 @@ export default function AdminDevicesPage({ apiBase }) {
                       }}>
                         {r?.lot?.name ? r.lot.name : "還未設定連結停車場"}
                       </span>
-                      <span style={{ fontSize: "8px", marginTop: "1.5px", color: shotAtColor }}>
+                      <span className="admin-dev-card-shot-time"
+                      style={{ fontSize: "8px", marginTop: "1.5px", color: shotAtColor }}>
                         圖像拍攝時間：
                         {lastUploadAt ? formatTimeYYYYMMDD_HHMMSS(new Date(lastUploadAt)) : "—"}
                         {uploadedAgo ? (
                           <span>
-                            （{uploadedAgo.min} 分 {String(uploadedAgo.sec).padStart(2, "0")} 秒前）
+                            （{String(uploadedAgo.min).padStart(2, "0")} 分 {String(uploadedAgo.sec).padStart(2, "0")} 秒前）
                           </span>
                         ) : null}
                       </span>
-                      <span style={{ fontSize: "8px", marginTop: "0.5px", color: confirmedAtColor }}>
+                      <span className="admin-dev-card-confirm-time"
+                      style={{ fontSize: "8px", marginTop: "0.5px", color: confirmedAtColor }}>
                         確認空位時間：
                         {lastConfirmedAt ? formatTimeYYYYMMDD_HHMMSS(new Date(lastConfirmedAt)) : "—"}
                         {confirmedAgo ? (
-                          <span>（{confirmedAgo.min} 分 {String(confirmedAgo.sec).padStart(2, "0")} 秒前）</span>
+                          <span>
+                            （{String(confirmedAgo.min).padStart(2, "0")} 分 {String(confirmedAgo.sec).padStart(2, "0")} 秒前）
+                          </span>
                         ) : null}
                       </span>
                     </div>

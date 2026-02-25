@@ -476,7 +476,7 @@ export default function AdminDevicesPage({ apiBase }) {
                         ) : null}
                       </span>
                       <span style={{ fontSize: "8px", marginTop: "0.5px", color: confirmedAtColor }}>
-                        最近確認空位數時間：
+                        確認空位時間：
                         {lastConfirmedAt ? formatTimeYYYYMMDD_HHMMSS(new Date(lastConfirmedAt)) : "—"}
                         {confirmedAgo ? (
                           <span>（{confirmedAgo.min} 分 {String(confirmedAgo.sec).padStart(2, "0")} 秒前）</span>

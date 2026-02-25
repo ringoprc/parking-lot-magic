@@ -52,7 +52,7 @@ export default function AdminDevicesPage({ apiBase }) {
 
   // deviceId -> edited vacancy
   const [editMap, setEditMap] = useState({});
-
+  const [confirmAllLoading, setConfirmAllLoading] = useState(false);
 
   //-----------------------------
   // Admin Key
@@ -208,6 +208,47 @@ export default function AdminDevicesPage({ apiBase }) {
     await load();
   }
 
+  async function confirmAllOnPage() {
+    if (!adminKey) return;
+    if (confirmAllLoading) return;
+    if (!rows?.length) return;
+
+    setConfirmAllLoading(true);
+    try {
+      let okCount = 0;
+      let skipCount = 0;
+
+      for (const r of rows) {
+        const deviceId = r.deviceId;
+
+        // only if linked lot + valid number
+        if (!r?.lot?._id) { skipCount++; continue; }
+        const v = toNum(editMap[deviceId]);
+        if (v == null || v < 0) { skipCount++; continue; }
+
+        const res = await fetch(`${apiBase}/api/admin/devices/confirm-vacancy`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-key": adminKey,
+          },
+          body: JSON.stringify({ deviceId, vacancy: v }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || "更新失敗");
+        okCount++;
+      }
+
+      toast.success(`本頁已確認 ${okCount} 筆（略過 ${skipCount} 筆）`);
+      await load({ silent: true });
+    } catch (e) {
+      toast.error(e?.message || "本頁全部確認失敗");
+    } finally {
+      setConfirmAllLoading(false);
+    }
+  }
+
 
   //-----------------------------
   // Pagination
@@ -231,7 +272,7 @@ export default function AdminDevicesPage({ apiBase }) {
   }
 
 
-  const ago = lastFetchAt ? minSecAgo(new Date(lastFetchAt)) : null;
+  const fetchedAgo = lastFetchAt ? minSecAgo(new Date(lastFetchAt)) : null;
 
   //-----------------------------
   // Return JSX
@@ -296,14 +337,14 @@ export default function AdminDevicesPage({ apiBase }) {
 
         <div style={{ marginLeft: "auto", color: "#777", fontSize: 13 }}>
           <span style={{ marginRight: 10 }}>
-            最近更新圖像：{" "}
+            最近載入圖像：{" "}
             {lastFetchAt ? formatTimeYYYYMMDD_HHMMSS(new Date(lastFetchAt)) : "—"}
             {(() => {
               const ms = minSecAgo(new Date(lastFetchAt));
               if (!ms) return null;
               return (
-                ago 
-                ? (<span>（{ago.min} 分 {String(ago.sec).padStart(2,"0")} 秒前）</span>) 
+                fetchedAgo 
+                ? (<span>（{fetchedAgo.min} 分 {String(fetchedAgo.sec).padStart(2,"0")} 秒前）</span>) 
                 : null
               );
             })()}
@@ -314,6 +355,23 @@ export default function AdminDevicesPage({ apiBase }) {
             </span>
           ) : null}
         </div>
+
+        <button
+          className="admin-dev-confirm-all-button"
+          style={{ marginLeft: 10, padding: "6px 10px" }}
+          disabled={confirmAllLoading || rows.length === 0}
+          onClick={confirmAllOnPage}
+          title="Confirm all on this page"
+        >
+          {confirmAllLoading ? (
+            <Spinner color="primary" />
+            ) : (
+            <>
+              <FaCheck size={19} />
+              <span>確認本頁全部空位</span>
+            </>
+          )}
+        </button>
 
         {/* Pagination */}
         <div className="admin-dev-page">
@@ -358,9 +416,34 @@ export default function AdminDevicesPage({ apiBase }) {
             <div className="admin-dev-grid">
             {rows.map((r) => {
               const deviceId = r.deviceId;
-              const lastUploadAt = r.phone.lastUploadAt;
               const vacancy = r?.lot?.vacancy ?? "";
               const edited = editMap[deviceId] ?? "";
+              
+              // shotAgo color rules: > 60s red, > 30s orange
+              const lastUploadAt = r?.phone?.lastUploadAt ?? null;
+              const shotSecAgo = lastUploadAt
+                ? Math.floor((Date.now() - new Date(lastUploadAt).getTime()) / 1000)
+                : null;
+              const uploadedAgo = lastUploadAt ? minSecAgo(new Date(lastUploadAt)) : null;
+              const shotAtColor =
+                shotSecAgo == null ? (r?.lot?.name ? "#333" : "#999") :
+                shotSecAgo >= 60 ? "#c0392b" :
+                shotSecAgo >= 40 ? "#e67e22" :
+                (r?.lot?.name ? "#333" : "#999");
+
+              // confirmedAgo color rules: > 60s red, > 30s orange
+              const lastConfirmedAt = r?.lot?.lastConfirmedAt ?? null;
+              const confirmedSecAgo = lastConfirmedAt
+                ? Math.floor((Date.now() - new Date(lastConfirmedAt).getTime()) / 1000)
+                : null;
+              const confirmedAgo = lastConfirmedAt ? minSecAgo(new Date(lastConfirmedAt)) : null;
+              const confirmedAtColor =
+                confirmedSecAgo == null ? (r?.lot?.name ? "#333" : "#999") :
+                confirmedSecAgo >= 60 ? "#c0392b" :
+                confirmedSecAgo >= 30 ? "#e67e22" :
+                (r?.lot?.name ? "#333" : "#999");
+              
+
               return (
                 <div key={deviceId} className="admin-dev-card">
                   <div className="admin-dev-card-title">
@@ -374,11 +457,30 @@ export default function AdminDevicesPage({ apiBase }) {
                           裝置 ID：{deviceId}
                         </span>
                       </div>
-                      <span style={{ fontSize: "13.5px", color: r?.lot?.name ? "#333" : "#999" }}>
+                      <span style={{ 
+                        fontSize: "13.5px", 
+                        color: r?.lot?.name ? "#333" : "#999",
+                        paddingBottom: "1px",
+                        marginBottom: "3px",
+                        borderBottom: "1px solid"
+                      }}>
                         {r?.lot?.name ? r.lot.name : "還未設定連結停車場"}
                       </span>
-                      <span style={{ fontSize: "8px", marginTop: "1.5px", color: r?.lot?.name ? "#333" : "#999" }}>
-                        最近更新：{formatTimeYYYYMMDD_HHMMSS(new Date(lastUploadAt))}
+                      <span style={{ fontSize: "8px", marginTop: "1.5px", color: shotAtColor }}>
+                        圖像拍攝時間：
+                        {lastUploadAt ? formatTimeYYYYMMDD_HHMMSS(new Date(lastUploadAt)) : "—"}
+                        {uploadedAgo ? (
+                          <span>
+                            （{uploadedAgo.min} 分 {String(uploadedAgo.sec).padStart(2, "0")} 秒前）
+                          </span>
+                        ) : null}
+                      </span>
+                      <span style={{ fontSize: "8px", marginTop: "0.5px", color: confirmedAtColor }}>
+                        最近確認空位數時間：
+                        {lastConfirmedAt ? formatTimeYYYYMMDD_HHMMSS(new Date(lastConfirmedAt)) : "—"}
+                        {confirmedAgo ? (
+                          <span>（{confirmedAgo.min} 分 {String(confirmedAgo.sec).padStart(2, "0")} 秒前）</span>
+                        ) : null}
                       </span>
                     </div>
 

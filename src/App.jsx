@@ -128,6 +128,25 @@ export default function App() {
     [lots]
   );
 
+  // Keep `active` fresh when lots are reloaded (polling)
+  // Otherwise BottomSheet keeps showing the old object.
+  useEffect(() => {
+    if (!active?.lotId) return;
+
+    const fresh = validLots.find((l) => l.lotId === active.lotId);
+    if (!fresh) return;
+
+    setActive((prev) => {
+      if (!prev || prev.lotId !== fresh.lotId) return prev;
+      if (prev === fresh) return prev;
+
+      // preserve computed fields like _dist if you selected from displayedLots
+      if (prev._dist != null && fresh._dist == null) return { ...fresh, _dist: prev._dist };
+      return fresh;
+    });
+  }, [validLots, active?.lotId]);
+
+
   const { locating: locatingMe, requestMyLocation } = useMyLocationAction({
     onSuccess: ({ lat, lng, accuracy }) => {
       setMyPos({ lat, lng });

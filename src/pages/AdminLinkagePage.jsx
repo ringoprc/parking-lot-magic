@@ -458,7 +458,7 @@ export default function AdminLinkagePage({ apiBase }) {
     if (!selectedLot?._id) return deviceSuggestions;
 
     return deviceSuggestions.filter(
-      (d) => !(d.parkingLotId._id && String(d.parkingLotId._id) === String(selectedLot._id))
+      (d) => !(d.parkingLotId?._id && String(d.parkingLotId?._id) === String(selectedLot?._id))
     );
   }, [deviceSuggestions, selectedLot?._id]);
 
@@ -497,7 +497,7 @@ export default function AdminLinkagePage({ apiBase }) {
           <div className="al-label">管理員密碼</div>
           <input
             type="text"
-            spellcheck="false"
+            spellCheck="false"
             className="al-input"
             style={{ minWidth: 360 }}
             value={adminKey}
@@ -740,7 +740,7 @@ export default function AdminLinkagePage({ apiBase }) {
                    
                       <div className="al-suggest">
                         {filteredDeviceSuggestions.length ? (
-                          <div>
+                          <div className="al-suggest-inner-div">
                             {filteredDeviceSuggestions.slice(0, 10).map((d) => (
                               <button
                                 key={d.deviceId}

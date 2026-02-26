@@ -74,7 +74,7 @@
   background: #fff0f0; 
 }
 
-.al-cols{
+.al-cols {
   margin-top: 12px;
   flex: 1 1 auto;
   min-height: 0;
@@ -327,11 +327,19 @@
   flex-direction: column;
   gap: 6px;
   max-height: 200px;
-  overflow: auto;
+  overflow-y: scroll;
   border-radius: 12px;
-  padding: 10px 14px;
+  padding: 12px 14px 12px 14px;
   background: #f7f7f7;
   min-height: 100px;
+  scrollbar-width: thin;
+}
+
+.al-suggest-inner-div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  scrollbar-width: thin;
 }
 
 .al-suggest-item {

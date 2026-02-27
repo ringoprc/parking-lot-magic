@@ -11,6 +11,9 @@ import MobileLotsBar from "./components/MobileLotsBar";
 import MobileLotsOverlay from "./components/MobileLotsOverlay";
 import ParkingMap from "./components/ParkingMap";
 
+import Spinner from "react-bootstrap/Spinner";
+import { FaCheck } from "react-icons/fa6";
+
 import AdminLotsPage from "./pages/AdminLotsPage";
 import AdminDevicesPage from "./pages/AdminDevicesPage";
 import AdminLinkagePage from "./pages/AdminLinkagePage";
@@ -101,6 +104,62 @@ export default function App() {
     if (!sbDragging) return;
     setSbDragging(false);
     localStorage.setItem("sidebarW", String(sidebarW));
+  }
+
+  //-----------------------------
+  // Secret APK
+  //-----------------------------
+  const tapTimesRef = useRef([]); // timestamps (ms)
+
+  const [apkModalOpen, setApkModalOpen] = useState(false);
+  const [apkPw, setApkPw] = useState("");
+  const [apkBusy, setApkBusy] = useState(false);
+  const [apkErr, setApkErr] = useState("");
+
+  function onLogoTap() {
+    const now = Date.now();
+    const tenSecAgo = now - 10_000;
+
+    const arr = tapTimesRef.current.filter((t) => t >= tenSecAgo);
+    arr.push(now);
+    tapTimesRef.current = arr;
+
+    if (arr.length >= 7) {
+      tapTimesRef.current = [];
+      setApkErr("");
+      setApkPw("");
+      setApkModalOpen(true);
+    }
+  }
+
+  async function confirmApkPw() {
+    if (apkBusy) return;
+    setApkBusy(true);
+    setApkErr("");
+
+    try {
+      const r = await fetch(`${apiBase}/download/get-url`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: apkPw }),
+      });
+
+      const data = await r.json().catch(() => null);
+
+      if (!r.ok || !data?.ok || !data?.url) {
+        setApkErr("ヽ(`Д´)ノ");
+        return;
+      }
+
+      setApkModalOpen(false);
+
+      // Trigger download
+      window.location.assign(data.url);
+    } catch (e) {
+      setApkErr("Network error");
+    } finally {
+      setApkBusy(false);
+    }
   }
 
 
@@ -297,7 +356,12 @@ export default function App() {
         <div className="title-bar">
           <div className="title-bar-inner">
             <div className="title-bar-left">
-              <img src={logo} alt="logo" className="title-bar-logo-img" />
+              <img
+                src={logo}
+                alt="logo"
+                className="title-bar-logo-img"
+                onClick={onLogoTap}
+              />
 
               <div>
                 <div className="title">
@@ -318,6 +382,78 @@ export default function App() {
             </div>
           </div>
         </div>
+
+        {apkModalOpen && (
+          <div
+            onClick={() => setApkModalOpen(false)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.45)",
+              zIndex: 9999,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "20px",
+            }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: "min(420px, 92vw)",
+                background: "#fff",
+                borderRadius: "14px",
+                padding: "16px",
+                boxShadow: "0 12px 36px rgba(0,0,0,0.25)",
+              }}
+            >
+              <div style={{ fontSize: "16px", fontWeight: 700, marginBottom: "10px" }}>
+                ...?
+              </div>
+
+              <input
+                value={apkPw}
+                onChange={(e) => setApkPw(e.target.value)}
+                type="password"
+                placeholder="Enter"
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  borderRadius: "10px",
+                  border: "1px solid #ddd",
+                  outline: "none",
+                  fontSize: "16px",
+                }}
+              />
+
+              {apkErr && (
+                <div style={{ marginTop: "8px", color: "#c0392b", fontSize: "14px",
+                    fontWeight: "500"
+                }}>
+                  {apkErr}
+                </div>
+              )}
+
+              <button className="app-sect-confirm-btn"
+                onClick={confirmApkPw}
+                disabled={apkBusy || !apkPw}
+                style={{
+                  cursor: apkBusy ? "default" : "pointer",
+                  opacity: apkBusy || !apkPw ? 0.6 : 1,
+                }}
+              >
+                {apkBusy ? (
+                  <>
+                    <Spinner className="app-custom-spinner" size="sm" />
+                    <span>Checking</span>
+                  </>
+                  ) : (
+                  <span>Confirm</span>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Mobile-only expandable lots bar (row under title) */}
         <div>

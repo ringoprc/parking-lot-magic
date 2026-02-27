@@ -19,6 +19,7 @@ import {
   PiBatteryVerticalMedium,
   PiBatteryVerticalLow
 } from "react-icons/pi";
+import { GoArrowRight } from "react-icons/go";
 
 const PAGE_SIZE = 16;
 
@@ -571,7 +572,9 @@ export default function AdminDevicesPage({ apiBase }) {
                     <div className="admin-dev-vrow">
                       <div className="admin-dev-vlabel">
                         <span style={{ marginRight: "8px" }}>{String(vacancy) || "-"}</span>
-                        <span>→{" "}</span>
+                        <span style={{ paddingBottom: "5px" }}>
+                          <GoArrowRight size={18} />
+                        </span>
                       </div>
                       <input
                         className="admin-dev-vinput"

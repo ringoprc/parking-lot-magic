@@ -496,7 +496,7 @@ export default function AdminDevicesPage({ apiBase }) {
                     title={batteryPct == null ? "Battery" : `Battery: ${batteryPct}%`}
                     style={{ 
                       color: batteryColor(batteryPct),
-                      border: `1px solid ${batteryColor(batteryPct)}`
+                      border: `1.5px solid ${batteryColor(batteryPct)}`
                     }}
                   >
                     {batteryPct == null ? (
@@ -515,7 +515,7 @@ export default function AdminDevicesPage({ apiBase }) {
 
                     <div className="admin-dev-lotmeta">
                       <div>
-                        <span style={{ fontSize: "9.5px", color: r?.lot?.name ? "#333" : "#999", marginRight: "8px" }}>
+                        <span style={{ fontSize: "9.5px", color: r?.lot?.name ? "#333" : "#999", marginRight: "2px" }}>
                           [{r?.lot?.lotId ? r.lot.lotId : "-"}]{" "}
                         </span>
                         <span style={{ fontSize: "9.5px", color: r?.lot?.name ? "#333" : "#999" }}>
@@ -527,6 +527,7 @@ export default function AdminDevicesPage({ apiBase }) {
                         color: r?.lot?.name ? "#333" : "#999",
                         paddingBottom: "1px",
                         marginBottom: "3px",
+                        marginRight: "34px",
                         borderBottom: "1px solid"
                       }}>
                         {r?.lot?.name ? r.lot.name : "還未設定連結停車場"}

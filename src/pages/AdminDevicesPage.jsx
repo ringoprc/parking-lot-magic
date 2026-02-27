@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
 import "./AdminDevicesPage.css";
+import { Spinner } from "reactstrap";
 
 import { 
   formatTime, 
@@ -12,14 +13,54 @@ import {
 } from "../utils/time";
 
 import { FaCheck } from "react-icons/fa6";
-import { Spinner } from "reactstrap";
+import { 
+  PiBatteryVerticalFull,
+  PiBatteryVerticalHigh,
+  PiBatteryVerticalMedium,
+  PiBatteryVerticalLow
+} from "react-icons/pi";
 
 const PAGE_SIZE = 16;
+
+//-----------------------
+// Helpers
+//-----------------------
 
 function toNum(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
 }
+
+function batteryLevel(pct) {
+  if (pct == null) return null;
+  const p = Number(pct);
+  if (!Number.isFinite(p)) return null;
+  const v = Math.max(0, Math.min(100, Math.round(p)));
+  return v;
+}
+
+function batteryColor(pct) {
+  const p = batteryLevel(pct);
+  if (p == null) return "#bbb";
+  if (p >= 75) return "#4caf50"; // green
+  if (p >= 20) return "#e67e22"; // orange
+  return "#de1802";              // red
+}
+
+function BatteryIcon({ pct, size = 16 }) {
+  const p = batteryLevel(pct);
+  if (p == null) return null;
+
+  if (p >= 75) return <PiBatteryVerticalFull size={size} />;
+  if (p >= 50) return <PiBatteryVerticalHigh size={size} />;
+  if (p >= 25) return <PiBatteryVerticalMedium size={size} />;
+  return <PiBatteryVerticalLow size={size} />;
+}
+
+
+//-----------------------
+// Component
+//-----------------------
 
 export default function AdminDevicesPage({ apiBase }) {
 
@@ -450,10 +491,26 @@ export default function AdminDevicesPage({ apiBase }) {
 
               return (
                 <div key={deviceId} className="admin-dev-card">
-                  <div className="admin-dev-battery-badge" title="Battery">
-                    {batteryPct == null ? "—" : `${batteryPct}%`}
+                  <div
+                    className="admin-dev-battery-badge"
+                    title={batteryPct == null ? "Battery" : `Battery: ${batteryPct}%`}
+                    style={{ 
+                      color: batteryColor(batteryPct),
+                      border: `1px solid ${batteryColor(batteryPct)}`
+                    }}
+                  >
+                    {batteryPct == null ? (
+                      <span style={{ color: "#bbb" }}>—</span>
+                    ) : (
+                      <>
+                        <span style={{ fontWeight: 700 }}>{batteryPct}</span>
+                        <span style={{ flexShrink: "0" }}>
+                          <BatteryIcon pct={batteryPct} size={16} />
+                        </span>
+                      </>
+                    )}
                   </div>
-                  
+
                   <div className="admin-dev-card-title">
 
                     <div className="admin-dev-lotmeta">

@@ -200,11 +200,12 @@
   align-items: center;
   justify-content: center;
   position: absolute;
+  gap: 0.5px;
   top: -7px;
   right: -7px;
-  height: 52px;
-  width: 52px;
-  font-size: 12px;
+  height: 54px;
+  width: 58px;
+  font-size: 13px;
   font-weight: 500;
   line-height: 1;
   padding: 6px 8px;

@@ -444,10 +444,16 @@ export default function AdminDevicesPage({ apiBase }) {
                 confirmedSecAgo >= 60 ? "#c0392b" :
                 confirmedSecAgo >= 30 ? "#e67e22" :
                 (r?.lot?.name ? "#333" : "#999");
+
+              const batteryPct = r?.phone?.lastBatteryPct ?? null;
               
 
               return (
                 <div key={deviceId} className="admin-dev-card">
+                  <div className="admin-dev-battery-badge" title="Battery">
+                    {batteryPct == null ? "—" : `${batteryPct}%`}
+                  </div>
+                  
                   <div className="admin-dev-card-title">
 
                     <div className="admin-dev-lotmeta">

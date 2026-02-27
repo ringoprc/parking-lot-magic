@@ -496,11 +496,11 @@ export default function AdminDevicesPage({ apiBase }) {
                     title={batteryPct == null ? "Battery" : `Battery: ${batteryPct}%`}
                     style={{ 
                       color: batteryColor(batteryPct),
-                      border: `1.5px solid ${batteryColor(batteryPct)}`
+                      border: `1px solid ${batteryColor(batteryPct)}`
                     }}
                   >
                     {batteryPct == null ? (
-                      <span style={{ color: "#bbb" }}>—</span>
+                      <span style={{ color: "#bbb" }}>NA</span>
                     ) : (
                       <>
                         <span style={{ fontWeight: 700 }}>{batteryPct}</span>

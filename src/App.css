@@ -195,6 +195,14 @@ div .gm-style-iw {
   position: relative;
   height: calc(100% - 100px);
   overflow-y: scroll;
+  padding-right: 3px;
+  scrollbar-width: thin;
+}
+
+@media (max-width: 900px) {
+  .lot-btn-list {
+    height: calc(100% - 0px);
+  }
 }
 
 .lot-btn-list-inner {
@@ -598,8 +606,8 @@ div .gm-style-iw {
   }
 
   .title-bar-devmeta {
-    font-size: 12px;
-    margin-top: 6px;
+    font-size: 10px;
+    margin-top: 3px;
     margin-left: 6px;
   }
 }
@@ -620,6 +628,15 @@ div .gm-style-iw {
   margin: 10px 10px 12px;
   padding-bottom: 16px;
   border-bottom: 1px solid #ddd;
+}
+
+@media (max-width: 900px) {
+  .lot-search {
+    position: relative;
+    margin: 10px 10px 10px;
+    padding-bottom: 0px;
+    border-bottom: none;
+  }    
 }
 
 .lot-search gmp-place-autocomplete {

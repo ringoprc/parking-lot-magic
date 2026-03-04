@@ -437,21 +437,28 @@ export default function LotSearchBar({
     try {
       const pp = s.placePrediction;
 
-      // ✅ 新 API
+      // 新 API
       if (pp?.toPlace) {
         const place = pp.toPlace();
         await place.fetchFields({ fields: ["displayName", "formattedAddress", "location", "viewport"] });
         const loc = place.location;
         if (!loc) return;
 
+        console.log('HERE1');
+
         console.log('place:', place);
+        console.log('place.displayName:', place.displayName);
+        console.log('place.formattedAddress:', place.formattedAddress);
+        console.log('loc.lat():', loc.lat());
+        console.log('loc.lng():', loc.lng());
+        console.log('place.viewport:', place.viewport);
 
         onPick?.({
-          name: place.Gi.displayName,
-          address: place.Gi.formattedAddress,
+          name: place.displayName ?? "",
+          address: place.formattedAddress ?? "",
           lat: loc.lat(),
           lng: loc.lng(),
-          viewport: place.viewport,
+          viewport: place.viewport ?? null,
         });
       } else {
         // classic fallback：用 PlacesService.getDetails
@@ -502,7 +509,7 @@ export default function LotSearchBar({
       inputRef.current?.blur?.();
 
     } catch (e) {
-
+      console.log('[pickSuggestion] Error applying suggestion:', e);
     }
   }
 

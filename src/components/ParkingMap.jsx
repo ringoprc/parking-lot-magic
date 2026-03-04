@@ -1,68 +1,23 @@
 // frontend/src/components/ParkingMap.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  APIProvider,
   Map,
   AdvancedMarker,
-  InfoWindow,
   useMap,
 } from "@vis.gl/react-google-maps";
 
-import LotBottomSheet from "./LotBottomSheet";
 import Spinner from "react-bootstrap/Spinner";
 import { FaCircle } from "react-icons/fa";
 import { TiLocationArrow } from "react-icons/ti";
 
-import { formatTime, minutesAgo, minSecAgo } from "../utils/time";
+import ParkingLotInfoWindow from "./ParkingLotInfoWindow";
+import LotBottomSheet from "./LotBottomSheet";
 
 function getPinColorsFromVacancy(v) {
   if (v == null) return { bg: "#9AA0A6", border: "#5F6368", glyph: "#FFFFFF" }; // unknown = 灰
   if (v === 0) return { bg: "#EA4335", border: "#C5221F", glyph: "#FFFFFF" }; // 0 = 紅
   if (v <= 5) return { bg: "#FBBC04", border: "#C58F00", glyph: "#202124" };  // 少 = 黃
   return { bg: "#34A853", border: "#0F7B2E", glyph: "#FFFFFF" };              // 多 = 綠
-}
-
-function toVacancyNum(v) {
-  if (v === "" || v == null) return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
-
-function getVacancyTextColor(v) {
-  const n = toVacancyNum(v);
-  if (n == null) return "#b6b6b6";   // unknown -> gray (pin border)
-  if (n === 0) return "#C5221F";     // 0 -> red (pin border)
-  if (n <= 5) return "#C58F00";      // low -> yellow (pin border)
-  return "#0F7B2E";                  // ok -> green (pin border)
-}
-
-function openGoogleNavFromLot(lot) {
-  if (!lot) return;
-
-  // Prefer coordinates if you have them
-  const lat = lot.lat ?? lot.latitude;
-  const lng = lot.lng ?? lot.longitude;
-
-  let url = "";
-
-  // DTesting default to [lat, lng]
-  if (lot.addressZh && !lot.addressZh) {
-    // Fallback to address if no lat/lng
-    url =
-      `https://www.google.com/maps/dir/?api=1` +
-      `&destination=${encodeURIComponent(lot.addressZh)}` +
-      `&travelmode=driving`;
-  } else if (lat != null && lng != null) {
-    const dest = `${lat},${lng}`;
-    url =
-      `https://www.google.com/maps/dir/?api=1` +
-      `&destination=${encodeURIComponent(dest)}` +
-      `&travelmode=driving`;
-  } else {
-    return;
-  }
-
-  window.open(url, "_blank", "noopener,noreferrer");
 }
 
 function getOffsetCenterLatLng(map, lat, lng, offsetYPx) {
@@ -358,140 +313,10 @@ export default function ParkingMap({
         ))}
 
         {!isMobile && active && (
-          <InfoWindow
-            position={{ lat: active.lat, lng: active.lng }}
-            onCloseClick={() => setActive?.(null)}
-            /*
-            disableAutoPan
-            options={{
-              disableAutoPan: true,
-              //pixelOffset: iwOffset, // <-- add this
-            }}
-            */
-          >
-            <div className="iw-content-wrapper">
-              <div className="iw-hero-outer">
-                <div className="iw-hero">
-                  <img
-                    className="iw-hero-img"
-                    src="https://placehold.co/640x240/f9f9f9/999999/png?text=Parking"
-                    alt=""
-                    loading="lazy"
-                  />
-                </div>
-              </div>
-
-              <div style={{ minWidth: 120 }}>
-
-                <div style={{ 
-                  display: "flex", 
-                  flexDirection: "column",
-                  borderBottom: "1px solid #eee",
-                  padding: "0px 3px 10px 3px",
-                  marginTop: "10px"
-                }}>
-                  <div style={{ 
-                    display: "flex", 
-                    justifyContent: "space-between", 
-                    alignItems: "flex-start",
-                  }}>
-                    <div style={{ 
-                      fontSize: 15, 
-                      fontWeight: 700, 
-                      marginBottom: "6px",
-                      marginRight: "20px" 
-                    }}>
-                      {active.name}
-                    </div>
-                    <div
-                    style={{
-                      fontSize: "15px",
-                      fontWeight: "700",
-                      color: getVacancyTextColor(active.vacancy),
-                      marginBottom: "6px",
-                      flexShrink: "0"
-                    }}>
-                      空位：
-                      <span style={{ fontSize: 15, fontWeight: 700 }}>
-                        {active.vacancy ?? "未知"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <span style={{
-                      fontSize: "12px"
-                    }}>{active.addressZh}</span>
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    flexDirection: "column",
-                    padding: "6px 3px 0px 6px"
-                  }}
-                >
-                  {(() => {
-                    const m = minutesAgo(active.lastUpdated);
-                    if (m == null) return null;
-                    if (m <= 3) return null;
-                    return (
-                      <div style={{
-                        marginTop: "6px",
-                        fontSize: "11px",
-                        color: "#ea4336",
-                        fontWeight: "900"
-                      }}>
-                        資料可能延遲（{m} 分鐘）
-                      </div>
-                    );
-                  })()}
-
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "5px"
-                    }}
-                  >
-                    <div style={{ marginTop: 6, fontSize: 10.5 }}>
-                      最近更新：{formatTime(active.lastUpdated)}
-                    </div>
-                    <div style={{ marginTop: 6, fontSize: 10.5 }}>
-                      {(() => {
-                        const ms = minSecAgo(active.lastUpdated);
-                        if (!ms) return null;
-
-                        // 想要永遠顯示「X 分 Y 秒前」
-                        return (
-                          <div style={{ marginTop: 0, fontSize: 10.5 }}>
-                            （{ms.min} 分 {String(ms.sec).padStart(2, "0")} 秒前）
-                          </div>
-                        );
-
-                        // 如果你更想在 < 60 秒時顯示「Y 秒前」，用這個：
-                        // const txt = ms.min <= 0 ? `${ms.sec} 秒前` : `${ms.min} 分 ${String(ms.sec).padStart(2,"0")} 秒前`;
-                        // return <div style={{ marginTop: 6, fontSize: 10.5 }}>（{txt}）</div>;
-                      })()}
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-            </div>
-
-            <div className="iw-actions">
-              <button
-                className="iw-navBtn"
-                onClick={() => openGoogleNavFromLot(active)}
-                type="button"
-              >
-                開始導航
-              </button>
-            </div>
-
-          </InfoWindow>
+          <ParkingLotInfoWindow
+            active={active}
+            setActive={setActive}
+          />
         )}
 
       </Map>

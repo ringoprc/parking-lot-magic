@@ -32,14 +32,13 @@ function getVacancyTextColor(v) {
 function openGoogleNav(active) {
   if (!active) return;
 
-  // Prefer coordinates if you have them
   const lat = active.lat ?? active.latitude;
   const lng = active.lng ?? active.longitude;
 
   let url = "";
 
-  if (active.addressZh) {
-    // Fallback to address if no lat/lng
+  // Testing default to [lat, lng]
+  if (active.addressZh  && !active.addressZh) {
     url =
       `https://www.google.com/maps/dir/?api=1` +
       `&destination=${encodeURIComponent(active.addressZh)}` +
@@ -134,6 +133,7 @@ export default function LotBottomSheet({
           onTouchStart={stopMapGesture}
           onTouchMove={stopMapGesture}
         >
+        
           <div className="vl-sheet-hero">
             <div className="vl-sheet-hero-img-div">
               <img

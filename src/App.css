@@ -498,11 +498,6 @@ div .gm-style-iw {
   pointer-events: none !important;
 }
 
-.iw-actions {
-  cursor: default !important;
-  pointer-events: all !important;
-}
-
 .map-wrap .gm-style-iw-chr {
   height: 40px;
 }
@@ -969,27 +964,6 @@ div .gm-style-iw {
 @keyframes vlPinPulse {
   0%   { transform: scale(0.55); opacity: 0.85; }
   100% { transform: scale(1.35); opacity: 0; }
-}
-
-.iw-actions {
-  margin-top: 15px;
-  display: flex;
-  gap: 10px;
-}
-
-.iw-navBtn {
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: 12px;
-  border: 1px solid #ccc;
-  font-weight: 800;
-  cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
-}
-
-.iw-navBtn:hover {
-  background: #2680f0;
-  color: white;
 }
 
 .lot-dist{

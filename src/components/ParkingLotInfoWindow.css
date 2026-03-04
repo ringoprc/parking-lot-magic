@@ -1,0 +1,99 @@
+/* frontend/src/components/ParkingLotInfoWindow.css */
+
+.iw-sheet-hero {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  border-bottom: 1px solid rgb(238, 238, 238);
+  padding: 0px 0px 8px 5px;
+}
+
+/* internal layout */
+.iw-sheet-hero-img-div {
+  display: block;
+  width: 70%;
+  height: 130px;
+  flex-grow: 1;
+}
+
+.iw-sheet-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.8;
+  border-radius: 4px;
+}
+
+.iw-sheet-sponsor-img-div {
+  display: block;
+  width: 110px;
+  height: 120px;
+}
+
+.iw-sheet-sponsor-img {
+  width: 100%;
+  height: 96px;
+  object-fit: cover;
+  display: block;
+  opacity: 0.2;
+  border-radius: 4px;
+}
+
+.iw-sheet-sponsor-example-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: transform 200ms ease;
+  font-weight: 900;
+  color: #4f4f4f;
+}
+
+.iw-sheet-sponsor-distance-label-div {
+  height: 30px;
+  font-size: 10px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  color: #808080;
+  font-weight: 600;
+  padding: 9px 6px 0px 6px;
+}
+
+.iw-sheet-sponsor-meta-div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.iw-actions {
+  display: flex;
+  gap: 10px;
+  cursor: default !important;
+  pointer-events: all !important;
+}
+
+.iw-nav-outer-div {
+  margin-top: 8px;
+}
+
+.iw-navBtn {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.iw-navBtn:hover {
+  background: #2680f0;
+  color: white;
+}
+
+
+
+

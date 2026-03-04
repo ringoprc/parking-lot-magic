@@ -638,6 +638,8 @@ export default function LotSearchBar({
         )}
       </div>
 
+      <div className="lot-search-horizontal-div"></div>
+
       {suggestionOpen && (
         <div ref={ddRef} className="lot-search-dd">
           <button

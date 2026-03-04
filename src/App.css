@@ -217,7 +217,6 @@ div .gm-style-iw {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  border-top: 1px solid #eee;
   border-bottom: 1px solid #eee;
   scrollbar-width: thin;
 }
@@ -663,8 +662,7 @@ div .gm-style-iw {
 .lot-search {
   position: relative;
   margin: 10px 10px 12px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #ddd;
+  padding-bottom: 0px;
 }
 
 @media (max-width: 900px) {
@@ -674,6 +672,12 @@ div .gm-style-iw {
     padding-bottom: 0px;
     border-bottom: none;
   }    
+}
+
+.lot-search-horizontal-div {
+  border-bottom: 1px solid #ddd;
+  width: 100%;
+  margin-top: 16px;
 }
 
 .lot-search gmp-place-autocomplete {
@@ -758,7 +762,7 @@ div .gm-style-iw {
   position: absolute;
   left: 0;
   right: 0;
-  top: calc(100% - 1px);
+  top: calc(100% - 18px);
   z-index: 2000;
   background: #ffffff;
   border-radius: 10px;

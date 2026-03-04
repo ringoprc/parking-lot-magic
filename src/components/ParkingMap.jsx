@@ -45,7 +45,8 @@ function openGoogleNavFromLot(lot) {
 
   let url = "";
 
-  if (lot.addressZh) {
+  // DTesting default to [lat, lng]
+  if (lot.addressZh || !lot.addressZh) {
     // Fallback to address if no lat/lng
     url =
       `https://www.google.com/maps/dir/?api=1` +

@@ -95,6 +95,9 @@ export default function AdminDevicesPage({ apiBase }) {
   const [editMap, setEditMap] = useState({});
   const [confirmAllLoading, setConfirmAllLoading] = useState(false);
 
+  const [zoomMap, setZoomMap] = useState({});          // deviceId -> number (1.0..4.0)
+  const [zoomSavingMap, setZoomSavingMap] = useState({}); // deviceId -> boolean
+
   //-----------------------------
   // Admin Key
   //-----------------------------
@@ -193,6 +196,20 @@ export default function AdminDevicesPage({ apiBase }) {
         }
         return copy;
       });
+
+      setZoomMap((prev) => {
+        const copy = { ...prev };
+        for (const r of nextRows) {
+          const deviceId = r.deviceId;
+          if (copy[deviceId] == null) {
+            // expects backend to return r.zoomRatio (see backend patch below)
+            const z = Number(r?.zoomRatio);
+            copy[deviceId] = Number.isFinite(z) ? z : 1.0;
+          }
+        }
+        return copy;
+      });
+
     } catch (e) {
       // ignore
     } finally {
@@ -287,6 +304,42 @@ export default function AdminDevicesPage({ apiBase }) {
       toast.error(e?.message || "本頁全部確認失敗");
     } finally {
       setConfirmAllLoading(false);
+    }
+  }
+
+
+  //-----------------------------
+  // Save Zoom
+  //-----------------------------
+  async function saveZoom(deviceId) {
+    if (!adminKey) return;
+
+    const zRaw = zoomMap[deviceId];
+    const z = Number(zRaw);
+    if (!Number.isFinite(z)) return;
+
+    const zoomRatio = Math.max(1.0, Math.min(4.0, z));
+
+    setZoomSavingMap((p) => ({ ...p, [deviceId]: true }));
+    try {
+      const res = await fetch(`${apiBase}/api/admin/devices/${encodeURIComponent(deviceId)}/config`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": adminKey,
+        },
+        body: JSON.stringify({ zoomRatio }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "zoom update failed");
+
+      // normalize state to server response (in case it clamps)
+      setZoomMap((p) => ({ ...p, [deviceId]: data.zoomRatio ?? zoomRatio }));
+    } catch (e) {
+      toast.error(e?.message || "zoom update failed");
+    } finally {
+      setZoomSavingMap((p) => ({ ...p, [deviceId]: false }));
     }
   }
 
@@ -471,7 +524,7 @@ export default function AdminDevicesPage({ apiBase }) {
               const uploadedAgo = lastUploadAt ? minSecAgo(new Date(lastUploadAt)) : null;
               const shotAtColor =
                 shotSecAgo == null ? (r?.lot?.name ? "#333" : "#999") :
-                shotSecAgo >= 60 ? "#c0392b" :
+                shotSecAgo >= 60 ? "#de1802" :
                 shotSecAgo >= 40 ? "#e67e22" :
                 (r?.lot?.name ? "#333" : "#999");
 
@@ -483,7 +536,7 @@ export default function AdminDevicesPage({ apiBase }) {
               const confirmedAgo = lastConfirmedAt ? minSecAgo(new Date(lastConfirmedAt)) : null;
               const confirmedAtColor =
                 confirmedSecAgo == null ? (r?.lot?.name ? "#333" : "#999") :
-                confirmedSecAgo >= 60 ? "#c0392b" :
+                confirmedSecAgo >= 60 ? "#de1802" :
                 confirmedSecAgo >= 30 ? "#e67e22" :
                 (r?.lot?.name ? "#333" : "#999");
 
@@ -492,6 +545,26 @@ export default function AdminDevicesPage({ apiBase }) {
 
               return (
                 <div key={deviceId} className="admin-dev-card">
+                  <div className="admin-dev-zoombar" title="Zoom">
+                    <input
+                      className="admin-dev-zoomrange"
+                      type="range"
+                      min="1"
+                      max="4"
+                      step="0.1"
+                      value={zoomMap[deviceId] ?? 1.0}
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        setZoomMap((p) => ({ ...p, [deviceId]: v }));
+                      }}
+                      onMouseUp={() => saveZoom(deviceId)}
+                      onTouchEnd={() => saveZoom(deviceId)}
+                    />
+                    <div className="admin-dev-zoomlabel">
+                      {(Number(zoomMap[deviceId] ?? 1.0)).toFixed(1)}x
+                    </div>
+                  </div>
+
                   <div
                     className="admin-dev-battery-badge"
                     title={batteryPct == null ? "Battery" : `Battery: ${batteryPct}%`}
@@ -593,6 +666,7 @@ export default function AdminDevicesPage({ apiBase }) {
                     </div>
                   </div>
                 </div>
+
               );
             })}
           </div>

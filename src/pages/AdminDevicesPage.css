@@ -215,6 +215,38 @@
   background: white;
 }
 
+/* Left vertical zoom control bar */
+.admin-dev-zoombar {
+  position: absolute;
+  left: 11px;
+  bottom: 54px;
+  width: 30px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 10px;
+  z-index: 999;
+  border: 1px solid #ccc;
+  align-items: center;
+  height: calc(100% - 140px);
+  justify-content: center;
+  gap: 3vh;
+  padding-top: 5vh;
+}
+
+/* Turn horizontal range into vertical */
+.admin-dev-zoomrange {
+  width: 12vh;
+  transform: rotate(-90deg);
+  transform-origin: center;
+}
+
+.admin-dev-zoomlabel {
+  margin-top: 3vh;
+  font-size: 11px;
+  font-weight: 700;
+  color: #333;
+}
+
 .admin-dev-card-title {
   padding: 3px 12px 3px 12px;
   font-weight: 700;
@@ -277,7 +309,7 @@
   border-top: 1px solid #f0f0f0;
 }
 
-.admin-dev-vrow{
+.admin-dev-vrow {
   display:flex;
   align-items:center;
   gap: 8px;

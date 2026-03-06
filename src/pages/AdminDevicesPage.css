@@ -1,5 +1,5 @@
 /* frontend/src/pages/AdminDevicesPage.css */
-.admin-dev-outer{
+.admin-dev-outer {
   padding: 12px 16px;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   height: 100vh;
@@ -9,48 +9,113 @@
   overflow: hidden;
 }
 
-.admin-dev-header{
-  display:flex;
+.admin-dev-header {
+  display: flex;
   gap: 16px;
   align-items: center;
   flex-wrap: wrap;
   flex-shrink: 0;
 }
 
-.admin-dev-title{
+@media (max-width: 600px) {
+  .admin-dev-header {
+    gap: 6px;
+  }
+}
+
+.admin-dev-title {
   font-size: 18px;
   font-weight: 800;
 }
 
-.admin-dev-adminkey{
+.admin-dev-adminkey {
   display:flex;
   gap: 8px;
   align-items:center;
   flex-wrap: wrap;
 }
 
-.admin-dev-label{
+@media (max-width: 600px) {
+  .admin-dev-adminkey {
+    padding-bottom: 10px;
+    margin-bottom: 3px;
+    border-bottom: 1px solid #eee;
+    margin-top: 0px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+    gap: 5px;
+  }
+}
+
+.admin-dev-label {
   color:#555;
   font-size: 14px;
 }
 
-.admin-dev-input{
+@media (max-width: 600px) {
+  .admin-dev-label {
+    font-size: 11px;
+  }
+}
+
+
+.admin-dev-input {
   padding: 8px 10px;
   border: 1px solid #ddd;
   border-radius: 10px;
   font-size: 14px;
+  min-width: 400px;
 }
 
-.admin-dev-btn{
+@media (max-width: 600px) {
+  .admin-dev-input.admin-password {
+    font-size: 11px;
+    padding: 4px 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-dev-input.admin-password {
+    min-width: calc(100vw - 114px);
+  }
+}
+
+@media (max-width: 600px){
+  .admin-dev-input.search-device-id {
+    min-width: calc(100vw - 100px);
+    font-size: 11px;
+  }
+}
+
+.admin-dev-btn {
   padding: 8px 12px;
   border-radius: 10px;
   border: 1px solid #ccc;
   font-size: 14px;
   background: #fff;
+  flex-shrink: 0;
 }
 
-.admin-dev-btn:hover{
+.admin-dev-btn:hover {
   border-color: #2196f3;
+}
+
+.admin-dev-btn.apply-password {
+
+}
+
+@media (max-width: 600px) {
+  .admin-dev-btn.apply-password {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-dev-btn.apply-search-id {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
 }
 
 .admin-dev-confirm-all-button {
@@ -58,8 +123,8 @@
   gap: 3px;
   font-size: 14px;
   background: #fff;
-
-  padding: 2px 5px 4px 5px;
+  margin-left: 10;
+  padding: 6px 10px;
   border-radius: 10px;
   border: 1.5px solid #0F7B2E;
   color: #0F7B2E;
@@ -74,18 +139,63 @@
   color: white;
 }
 
-.admin-dev-filters {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin-top: 3px;
-  flex-wrap: wrap;
-  flex-shrink: 0;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #ddd;
+@media (max-width: 600px) {
+  .admin-dev-confirm-all-button {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+    font-size: 18px;
+    padding: 4px 12px;
+    align-items: center;
+    gap: 8px;
+  }
 }
 
-.admin-dev-select{
+.admin-dev-filters {
+  display: flex;
+  gap: 0px;
+  align-items: center;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  border-bottom: 1px solid #ddd;
+  justify-content: space-between;
+  padding: 0px 12px 6px 0px;
+}
+
+@media (max-width: 1440px) {
+  .admin-dev-filters {
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 6px;
+    align-items: flex-start;
+    padding: 12px 6px 12px 6px;
+    border-top: 1px solid #eee;
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-dev-filters {
+    border-top: none;
+    padding: 0px 0px 14px 0px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #aaa;
+  }
+}
+
+.admin-dev-select-outer-div {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 10px;
+}
+
+@media (max-width: 600px) {
+  .admin-dev-select-outer-div {
+    gap: 6px;
+  }
+}
+
+.admin-dev-select {
   padding: 8px 10px;
   border: 1px solid #7aa5c7;
   border-radius: 10px;
@@ -94,23 +204,102 @@
   outline: none;
 }
 
-.admin-dev-search{
+.admin-dev-select.page-size-select {
+  width: 80px;
+}
+
+@media (max-width: 600px) {
+  .admin-dev-select.parking-log-groups {
+    padding: 6px 6px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-dev-select.page-size-select {
+    width: 56px;
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+}
+
+.admin-dev-search {
   display:flex;
   gap: 8px;
   align-items:center;
   flex-wrap: wrap;
 }
 
-.admin-dev-pagination-div {
+@media (max-width: 600px) {
+  .admin-dev-search {
+    flex-wrap: nowrap;
+  }    
+}
+
+.admin-dev-lastfetchat-div {
+  color: rgb(119, 119, 119);
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 600px) {
+  .admin-dev-lastfetchat-div {
+    font-size: 10px;
+  }
+}
+
+.admin-dev-pagination-outer-div {
   display: flex;
   gap: 22px;
   align-items: center;
-  padding: 4px 10px 3px 10px;
+  padding: 4px 16px 3px;
   border: 1px solid #eee;
   border-radius: 10px;
 }
 
-.admin-dev-page{
+@media (max-width: 600px) {
+  .admin-dev-pagination-outer-div {
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+    padding: 10px 10px;
+    border: 1px solid #ccc;
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-dev-confirm-all-button-div {
+    width: 100%;
+  }
+}
+
+.admin-dev-page-size-label {
+  font-size: 13px;
+  color: #666;
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .admin-dev-page-size-label {
+    font-size: 10px;
+  }
+}
+
+.admin-dev-pagination-div {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+@media (max-width: 600px) {
+  .admin-dev-pagination-div {
+    width: 100%;
+    font-size: 9px;
+  } 
+}
+
+.admin-dev-pagination {
   margin-left: auto;
   display:flex;
   align-items:center;
@@ -134,6 +323,12 @@
   color:#333;
 }
 
+@media (max-width: 600px) {
+  .admin-dev-pagelabel {
+    font-size: 10px;
+  }
+}
+
 .admin-dev-body {
   margin-top: 8px;
   flex: 1 1 auto;
@@ -141,6 +336,12 @@
   padding-bottom: 8px;
   padding-right: 12px;
   scrollbar-width: thin;
+}
+
+@media (max-width: 600px) {
+  .admin-dev-body {
+    padding-right: 6px;
+  }    
 }
 
 .admin-dev-loading {
@@ -285,7 +486,7 @@
 
 .admin-dev-imgwrap {
   position: relative;
-  max-height: 22vh;
+  max-height: 20vh;
   width: 100%;
   aspect-ratio: 4 / 3;
   background: #fafafa;

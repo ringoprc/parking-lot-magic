@@ -21,7 +21,8 @@ import {
 } from "react-icons/pi";
 import { GoArrowRight } from "react-icons/go";
 
-const PAGE_SIZE = 16;
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 40];
+const DEFAULT_PAGE_SIZE = 10;
 
 //-----------------------
 // Helpers
@@ -87,8 +88,10 @@ export default function AdminDevicesPage({ apiBase }) {
   const inFlightRef = useRef(false);
 
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [rows, setRows] = useState([]);
-  const [meta, setMeta] = useState({ total: 0, page: 1, pageSize: PAGE_SIZE });
+  const [meta, setMeta] = useState({ total: 0, page: 1, pageSize: DEFAULT_PAGE_SIZE });
+
   const [loading, setLoading] = useState(false);
 
   // deviceId -> edited vacancy
@@ -137,11 +140,13 @@ export default function AdminDevicesPage({ apiBase }) {
       searchOverride,
       pageOverride,
       groupIdOverride,
+      pageSizeOverride,
     } = opts;
 
     const effSearch = (searchOverride ?? appliedSearch);
     const effPage = (pageOverride ?? page);
     const effGroupId = (groupIdOverride ?? groupId);
+    const effPageSize = (pageSizeOverride ?? pageSize);
 
     if (!adminKey) {
       if (!silent) toast.error("請先輸入管理員密碼");
@@ -154,7 +159,7 @@ export default function AdminDevicesPage({ apiBase }) {
     try {
       const qs = new URLSearchParams({
         page: String(effPage),
-        pageSize: String(PAGE_SIZE),
+        pageSize: String(effPageSize),
         groupId: effGroupId,
         search: effSearch,
       });
@@ -181,7 +186,7 @@ export default function AdminDevicesPage({ apiBase }) {
 
       const nextRows = Array.isArray(data?.rows) ? data.rows : [];
       setRows(nextRows);
-      setMeta(data?.meta || { total: nextRows.length, page, pageSize: PAGE_SIZE });
+      setMeta(data?.meta || { total: nextRows.length, page: effPage, pageSize: effPageSize });
 
       // initialize editMap defaults (only if not already edited)
       setEditMap((prev) => {
@@ -229,7 +234,7 @@ export default function AdminDevicesPage({ apiBase }) {
 
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adminKey, isAdminConfirmed, page, groupId, appliedSearch]);
+  }, [adminKey, isAdminConfirmed, page, groupId, appliedSearch, pageSize]);
 
   
   //-----------------------------
@@ -351,12 +356,12 @@ export default function AdminDevicesPage({ apiBase }) {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, groupId]);
+  }, [page, groupId, pageSize]);
 
   const pageCount = useMemo(() => {
     const total = toNum(meta?.total) ?? 0;
-    return Math.max(1, Math.ceil(total / PAGE_SIZE));
-  }, [meta]);
+    return Math.max(1, Math.ceil(total / pageSize));
+  }, [meta, pageSize]);
 
   function onSearchSubmit() {
     const s = search.trim();
@@ -375,122 +380,156 @@ export default function AdminDevicesPage({ apiBase }) {
     <div className="admin-dev-outer">
       {/* Header */}
       <div className="admin-dev-header">
-        <div className="admin-dev-title">Admin Devices</div>
+        <div className="admin-dev-title">裝置管理頁面</div>
 
         <div className="admin-dev-adminkey">
           <div className="admin-dev-label">管理員密碼</div>
-          <input
-            className="admin-dev-input"
-            style={{ minWidth: "400px" }}
-            value={adminKey}
-            onChange={(e) => persistAdminKey(e.target.value)}
-            placeholder="admin key"
-          />
-          <button className="admin-dev-btn" 
-            onClick={() => {
-              const s = search.trim();
-              setAppliedSearch(s);
-              setPage(1);
-              load({ searchOverride: s, pageOverride: 1 });
-            }}
-          >
-            重新載入
-          </button>
+          <div>
+            <input
+              className="admin-dev-input admin-password"
+              value={adminKey}
+              onChange={(e) => persistAdminKey(e.target.value)}
+              placeholder="admin key"
+            />
+            <button className="admin-dev-btn apply-password" 
+              onClick={() => {
+                const s = search.trim();
+                setAppliedSearch(s);
+                setPage(1);
+                load({ searchOverride: s, pageOverride: 1 });
+              }}
+            >
+              重新載入
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Filters */}
       <div className="admin-dev-filters">
-        <select
-          className="admin-dev-select"
-          value={groupId}
-          onChange={(e) => { setGroupId(e.target.value); setPage(1); }}
-        >
-          <option value="all">所有停車場群組</option>
-          {groups.map((g) => (
-            <option key={g._id} value={g._id}>
-              {g.name || String(g._id)}
-            </option>
-          ))}
-        </select>
 
-        <div className="admin-dev-search">
-          <input
-            className="admin-dev-input"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="搜尋裝置 ID..."
-            onKeyDown={(e) => {
-              if (e.key === "Enter") onSearchSubmit();
-            }}
-          />
-          <button className="admin-dev-btn" onClick={onSearchSubmit}>
-            搜尋
-          </button>
-        </div>
-
-        <div style={{ marginLeft: "auto", color: "#777", fontSize: 13 }}>
-          <span style={{ marginRight: 10 }}>
-            最近載入圖像：{" "}
-            {lastFetchAt ? formatTimeYYYYMMDD_HHMMSS(new Date(lastFetchAt)) : "—"}
-            {(() => {
-              const ms = minSecAgo(new Date(lastFetchAt));
-              if (!ms) return null;
-              return (
-                fetchedAgo 
-                ? (<span>（{fetchedAgo.min} 分 {String(fetchedAgo.sec).padStart(2,"0")} 秒前）</span>) 
-                : null
-              );
-            })()}
-          </span>
-          {lastFetchError ? (
-            <span style={{ color: "#c0392b" }}>
-              (failed: {lastFetchError})
-            </span>
-          ) : null}
-        </div>
-
-        <div className="admin-dev-pagination-div">
-          <button
-            className="admin-dev-confirm-all-button"
-            style={{ marginLeft: 10, padding: "6px 10px" }}
-            disabled={confirmAllLoading || rows.length === 0}
-            onClick={confirmAllOnPage}
-            title="Confirm all on this page"
+        <div className="admin-dev-select-outer-div">
+          <select
+            className="admin-dev-select parking-log-groups"
+            value={groupId}
+            onChange={(e) => { setGroupId(e.target.value); setPage(1); }}
           >
-            {confirmAllLoading ? (
-              <Spinner color="primary" />
-              ) : (
-              <>
-                <FaCheck size={19} />
-                <span>確認本頁全部空位</span>
-              </>
-            )}
-          </button>
+            <option value="all">所有停車場群組</option>
+            {groups.map((g) => (
+              <option key={g._id} value={g._id}>
+                {g.name || String(g._id)}
+              </option>
+            ))}
+          </select>
 
-          {/* Pagination */}
-          <div className="admin-dev-page">
-            <button
-              className="admin-dev-navbtn"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              title="Prev"
-            >
-              <FaChevronLeft />
+          <div className="admin-dev-search">
+            <input
+              className="admin-dev-input search-device-id"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="搜尋裝置 ID..."
+              onKeyDown={(e) => {
+                if (e.key === "Enter") onSearchSubmit();
+              }}
+            />
+            <button className="admin-dev-btn apply-search-id" onClick={onSearchSubmit}>
+              搜尋
             </button>
+          </div>
+        </div>
 
-            <div className="admin-dev-pagelabel">
-              Page {page} / {pageCount} ({meta?.total ?? 0})
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+          
+          <div className="admin-dev-lastfetchat-div">
+            <span style={{ marginRight: 10 }}>
+              最近載入圖像：{" "}
+            </span>
+            <span>
+              {lastFetchAt ? formatTimeYYYYMMDD_HHMMSS(new Date(lastFetchAt)) : "—"}
+              {(() => {
+                const ms = minSecAgo(new Date(lastFetchAt));
+                if (!ms) return null;
+                return (
+                  fetchedAgo 
+                  ? (<span>（{fetchedAgo.min} 分 {String(fetchedAgo.sec).padStart(2,"0")} 秒前）</span>) 
+                  : null
+                );
+              })()}
+            </span>
+            {lastFetchError ? (
+              <span style={{ color: "#c0392b" }}>
+                (failed: {lastFetchError})
+              </span>
+            ) : null}
+          </div>
+
+          <div className="admin-dev-pagination-outer-div">
+
+            <div className="admin-dev-confirm-all-button-div">
+              <button
+                className="admin-dev-confirm-all-button"
+                disabled={confirmAllLoading || rows.length === 0}
+                onClick={confirmAllOnPage}
+                title="Confirm all on this page"
+              >
+                {confirmAllLoading ? (
+                  <Spinner color="primary" />
+                  ) : (
+                  <>
+                    <FaCheck size={19} />
+                    <span>確認本頁全部空位</span>
+                  </>
+                )}
+              </button>
             </div>
 
-            <button
-              className="admin-dev-navbtn"
-              disabled={page >= pageCount}
-              onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-              title="Next"
-            >
-              <FaChevronRight />
-            </button>
+            <div className="admin-dev-pagination-div">
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginRight: 10 }}>
+                <span className="admin-dev-page-size-label">每頁</span>
+                <select
+                  className="admin-dev-select page-size-select"
+                  value={pageSize}
+                  onChange={(e) => {
+                    const next = Number(e.target.value);
+                    setPageSize(next);
+                    setPage(1);
+                    load({ pageOverride: 1, pageSizeOverride: next });
+                  }}
+                >
+                  {PAGE_SIZE_OPTIONS.map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Pagination */}
+              <div className="admin-dev-pagination">
+                <button
+                  className="admin-dev-navbtn"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  title="Prev"
+                >
+                  <FaChevronLeft />
+                </button>
+
+                <div className="admin-dev-pagelabel">
+                  Page {page} / {pageCount} ({meta?.total ?? 0})
+                </div>
+
+                <button
+                  className="admin-dev-navbtn"
+                  disabled={page >= pageCount}
+                  onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                  title="Next"
+                >
+                  <FaChevronRight />
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -651,7 +690,8 @@ export default function AdminDevicesPage({ apiBase }) {
                       </div>
                       <input
                         className="admin-dev-vinput"
-                        value={edited || "-"}
+                        value={edited ?? ""}
+                        placeholder="-"
                         onChange={(e) =>
                           setEditMap((prev) => ({ ...prev, [deviceId]: e.target.value }))
                         }

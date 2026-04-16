@@ -87,6 +87,8 @@ export default function AdminDevicesPage({ apiBase }) {
   // prevent overlapping fetches (interval + manual actions)
   const inFlightRef = useRef(false);
 
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortDir, setSortDir] = useState("desc");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [rows, setRows] = useState([]);
@@ -157,12 +159,16 @@ export default function AdminDevicesPage({ apiBase }) {
       pageOverride,
       groupIdOverride,
       pageSizeOverride,
+      sortByOverride,
+      sortDirOverride,
     } = opts;
 
     const effSearch = (searchOverride ?? appliedSearch);
     const effPage = (pageOverride ?? page);
     const effGroupId = (groupIdOverride ?? groupId);
     const effPageSize = (pageSizeOverride ?? pageSize);
+    const effSortBy = (sortByOverride ?? sortBy);
+    const effSortDir = (sortDirOverride ?? sortDir);
 
     if (!adminKey) {
       if (!silent) toast.error("請先輸入管理員密碼");
@@ -178,6 +184,8 @@ export default function AdminDevicesPage({ apiBase }) {
         pageSize: String(effPageSize),
         groupId: effGroupId,
         search: effSearch,
+        sortBy: effSortBy,
+        sortDir: effSortDir,
       });
 
       const res = await fetch(`${apiBase}/api/admin/devices/phones?${qs.toString()}`, {
@@ -250,7 +258,7 @@ export default function AdminDevicesPage({ apiBase }) {
 
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adminKey, isAdminConfirmed, page, groupId, appliedSearch, pageSize]);
+  }, [adminKey, isAdminConfirmed, page, groupId, appliedSearch, pageSize, sortBy, sortDir]);
 
   
   //-----------------------------
@@ -372,7 +380,7 @@ export default function AdminDevicesPage({ apiBase }) {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, groupId, pageSize]);
+  }, [page, groupId, pageSize, sortBy, sortDir]);
 
   const pageCount = useMemo(() => {
     const total = toNum(meta?.total) ?? 0;
@@ -638,6 +646,34 @@ export default function AdminDevicesPage({ apiBase }) {
         </div>
       </div>
 
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <span style={{ fontSize: "12px", color: "#666" }}>排序</span>
+        <select
+          className="admin-dev-select"
+          value={`${sortBy}_${sortDir}`}
+          onChange={(e) => {
+            const [nextSortBy, nextSortDir] = String(e.target.value).split("_");
+            setSortBy(nextSortBy);
+            setSortDir(nextSortDir || "desc");
+            setPage(1);
+            load({
+              pageOverride: 1,
+              sortByOverride: nextSortBy,
+              sortDirOverride: nextSortDir || "desc",
+            });
+          }}
+        >
+          <option value="createdAt_desc">開始時間：近到遠</option>
+          <option value="createdAt_asc">開始時間：遠到近</option>
+          <option value="lastUploadAt_desc">圖像時間：近到遠</option>
+          <option value="lastUploadAt_asc">圖像時間：遠到近</option>
+          <option value="uploadCountSinceBoot_desc">開機後上傳次數：多到少</option>
+          <option value="uploadCountSinceBoot_asc">開機後上傳次數：少到多</option>
+          <option value="deviceId_asc">裝置 ID：A → Z</option>
+          <option value="deviceId_desc">裝置 ID：Z → A</option>
+        </select>
+      </div>
+
       {/* Filters */}
       <div className="admin-dev-filters">
 
@@ -813,7 +849,9 @@ export default function AdminDevicesPage({ apiBase }) {
                 (r?.lot?.name ? "#333" : "#999");
 
               const batteryPct = r?.phone?.lastBatteryPct ?? null;
-              
+              const createdAt = r?.phone?.createdAt ?? null;
+              const createdAgo = createdAt ? minSecAgo(new Date(createdAt)) : null;
+              const uploadCountSinceBoot = r?.phone?.uploadCountSinceBoot ?? null;
 
               return (
                 <div key={deviceId} className="admin-dev-card">
@@ -882,9 +920,18 @@ export default function AdminDevicesPage({ apiBase }) {
                       }}>
                         {r?.lot?.name ? r.lot.name : "還未設定連結停車場"}
                       </span>
+                      <span className="admin-dev-card-confirm-time"
+                      style={{ fontSize: "8px", marginTop: "0.5px", color: confirmedAtColor }}>
+                        開始時間：{createdAt ? formatTimeYYYYMMDD_HHMMSS(new Date(createdAt)) : "—"}
+                        {createdAgo ? (
+                          <span>
+                            （{String(createdAgo.min).padStart(2, "0")} 分 {String(createdAgo.sec).padStart(2, "0")} 秒前）
+                          </span>
+                        ) : null}
+                      </span>
                       <span className="admin-dev-card-shot-time"
                       style={{ fontSize: "8px", marginTop: "1.5px", color: shotAtColor }}>
-                        圖像拍攝時間：
+                        目前圖像拍攝時間：
                         {lastUploadAt ? formatTimeYYYYMMDD_HHMMSS(new Date(lastUploadAt)) : "—"}
                         {uploadedAgo ? (
                           <span>
@@ -892,6 +939,7 @@ export default function AdminDevicesPage({ apiBase }) {
                           </span>
                         ) : null}
                       </span>
+                      {/*
                       <span className="admin-dev-card-confirm-time"
                       style={{ fontSize: "8px", marginTop: "0.5px", color: confirmedAtColor }}>
                         確認空位時間：
@@ -902,6 +950,7 @@ export default function AdminDevicesPage({ apiBase }) {
                           </span>
                         ) : null}
                       </span>
+                      */}
                     </div>
 
                     <div className="admin-dev-deviceid">

@@ -68,6 +68,12 @@
 }
 
 @media (max-width: 600px) {
+  .admin-dev-input.modal-search-input {
+    min-width: 80vw; 
+  }
+}
+
+@media (max-width: 600px) {
   .admin-dev-input.admin-password {
     font-size: 11px;
     padding: 4px 12px;

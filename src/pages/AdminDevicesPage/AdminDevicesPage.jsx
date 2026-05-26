@@ -2,17 +2,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import "./AdminDevicesPage.css";
-import { Spinner, Modal, ModalHeader, ModalBody, ModalFooter } from "reactstrap";
+import { Spinner } from "reactstrap";
+
+import AdminDeviceLinkModal from "./AdminDeviceLinkModal";
 
 import { 
   formatTime, 
   formatTimeYYYYMMDD_HHMMSS, 
   minutesAgo, 
   minSecAgo 
-} from "../utils/time";
+} from "../../utils/time";
 
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
-import { FaCheck, FaPencilAlt } from "react-icons/fa";
+import { FaCheck, FaPencilAlt, FaLink } from "react-icons/fa";
 import { 
   PiBatteryVerticalFull,
   PiBatteryVerticalHigh,
@@ -23,6 +25,8 @@ import { GoArrowRight } from "react-icons/go";
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 40];
 const DEFAULT_PAGE_SIZE = 10;
+const CAPTURE_INTERVAL_OPTIONS = [5, 15, 30];
+const DEFAULT_CAPTURE_INTERVAL_SEC = 30;
 
 //-----------------------
 // Helpers
@@ -87,8 +91,14 @@ export default function AdminDevicesPage({ apiBase }) {
   // prevent overlapping fetches (interval + manual actions)
   const inFlightRef = useRef(false);
 
+  // sort
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortDir, setSortDir] = useState("desc");
+  // inactive device visibility
+  // inactive = phone.lastUploadAt is missing or more than 60 minutes ago
+  const [showInactiveDevices, setShowInactiveDevices] = useState(true);
+
+  // page
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [rows, setRows] = useState([]);
@@ -102,25 +112,16 @@ export default function AdminDevicesPage({ apiBase }) {
 
   const [zoomMap, setZoomMap] = useState({});          // deviceId -> number (1.0..4.0)
   const [zoomSavingMap, setZoomSavingMap] = useState({}); // deviceId -> boolean
+  const [captureIntervalMap, setCaptureIntervalMap] = useState({}); // deviceId -> 5 | 15 | 30
 
-
+  // -----------
+  // link modal
+  // -----------
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [linkModalDevice, setLinkModalDevice] = useState(null);
 
-  const [lotSearchText, setLotSearchText] = useState("");
-  const [lotSuggestions, setLotSuggestions] = useState([]);
-  const [lotSuggestionsLoading, setLotSuggestionsLoading] = useState(false);
-  const [lotSuggestionsOpen, setLotSuggestionsOpen] = useState(false);
-  const [selectedLotId, setSelectedLotId] = useState("");
-
-  const [linkSaving, setLinkSaving] = useState(false);
-
-  const lotSearchContainerRef = useRef(null);
-  const lotSuggestTimerRef = useRef(null);
-  const skipNextLotSuggestRef = useRef(false);
-
   //-----------------------------
-  // Admin Key
+  // Set Admin Key
   //-----------------------------
   function persistAdminKey(v) {
     setAdminKey(v);
@@ -161,6 +162,7 @@ export default function AdminDevicesPage({ apiBase }) {
       pageSizeOverride,
       sortByOverride,
       sortDirOverride,
+      showInactiveDevicesOverride,
     } = opts;
 
     const effSearch = (searchOverride ?? appliedSearch);
@@ -169,6 +171,9 @@ export default function AdminDevicesPage({ apiBase }) {
     const effPageSize = (pageSizeOverride ?? pageSize);
     const effSortBy = (sortByOverride ?? sortBy);
     const effSortDir = (sortDirOverride ?? sortDir);
+    const effShowInactiveDevices = (
+      showInactiveDevicesOverride ?? showInactiveDevices
+    );
 
     if (!adminKey) {
       if (!silent) toast.error("請先輸入管理員密碼");
@@ -186,6 +191,7 @@ export default function AdminDevicesPage({ apiBase }) {
         search: effSearch,
         sortBy: effSortBy,
         sortDir: effSortDir,
+        hideInactive: effShowInactiveDevices ? "0" : "1",
       });
 
       const res = await fetch(`${apiBase}/api/admin/devices/phones?${qs.toString()}`, {
@@ -239,6 +245,34 @@ export default function AdminDevicesPage({ apiBase }) {
         return copy;
       });
 
+      setCaptureIntervalMap((prev) => {
+        const copy = { ...prev };
+
+        for (const r of nextRows) {
+          const deviceId = r.deviceId;
+          if (!deviceId) continue;
+
+          if (copy[deviceId] == null) {
+            // Future backend options we may return:
+            // r.captureIntervalSec
+            // r.phone.captureIntervalSec
+            // r.config.captureIntervalSec
+            const raw =
+              r?.captureIntervalSec ??
+              r?.phone?.captureIntervalSec ??
+              r?.config?.captureIntervalSec ??
+              DEFAULT_CAPTURE_INTERVAL_SEC;
+
+            const n = Number(raw);
+            copy[deviceId] = CAPTURE_INTERVAL_OPTIONS.includes(n)
+              ? n
+              : DEFAULT_CAPTURE_INTERVAL_SEC;
+          }
+        }
+
+        return copy;
+      });
+
     } catch (e) {
       // ignore
     } finally {
@@ -247,7 +281,7 @@ export default function AdminDevicesPage({ apiBase }) {
     }
   }
 
-  // Auto refresh every 30 seconds (after admin is confirmed)
+  // Auto refresh every 30 seconds (after admin is confirmed or something changed)
   useEffect(() => {
     if (!adminKey) return;
     if (!isAdminConfirmed) return;
@@ -258,7 +292,7 @@ export default function AdminDevicesPage({ apiBase }) {
 
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adminKey, isAdminConfirmed, page, groupId, appliedSearch, pageSize, sortBy, sortDir]);
+  }, [adminKey, isAdminConfirmed, page, groupId, appliedSearch, pageSize, sortBy, sortDir, showInactiveDevices]);
 
   
   //-----------------------------
@@ -295,6 +329,7 @@ export default function AdminDevicesPage({ apiBase }) {
     await load();
   }
 
+  // Confirm all
   async function confirmAllOnPage() {
     if (!adminKey) return;
     if (confirmAllLoading) return;
@@ -333,6 +368,61 @@ export default function AdminDevicesPage({ apiBase }) {
       toast.error(e?.message || "本頁全部確認失敗");
     } finally {
       setConfirmAllLoading(false);
+    }
+  }
+
+
+  //-----------------------------
+  // Save Capture Interval
+  //-----------------------------
+  async function handleCaptureIntervalClick(deviceId, seconds) {
+    if (!adminKey) return;
+    if (!deviceId) return;
+
+    const n = Number(seconds);
+    if (!CAPTURE_INTERVAL_OPTIONS.includes(n)) {
+      toast.error("拍攝間隔必須是 5、15 或 30 秒");
+      return;
+    }
+
+    const prevValue = captureIntervalMap[deviceId] ?? DEFAULT_CAPTURE_INTERVAL_SEC;
+
+    // optimistic UI update
+    setCaptureIntervalMap((prev) => ({
+      ...prev,
+      [deviceId]: n,
+    }));
+
+    try {
+      const res = await fetch(
+        `${apiBase}/api/admin/devices/${encodeURIComponent(deviceId)}/config`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-key": adminKey,
+          },
+          body: JSON.stringify({ captureIntervalSec: n }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "拍攝間隔更新失敗");
+
+      const serverValue = Number(data?.captureIntervalSec);
+      setCaptureIntervalMap((prev) => ({
+        ...prev,
+        [deviceId]: CAPTURE_INTERVAL_OPTIONS.includes(serverValue)
+          ? serverValue
+          : n,
+      }));
+    } catch (e) {
+      setCaptureIntervalMap((prev) => ({
+        ...prev,
+        [deviceId]: prevValue,
+      }));
+
+      toast.error(e?.message || "拍攝間隔更新失敗");
     }
   }
 
@@ -380,7 +470,7 @@ export default function AdminDevicesPage({ apiBase }) {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, groupId, pageSize, sortBy, sortDir]);
+  }, [page, groupId, pageSize, sortBy, sortDir, showInactiveDevices]);
 
   const pageCount = useMemo(() => {
     const total = toNum(meta?.total) ?? 0;
@@ -399,219 +489,19 @@ export default function AdminDevicesPage({ apiBase }) {
 
 
   //-----------------------------
-  // Link Device <-> Lot Modal
+  // DevicsLinkModal
   //-----------------------------
-  async function fetchLotSuggestions(query, opts = {}) {
-    if (!adminKey) return;
-
-    const {
-      keepSelectedLotId = "",
-      openDropdown = true,
-      silent = false,
-    } = opts;
-
-    const q = String(query ?? "").trim();
-
-    if (!q) {
-      setLotSuggestions([]);
-      setLotSuggestionsOpen(false);
-      return;
-    }
-
-    setLotSuggestionsLoading(true);
-    try {
-      const qs = new URLSearchParams({
-        query: q,
-        limit: "8",
-      });
-
-      const res = await fetch(`${apiBase}/api/admin/lots/suggest?${qs.toString()}`, {
-        headers: { "x-admin-key": adminKey },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "load lots failed");
-
-      const nextRows = Array.isArray(data?.rows) ? data.rows : [];
-      setLotSuggestions(nextRows);
-      setLotSuggestionsOpen(openDropdown && nextRows.length > 0);
-
-      if (keepSelectedLotId) {
-        const found = nextRows.find((x) => String(x?._id) === String(keepSelectedLotId));
-        if (found) setSelectedLotId(String(found._id));
-      }
-    } catch (e) {
-      if (!silent) toast.error(e?.message || "停車場搜尋失敗");
-      setLotSuggestions([]);
-      setLotSuggestionsOpen(false);
-    } finally {
-      setLotSuggestionsLoading(false);
-    }
-  }
 
   function openLinkModal(row) {
-    const currentLotId = row?.lot?._id ? String(row.lot._id) : "";
-    const currentLotName = row?.lot?.name ? String(row.lot.name) : "";
-
     setLinkModalDevice(row);
     setLinkModalOpen(true);
-    setLotSearchText(currentLotName);
-    setSelectedLotId(currentLotId);
-    setLotSuggestions([]);
-    setLotSuggestionsOpen(false);
-
-    if (currentLotName) {
-      fetchLotSuggestions(currentLotName, {
-        keepSelectedLotId: currentLotId,
-        openDropdown: false,
-        silent: true,
-      });
-    }
   }
 
   function closeLinkModal() {
     setLinkModalOpen(false);
     setLinkModalDevice(null);
-    setLotSearchText("");
-    setLotSuggestions([]);
-    setLotSuggestionsOpen(false);
-    setSelectedLotId("");
-
-    if (lotSuggestTimerRef.current) {
-      clearTimeout(lotSuggestTimerRef.current);
-      lotSuggestTimerRef.current = null;
-    }
   }
 
-  async function saveDeviceLotLink() {
-    if (!adminKey) return;
-    if (!linkModalDevice?.deviceId) return;
-
-    if (!selectedLotId) {
-      toast.error("請先選擇停車場");
-      return;
-    }
-
-    setLinkSaving(true);
-    try {
-      const res = await fetch(
-        `${apiBase}/api/admin/devices/${encodeURIComponent(linkModalDevice.deviceId)}/link-lot`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-admin-key": adminKey,
-          },
-          body: JSON.stringify({
-            lotId: selectedLotId,
-            force: true,
-          }),
-        }
-      );
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "link failed");
-
-      toast.success("已更新裝置連結停車場");
-      closeLinkModal();
-      await load({ silent: true });
-    } catch (e) {
-      toast.error(e?.message || "裝置連結停車場失敗");
-    } finally {
-      setLinkSaving(false);
-    }
-  }
-
-  async function unlinkDeviceFromLot() {
-    if (!adminKey) return;
-    if (!linkModalDevice?.deviceId) return;
-
-    setLinkSaving(true);
-    try {
-      const currentLotId =
-        linkModalDevice?.lot?._id || linkModalDevice?.phone?.parkingLotId || "";
-
-      if (!currentLotId) {
-        toast.success("此裝置目前未連結停車場");
-        closeLinkModal();
-        await load({ silent: true });
-        return;
-      }
-
-      const res = await fetch(
-        `${apiBase}/api/admin/lots/${encodeURIComponent(currentLotId)}/devices/${encodeURIComponent(linkModalDevice.deviceId)}`,
-        {
-          method: "DELETE",
-          headers: {
-            "x-admin-key": adminKey,
-          },
-        }
-      );
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "unlink failed");
-
-      toast.success("已取消裝置與停車場的連結");
-      closeLinkModal();
-      await load({ silent: true });
-    } catch (e) {
-      toast.error(e?.message || "取消連結失敗");
-    } finally {
-      setLinkSaving(false);
-    }
-  }
-
-  useEffect(() => {
-    if (!linkModalOpen) return;
-
-    if (skipNextLotSuggestRef.current) {
-      skipNextLotSuggestRef.current = false;
-      return;
-    }
-
-    const q = String(lotSearchText ?? "").trim();
-
-    if (lotSuggestTimerRef.current) {
-      clearTimeout(lotSuggestTimerRef.current);
-      lotSuggestTimerRef.current = null;
-    }
-
-    if (!q) {
-      setLotSuggestions([]);
-      setLotSuggestionsOpen(false);
-      return;
-    }
-
-    lotSuggestTimerRef.current = setTimeout(() => {
-      fetchLotSuggestions(q, {
-        keepSelectedLotId: selectedLotId,
-        openDropdown: true,
-        silent: true,
-      });
-    }, 250);
-
-    return () => {
-      if (lotSuggestTimerRef.current) {
-        clearTimeout(lotSuggestTimerRef.current);
-        lotSuggestTimerRef.current = null;
-      }
-    };
-  }, [lotSearchText, linkModalOpen, selectedLotId]);
-
-  useEffect(() => {
-    if (!linkModalOpen) return;
-
-    function handleClickOutside(e) {
-      if (
-        lotSearchContainerRef.current &&
-        !lotSearchContainerRef.current.contains(e.target)
-      ) {
-        setLotSuggestionsOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [linkModalOpen]);
 
 
   //-----------------------------
@@ -646,7 +536,12 @@ export default function AdminDevicesPage({ apiBase }) {
         </div>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <div 
+        style={{ 
+          display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap",
+          marginTop: "6px", marginBottom: "4px"
+       }}
+      >
         <span style={{ fontSize: "12px", color: "#666" }}>排序</span>
         <select
           className="admin-dev-select"
@@ -672,6 +567,29 @@ export default function AdminDevicesPage({ apiBase }) {
           <option value="deviceId_asc">裝置 ID：A → Z</option>
           <option value="deviceId_desc">裝置 ID：Z → A</option>
         </select>
+
+        <button
+          type="button"
+          className={`admin-dev-toggle ${showInactiveDevices ? "is-on" : "is-off"}`}
+          onClick={() => {
+            const next = !showInactiveDevices;
+            setShowInactiveDevices(next);
+            setPage(1);
+            load({
+              pageOverride: 1,
+              showInactiveDevicesOverride: next,
+            });
+          }}
+          title={showInactiveDevices ? "目前會顯示非拍攝中的裝置" : "目前會隱藏非拍攝中的裝置"}
+        >
+          <span className="admin-dev-toggle-track">
+            <span className="admin-dev-toggle-thumb" />
+          </span>
+
+          <span className="admin-dev-toggle-label">
+            {showInactiveDevices ? "顯示非拍攝中" : "隱藏非拍攝中"}
+          </span>
+        </button>
       </div>
 
       {/* Filters */}
@@ -875,6 +793,25 @@ export default function AdminDevicesPage({ apiBase }) {
                     </div>
                   </div>
 
+                  <div className="admin-dev-capture-intervals" title="拍攝間隔">
+                    {CAPTURE_INTERVAL_OPTIONS.map((sec) => {
+                      const selected =
+                        Number(captureIntervalMap[deviceId] ?? DEFAULT_CAPTURE_INTERVAL_SEC) === sec;
+
+                      return (
+                        <button
+                          key={sec}
+                          type="button"
+                          className={`admin-dev-capture-dot ${selected ? "is-selected" : ""}`}
+                          onClick={() => handleCaptureIntervalClick(deviceId, sec)}
+                          title={`每 ${sec} 秒拍攝一次`}
+                        >
+                          {sec}s
+                        </button>
+                      );
+                    })}
+                  </div>
+
                   <div
                     className="admin-dev-battery-badge"
                     title={batteryPct == null ? "Battery" : `Battery: ${batteryPct}%`}
@@ -895,14 +832,43 @@ export default function AdminDevicesPage({ apiBase }) {
                     )}
                   </div>
 
-                  <div className="admin-dev-card-title">
+                  <div className="admin-dev-card-title"
+                    style={{
+                      display: "flex",
+                      alignItems: "center"
+                    }}
+                  >
+
+                    <div>
+                      <button
+                        type="button"
+                        title="設定停車場連結"
+                        onClick={() => openLinkModal(r)}
+                        style={{
+                          border: "1px solid #2a8fe0",
+                          background: "#fff",
+                          width: "28px",
+                          height: "28px",
+                          borderRadius: "7px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                          color: "#2a8fe0",
+                          zIndex: 2,
+                          padding: 0,
+                        }}
+                      >
+                        <FaLink size={13} />
+                      </button>
+                    </div>
 
                     <div className="admin-dev-lotmeta">
                       <div>
-                        <span style={{ fontSize: "9.5px", color: r?.lot?.name ? "#333" : "#999", marginRight: "2px" }}>
+                        <span style={{ fontSize: "8px", color: r?.lot?.name ? "#333" : "#999", marginRight: "2px" }}>
                           [{r?.lot?.lotId ? r.lot.lotId : "-"}]{" "}
                         </span>
-                        <span style={{ fontSize: "9.5px", color: r?.lot?.name ? "#333" : "#999" }}>
+                        <span style={{ fontSize: "8px", color: r?.lot?.name ? "#333" : "#999" }}>
                           裝置 ID：{deviceId}
                         </span>
                       </div>
@@ -931,7 +897,7 @@ export default function AdminDevicesPage({ apiBase }) {
                       </span>
                       <span className="admin-dev-card-shot-time"
                       style={{ fontSize: "8px", marginTop: "1.5px", color: shotAtColor }}>
-                        目前圖像拍攝時間：
+                        拍攝時間：
                         {lastUploadAt ? formatTimeYYYYMMDD_HHMMSS(new Date(lastUploadAt)) : "—"}
                         {uploadedAgo ? (
                           <span>
@@ -967,30 +933,6 @@ export default function AdminDevicesPage({ apiBase }) {
                   </div>
 
                   <div className="admin-dev-bottom" style={{ position: "relative" }}>
-                    <button
-                      type="button"
-                      title="設定停車場連結"
-                      onClick={() => openLinkModal(r)}
-                      style={{
-                        position: "absolute",
-                        left: "12px",
-                        bottom: "10px",
-                        border: "1px solid #2a8fe0",
-                        background: "#fff",
-                        width: "28px",
-                        height: "28px",
-                        borderRadius: "7px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        cursor: "pointer",
-                        color: "#2a8fe0",
-                        zIndex: 2,
-                        padding: 0,
-                      }}
-                    >
-                      <FaPencilAlt size={13} />
-                    </button>
 
                     <div className="admin-dev-vrow">
                       <div className="admin-dev-vlabel">
@@ -1025,163 +967,14 @@ export default function AdminDevicesPage({ apiBase }) {
         )}
       </div>
 
-      <Modal isOpen={linkModalOpen} toggle={closeLinkModal} centered>
-        <ModalHeader toggle={closeLinkModal}>設定裝置停車場連結</ModalHeader>
-        <ModalBody style={{ minHeight: "65vh" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div>
-              <div style={{ fontSize: "12px", color: "#666", marginBottom: "4px" }}>裝置 ID</div>
-              <div style={{ fontWeight: 700, fontSize: "12px" }}>{linkModalDevice?.deviceId || "-"}</div>
-            </div>
-
-            <div>
-              <div style={{ fontSize: "12px", color: "#666", marginBottom: "4px" }}>目前停車場</div>
-              <div style={{ fontWeight: 700, fontSize: "12px" }}>{linkModalDevice?.lot?.name || "尚未連結"}</div>
-            </div>
-
-            <div
-              ref={lotSearchContainerRef}
-              style={{ position: "relative" }}
-            >
-              <div style={{ fontSize: "12px", color: "#666", marginBottom: "4px" }}>搜尋停車場</div>
-              <input
-                className="admin-dev-input modal-search-input"
-                value={lotSearchText}
-                onChange={(e) => {
-                  setLotSearchText(e.target.value);
-                  setLotSuggestionsOpen(true);
-                }}
-                onFocus={() => {
-                  if (lotSuggestions.length > 0) setLotSuggestionsOpen(true);
-                }}
-                placeholder="輸入 lotId、名稱、地址..."
-                autoComplete="off"
-              />
-
-              {lotSuggestionsLoading ? (
-                <div
-                  style={{
-                    position: "absolute",
-                    right: "10px",
-                    top: "34px",
-                    fontSize: "11px",
-                    color: "#888",
-                  }}
-                >
-                  搜尋中...
-                </div>
-              ) : null}
-
-              {lotSuggestionsOpen && lotSuggestions.length > 0 ? (
-                <div
-                  style={{
-                    position: "absolute",
-                    left: 0,
-                    right: 0,
-                    top: "100%",
-                    marginTop: "6px",
-                    background: "#fff",
-                    border: "1px solid #d9dee7",
-                    borderRadius: "10px",
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
-                    overflow: "hidden",
-                    zIndex: 20,
-                    maxHeight: "240px",
-                    overflowY: "auto",
-                  }}
-                >
-                  {lotSuggestions.map((lot) => {
-                    const isSelected = String(selectedLotId) === String(lot._id);
-
-                    return (
-                      <button
-                        key={lot._id}
-                        type="button"
-                        onClick={() => {
-                          skipNextLotSuggestRef.current = true;
-                          setSelectedLotId(String(lot._id));
-                          setLotSearchText(`[${lot.lotId || "-"}] ${lot.name || ""}`);
-                          setLotSuggestionsOpen(false);
-                        }}
-                        style={{
-                          display: "block",
-                          width: "100%",
-                          textAlign: "left",
-                          padding: "10px 12px",
-                          border: "none",
-                          borderBottom: "1px solid #eef2f6",
-                          background: isSelected ? "#f4f8ff" : "#fff",
-                          cursor: "pointer",
-                        }}
-                      >
-                        <div style={{ fontSize: "12px", fontWeight: 700, color: "#333" }}>
-                          [{lot.lotId || "-"}] {lot.name || "-"}
-                        </div>
-                        <div style={{ fontSize: "11px", color: "#666", marginTop: "2px" }}>
-                          {lot.district || "-"}{lot.addressZh ? `｜${lot.addressZh}` : ""}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : null}
-            </div>
-
-            {selectedLotId ? (() => {
-              const chosen =
-                lotSuggestions.find((lot) => String(lot._id) === String(selectedLotId)) ||
-                (linkModalDevice?.lot && String(linkModalDevice.lot._id) === String(selectedLotId)
-                  ? linkModalDevice.lot
-                  : null);
-
-              if (!chosen) return null;
-
-              return (
-                <div style={{ fontSize: "12px", color: "#555", lineHeight: 1.5 }}>
-                  <div>lotId：{chosen.lotId || "-"}</div>
-                  <div>名稱：{chosen.name || "-"}</div>
-                  <div>行政區：{chosen.district || "-"}</div>
-                  <div>地址：{chosen.addressZh || "-"}</div>
-                </div>
-              );
-            })() : null}
-          </div>
-        </ModalBody>
-
-        <ModalFooter>
-          <button
-            type="button"
-            className="admin-dev-btn"
-            onClick={closeLinkModal}
-            disabled={linkSaving}
-          >
-            取消
-          </button>
-
-          <button
-            type="button"
-            className="admin-dev-btn"
-            onClick={unlinkDeviceFromLot}
-            disabled={linkSaving}
-            style={{
-              borderColor: "#e5c1c1",
-              color: "#b42318",
-              background: "#fff",
-            }}
-          >
-            取消連結到任何停車場
-          </button>
-
-          <button
-            type="button"
-            className="admin-dev-btn"
-            onClick={saveDeviceLotLink}
-            disabled={linkSaving || !selectedLotId}
-          >
-            {linkSaving ? "儲存中..." : "儲存"}
-          </button>
-        </ModalFooter>
-      </Modal>
+      <AdminDeviceLinkModal
+        isOpen={linkModalOpen}
+        device={linkModalDevice}
+        apiBase={apiBase}
+        adminKey={adminKey}
+        onClose={closeLinkModal}
+        onSaved={() => load({ silent: true })}
+      />
 
     </div>
   );

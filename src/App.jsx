@@ -15,7 +15,7 @@ import Spinner from "react-bootstrap/Spinner";
 import { FaCheck } from "react-icons/fa6";
 
 import AdminLotsPage from "./pages/AdminLotsPage";
-import AdminDevicesPage from "./pages/AdminDevicesPage";
+import AdminDevicesPage from "./pages/AdminDevicesPage/AdminDevicesPage";
 import AdminLinkagePage from "./pages/AdminLinkagePage";
 
 import { useMyLocationAction } from "./hooks/useMyLocationAction";

@@ -108,6 +108,8 @@ export default function AdminDevicesPage({ apiBase }) {
 
   // deviceId -> edited vacancy
   const [editMap, setEditMap] = useState({});
+  // deviceId -> true means user manually edited this vacancy input
+  const vacancyTouchedRef = useRef({});
   const [confirmAllLoading, setConfirmAllLoading] = useState(false);
 
   const [zoomMap, setZoomMap] = useState({});          // deviceId -> number (1.0..4.0)
@@ -223,10 +225,20 @@ export default function AdminDevicesPage({ apiBase }) {
         const copy = { ...prev };
         for (const r of nextRows) {
           const deviceId = r.deviceId;
-          if (copy[deviceId] == null) {
-            const suggested = r?.lot?.aiSuggestedNextVacancy;
-            const current = r?.lot?.vacancy;
-            copy[deviceId] = suggested ?? current ?? "";
+          const suggested =
+            r?.phone?.aiLastResult?.status === "ok"
+              ? r?.phone?.aiLastResult?.vacancy
+              : null;
+
+          const lotSuggested = r?.lot?.aiSuggestedNextVacancy;
+          const current = r?.lot?.vacancy;
+
+          const nextDefault = suggested ?? lotSuggested ?? current ?? "";
+
+          // If admin has not manually typed in this input,
+          // keep syncing the input with latest backend/AI result.
+          if (!vacancyTouchedRef.current[deviceId]) {
+            copy[deviceId] = nextDefault;
           }
         }
         return copy;
@@ -326,6 +338,7 @@ export default function AdminDevicesPage({ apiBase }) {
     }
 
     toast.success("已更新");
+    delete vacancyTouchedRef.current[deviceId];
     await load();
   }
 
@@ -740,6 +753,10 @@ export default function AdminDevicesPage({ apiBase }) {
             {rows.map((r) => {
               const deviceId = r.deviceId;
               const vacancy = r?.lot?.vacancy ?? "";
+              const aiVacancy =
+                r?.phone?.aiLastResult?.status === "ok"
+                  ? r?.phone?.aiLastResult?.vacancy
+                  : null;
               const edited = editMap[deviceId] ?? "";
               
               // shotAgo color rules: > 60s red, > 30s orange
@@ -936,7 +953,9 @@ export default function AdminDevicesPage({ apiBase }) {
 
                     <div className="admin-dev-vrow">
                       <div className="admin-dev-vlabel">
-                        <span style={{ marginRight: "8px" }}>{String(vacancy) || "-"}</span>
+                        <span style={{ marginRight: "8px" }}>
+                          {vacancy !== "" && vacancy != null ? String(vacancy) : "-"}
+                        </span>
                         <span style={{ paddingBottom: "5px" }}>
                           <GoArrowRight size={18} />
                         </span>
@@ -945,9 +964,10 @@ export default function AdminDevicesPage({ apiBase }) {
                         className="admin-dev-vinput"
                         value={edited ?? ""}
                         placeholder="-"
-                        onChange={(e) =>
-                          setEditMap((prev) => ({ ...prev, [deviceId]: e.target.value }))
-                        }
+                        onChange={(e) => {
+                          vacancyTouchedRef.current[deviceId] = true;
+                          setEditMap((prev) => ({ ...prev, [deviceId]: e.target.value }));
+                        }}
                       />
                       <button
                         className="admin-dev-confirm"

@@ -181,7 +181,9 @@ export default function LotBottomSheet({
                     >
                       <MdContentCopy size={14} />
                     </div>
-                    <span>{active.name}</span>
+                    <div style={{ marginTop: "2.5px" }}>
+                      <span>{active.name}</span>
+                    </div>
                   </div>
                   {/* 空位：10 */}
                   <div className={"vl-sheet-vac "
@@ -202,7 +204,9 @@ export default function LotBottomSheet({
                   >
                     <MdContentCopy size={12} />
                   </div>
-                  <span>{active.addressZh}</span>
+                  <div style={{ marginTop: "1px" }}>
+                    <span>{active.addressZh}</span>
+                  </div>
                 </div>
               </div>
 

@@ -204,7 +204,7 @@
 
 .vl-sheet-title { 
   display: flex;
-  gap: 3px;
+  gap: 6px;
   align-items: center;
   font-size: 15px; 
   font-weight: 800; 
@@ -231,6 +231,9 @@
   font-weight: 800; 
   color: #317bff; 
   white-space: nowrap; 
+  position: absolute;
+  bottom: 130px;
+  right: 15px;
 }
 
 .vl-sheet-vac.is-long-name { 
@@ -239,7 +242,7 @@
 
 @media (max-width: 900px) {
   .vl-sheet-vac.is-long-name { 
-    font-size: 11.5px;
+    font-size: 13.5px;
   }
 }
 
@@ -249,9 +252,9 @@
 
 .vl-sheet-addr { 
   display: flex;
-  gap: 6px;
+  gap: 7px;
   align-items: center;
-  margin-top: 8px; 
+  margin-top: 4px;
   font-size: 11px;
   color: #333; 
 }

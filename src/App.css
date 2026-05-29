@@ -410,10 +410,10 @@ div .gm-style-iw {
 .map-wrap .gm-style-iw-c {
   -webkit-transform: translate3d(-50%, -120%, 0);
   transform: translate3d(-50%, -120%, 0);
-  max-height: 352px !important;
-  min-height: 352px !important;
+  max-height: 358px !important;
+  min-height: 358px !important;
   width: 350px;
-  padding: 1px 20px 10px 20px !important;
+  padding: 1px 20px 20px 20px !important;
 }
 
 /* The small bottom triangle */
@@ -436,6 +436,7 @@ div .gm-style-iw {
 
 .map-wrap .gm-ui-hover-effect>span {
   background-color: black;
+  margin: 6px;
 }
 
 .map-locate-btn {

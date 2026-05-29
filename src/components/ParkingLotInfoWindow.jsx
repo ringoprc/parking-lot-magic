@@ -161,7 +161,7 @@ export default function ParkingLotInfoWindow({
                   marginBottom: "6px",
                   marginRight: "20px",
                   alignItems: "center",
-                  gap: "6px",
+                  gap: "7px",
                 }}
               >
                 <div
@@ -182,6 +182,7 @@ export default function ParkingLotInfoWindow({
                   color: getVacancyTextColor(active.vacancy),
                   marginBottom: "6px",
                   flexShrink: "0",
+                  marginTop: "3px"
                 }}
               >
                 空位：
@@ -195,7 +196,7 @@ export default function ParkingLotInfoWindow({
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "6px",
+                gap: "10px",
               }}
             >
               <div

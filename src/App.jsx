@@ -173,7 +173,8 @@ export default function App() {
     district: null,
     center: queryCenter,
     radiusM: RADIUS_M,
-    pollMs: 15000,
+    /*pollMs: 15000,*/
+    pollMs: 150000,
   });
 
   const validLots = useMemo(

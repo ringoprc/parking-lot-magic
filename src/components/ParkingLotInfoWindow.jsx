@@ -182,7 +182,7 @@ export default function ParkingLotInfoWindow({
                   color: getVacancyTextColor(active.vacancy),
                   marginBottom: "6px",
                   flexShrink: "0",
-                  marginTop: "3px"
+                  marginTop: "4px"
                 }}
               >
                 空位：

@@ -159,8 +159,7 @@ export default function LotBottomSheet({
               <div className="vl-sheet-sponsor-distance-label-div">
                 <MdDirectionsWalk size={18} />
                 <div className="vl-sheet-sponsor-meta-div">
-                  <span style={{ fontSize: "9px" }}>店家步行距離</span>
-                  <span style={{ fontSize: "12px" }}>10m 內</span>
+                  <span style={{ fontSize: "9px" }}>店家步行距離 10m 內</span>
                 </div>
               </div>
             </div>
@@ -225,7 +224,14 @@ export default function LotBottomSheet({
                     const ms = minSecAgo(active.lastUpdated);
                     if (!ms) return null;
                     return (
-                      <div>
+                      <div
+                        style={{
+                          maxWidth: "30%",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis"
+                        }}
+                      >
                         （{ms.min} 分 {String(ms.sec).padStart(2, "0")} 秒前）
                       </div>
                     );

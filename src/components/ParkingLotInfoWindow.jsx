@@ -128,10 +128,9 @@ export default function ParkingLotInfoWindow({
               <span className="iw-sheet-sponsor-example-label">範例</span>
             </div>
             <div className="iw-sheet-sponsor-distance-label-div">
-              <MdDirectionsWalk size={18} />
+              <MdDirectionsWalk size={16} />
               <div className="iw-sheet-sponsor-meta-div">
-                <span style={{ fontSize: "9px" }}>店家步行距離</span>
-                <span style={{ fontSize: "12px" }}>10m 內</span>
+                <span style={{ fontSize: "11px" }}>店家步行距離 10m 內</span>
               </div>
             </div>
           </div>
@@ -173,12 +172,12 @@ export default function ParkingLotInfoWindow({
                 >
                   <MdContentCopy size={14} />
                 </div>
-                <span>{active.name}</span>
+                <span style={{ marginTop: "3px" }}>{active.name}</span>
               </div>
 
               <div
                 style={{
-                  fontSize: "15px",
+                  fontSize: "14px",
                   fontWeight: "700",
                   color: getVacancyTextColor(active.vacancy),
                   marginBottom: "6px",
@@ -186,7 +185,7 @@ export default function ParkingLotInfoWindow({
                 }}
               >
                 空位：
-                <span style={{ fontSize: 15, fontWeight: 700 }}>
+                <span>
                   {active.vacancy ?? "未知"}
                 </span>
               </div>
@@ -207,7 +206,7 @@ export default function ParkingLotInfoWindow({
               >
                 <MdContentCopy size={12} />
               </div>
-              <span style={{ fontSize: "12px" }}>{active.addressZh}</span>
+              <span style={{ fontSize: "11.5px", fontWeight: "400", color: "#666", marginTop: "2.5px" }}>{active.addressZh}</span>
             </div>
           </div>
 

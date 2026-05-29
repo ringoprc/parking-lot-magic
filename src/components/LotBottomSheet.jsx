@@ -159,7 +159,7 @@ export default function LotBottomSheet({
               <div className="vl-sheet-sponsor-distance-label-div">
                 <MdDirectionsWalk size={18} />
                 <div className="vl-sheet-sponsor-meta-div">
-                  <span style={{ fontSize: "9px" }}>店家步行距離 10m 內</span>
+                  <span style={{ fontSize: "10px" }}>店家步行距離 10m 內</span>
                 </div>
               </div>
             </div>

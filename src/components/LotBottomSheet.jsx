@@ -15,7 +15,7 @@ import sponsorImage from "../assets/sponser_demo_img.jpeg";
 
 import "./LotBottomSheet.css";
 
-const NAV_AD_SECONDS = 9;
+const NAV_AD_SECONDS = 6;
 
 function toVacancyNum(v) {
   if (v === "" || v == null) return null;

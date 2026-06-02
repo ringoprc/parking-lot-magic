@@ -15,7 +15,7 @@ import sponsorImage from "../assets/sponser_demo_img.jpeg";
 
 import "./LotBottomSheet.css";
 
-const NAV_AD_SECONDS = 9;
+const NAV_AD_SECONDS = 5;
 
 function toVacancyNum(v) {
   if (v === "" || v == null) return null;
@@ -133,14 +133,12 @@ export default function LotBottomSheet({
 
       if (remainingMs <= 0) {
         clearInterval(interval);
-        setNavAdOpen(false);
-        setNavAdStartedAt(null);
-        openGoogleNav(active, { sameTab: true });
+        setNavCountdown(0);
       }
     }, 250);
 
     return () => clearInterval(interval);
-  }, [navAdOpen, navAdStartedAt, active]);
+  }, [navAdOpen, navAdStartedAt]);
 
   useEffect(() => {
     if (!active) {
@@ -162,6 +160,16 @@ export default function LotBottomSheet({
     setNavCountdown(NAV_AD_SECONDS);
     setNavAdStartedAt(Date.now());
     setNavAdOpen(true);
+  }
+
+  function proceedNavigationFromAd() {
+    if (!active) return;
+
+    setNavAdOpen(false);
+    setNavAdStartedAt(null);
+    setNavCountdown(NAV_AD_SECONDS);
+
+    openGoogleNav(active, { sameTab: true });
   }
 
   function close() {
@@ -330,8 +338,21 @@ export default function LotBottomSheet({
         >
           <div className="vl-nav-ad-modal">
 
+            {navCountdown <= 0 && (
+              <button
+                className="vl-nav-ad-close"
+                type="button"
+                onClick={proceedNavigationFromAd}
+                aria-label="開始導航"
+              >
+                ×
+              </button>
+            )}
+
             <div className="vl-nav-ad-title">
-              正在準備導航：還剩 {navCountdown} 秒...
+              {navCountdown > 0
+                ? `正在準備導航：還剩 ${navCountdown} 秒...`
+                : ""}
             </div>
 
             <img

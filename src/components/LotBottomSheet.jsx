@@ -15,7 +15,7 @@ import sponsorImage from "../assets/sponser_demo_img.jpeg";
 
 import "./LotBottomSheet.css";
 
-const NAV_AD_SECONDS = 5;
+const NAV_AD_SECONDS = 9;
 
 function toVacancyNum(v) {
   if (v === "" || v == null) return null;
@@ -345,14 +345,14 @@ export default function LotBottomSheet({
                 onClick={proceedNavigationFromAd}
                 aria-label="開始導航"
               >
-                ×
+                <span>×</span>
               </button>
             )}
 
-            <div className="vl-nav-ad-title">
+            <div className="vl-nav-ad-title" style={{ color: navCountdown > 0 ? "#111" : "#ffff00" }}>
               {navCountdown > 0
                 ? `正在準備導航：還剩 ${navCountdown} 秒...`
-                : ""}
+                : "_"}
             </div>
 
             <img

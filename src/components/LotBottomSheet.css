@@ -215,6 +215,7 @@
   font-size: 15px; 
   font-weight: 800; 
   color: #333;
+  max-width: 75%;
 }
 
 .vl-sheet-title.is-long-name { 
@@ -362,16 +363,15 @@
   width: min(82vw, 330px);
   background: #fff;
   border-radius: 18px;
-  padding: 18px 16px 26px;
+  padding: 42px 16px 26px;
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.22);
   text-align: center;
 }
 
 .vl-nav-ad-title {
-  font-size: 20px;
-  font-weight: 500;
   color: #111;
-  margin-bottom: 18px;
+  padding: 4px 0px 0px 0px;
+  margin: -33px 0px 9px 0px;
 }
 
 .vl-nav-ad-img {
@@ -413,7 +413,7 @@
 
 .vl-nav-ad-close {
   position: absolute;
-  top: 8px;
+  top: 6px;
   right: 10px;
   width: 22px;
   height: 22px;
@@ -424,6 +424,17 @@
   font-size: 18px;
   line-height: 20px;
   cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  margin: 7px 0px 10px 0px;
 }
 
-
+.vl-nav-ad-close span {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 3px;
+}

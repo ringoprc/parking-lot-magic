@@ -30,6 +30,8 @@
   transition: transform 160ms ease;
   will-change: transform;
   border-radius: 18px;
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 0px;
 }
 
 .vl-sheet.open {

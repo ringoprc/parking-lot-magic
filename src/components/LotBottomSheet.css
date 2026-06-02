@@ -16,7 +16,6 @@
   position: fixed;
   left: 0;
   right: 0;
-
    /* key: keep it above iPhone home indicator / bottom bar */
   bottom: env(safe-area-inset-bottom);
   background: #fff;
@@ -24,13 +23,17 @@
   border-top-right-radius: 18px;
   box-shadow: 0 -10px 30px rgba(0,0,0,0.18);
   overflow: hidden;
-
   /*max-height: min(70dvh, 520px);*/
   height: auto;
 
+  transform: translateY(calc(100% + env(safe-area-inset-bottom)));
   transition: transform 160ms ease;
   will-change: transform;
   border-radius: 18px;
+}
+
+.vl-sheet.open {
+  transform: translateY(0);
 }
 
 /* handle row */
@@ -277,7 +280,7 @@
   width: 100%;
   padding: 6px 12px;
   border-radius: 12px;
-  margin: 0px 10px;
+  margin: 10px 10px 0px 0px;
   font-size: 13px;
   border: 1px solid #2680f0;
   font-weight: 800;
@@ -338,5 +341,87 @@
   }
 }
 
+
+/*----------------------------*/
+/* Cound Down Ad Modal        */
+/*----------------------------*/
+.vl-nav-ad-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.vl-nav-ad-modal {
+  position: relative;
+  width: min(82vw, 330px);
+  background: #fff;
+  border-radius: 18px;
+  padding: 18px 16px 26px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.22);
+  text-align: center;
+}
+
+.vl-nav-ad-title {
+  font-size: 20px;
+  font-weight: 500;
+  color: #111;
+  margin-bottom: 18px;
+}
+
+.vl-nav-ad-img {
+  width: 100%;
+  max-height: 250px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 22px;
+}
+
+.vl-nav-ad-progressTrack {
+  width: 100%;
+  height: 6px;
+  background: #e7e7e7;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.vl-nav-ad-progressBar {
+  height: 100%;
+  width: 100%;
+  background: #7fb34d;
+  border-radius: 999px;
+  transform-origin: left center;
+  animation-name: vlNavAdShrink;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes vlNavAdShrink {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.vl-nav-ad-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: #f3f3f3;
+  color: #777;
+  font-size: 18px;
+  line-height: 20px;
+  cursor: pointer;
+}
 
 

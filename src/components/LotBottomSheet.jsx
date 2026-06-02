@@ -15,6 +15,8 @@ import sponsorImage from "../assets/sponser_demo_img.jpeg";
 
 import "./LotBottomSheet.css";
 
+const NAV_AD_SECONDS = 9;
+
 function toVacancyNum(v) {
   if (v === "" || v == null) return null;
   const n = Number(v);
@@ -29,31 +31,41 @@ function getVacancyTextColor(v) {
   return "#0F7B2E";                  // ok -> green (pin border)
 }
 
-function openGoogleNav(active) {
-  if (!active) return;
+function getGoogleNavUrl(active) {
+  if (!active) return "";
 
   const lat = active.lat ?? active.latitude;
   const lng = active.lng ?? active.longitude;
 
-  let url = "";
-
-  // Testing default to [lat, lng]
-  if (active.addressZh  && !active.addressZh) {
-    url =
-      `https://www.google.com/maps/dir/?api=1` +
-      `&destination=${encodeURIComponent(active.addressZh)}` +
-      `&travelmode=driving`;
-  } else if (lat != null && lng != null) {
+  if (lat != null && lng != null) {
     const dest = `${lat},${lng}`;
-    url =
+    return (
       `https://www.google.com/maps/dir/?api=1` +
       `&destination=${encodeURIComponent(dest)}` +
-      `&travelmode=driving`;
-  } else {
-    return;
+      `&travelmode=driving`
+    );
   }
 
-  window.open(url, "_blank", "noopener,noreferrer");
+  if (active.addressZh) {
+    return (
+      `https://www.google.com/maps/dir/?api=1` +
+      `&destination=${encodeURIComponent(active.addressZh)}` +
+      `&travelmode=driving`
+    );
+  }
+
+  return "";
+}
+
+function openGoogleNav(active, { sameTab = false } = {}) {
+  const url = getGoogleNavUrl(active);
+  if (!url) return;
+
+  if (sameTab) {
+    window.location.assign(url);
+  } else {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
 }
 
 async function copyToClipboard(text) {
@@ -96,11 +108,61 @@ export default function LotBottomSheet({
   lastFrontendFetchAt 
 }) {
   const [open, setOpen] = useState(false);
+  const [navAdOpen, setNavAdOpen] = useState(false);
+  const [navCountdown, setNavCountdown] = useState(NAV_AD_SECONDS);
+  const [navAdStartedAt, setNavAdStartedAt] = useState(null);
+
+
+  //---------------------------
+  // useEffects
+  //---------------------------
 
   // open when active exists, close when active is null
   useEffect(() => {
     setOpen(!!active);
   }, [active]);
+
+  useEffect(() => {
+    if (!navAdOpen || !navAdStartedAt) return;
+
+    const interval = setInterval(() => {
+      const elapsedMs = Date.now() - navAdStartedAt;
+      const remainingMs = Math.max(NAV_AD_SECONDS * 1000 - elapsedMs, 0);
+
+      setNavCountdown(Math.ceil(remainingMs / 1000));
+
+      if (remainingMs <= 0) {
+        clearInterval(interval);
+        setNavAdOpen(false);
+        setNavAdStartedAt(null);
+        openGoogleNav(active, { sameTab: true });
+      }
+    }, 250);
+
+    return () => clearInterval(interval);
+  }, [navAdOpen, navAdStartedAt, active]);
+
+  useEffect(() => {
+    if (!active) {
+      setNavAdOpen(false);
+      setNavCountdown(NAV_AD_SECONDS);
+      setNavAdStartedAt(null);
+    }
+  }, [active]);
+
+
+  //---------------------------
+  // Functions
+  //---------------------------
+
+  function startNavigationWithAd() {
+    if (!active) return;
+
+    setOpen(false); // close bottom info sheet
+    setNavCountdown(NAV_AD_SECONDS);
+    setNavAdStartedAt(Date.now());
+    setNavAdOpen(true);
+  }
 
   function close() {
     setOpen(false);
@@ -111,6 +173,11 @@ export default function LotBottomSheet({
   function stopMapGesture(e) {
     e.stopPropagation();
   }
+
+
+  //---------------------------
+  // Return
+  //---------------------------
 
   // Keep the sheet mounted for the close animation, but hide if no active and not open
   if (!active && !open) return null;
@@ -243,20 +310,49 @@ export default function LotBottomSheet({
                 </div>
               </div>
 
+              <button
+                className="vl-sheet-navBtn"
+                onClick={startNavigationWithAd}
+                type="button"
+              >
+                開始導航
+              </button>
 
-              <div className="vl-sheet-actions">
-                <button
-                  className="vl-sheet-navBtn"
-                  onClick={() => openGoogleNav(active)}
-                  type="button"
-                >
-                  開始導航
-                </button>
-              </div>
             </div>
           )}
         </div>
       </div>
+
+      {navAdOpen && (
+        <div
+          className="vl-nav-ad-layer"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="vl-nav-ad-modal">
+
+            <div className="vl-nav-ad-title">
+              正在準備導航：還剩 {navCountdown} 秒...
+            </div>
+
+            <img
+              className="vl-nav-ad-img"
+              src={sponsorImage}
+              alt="advertisement"
+            />
+
+            <div className="vl-nav-ad-progressTrack">
+              <div
+                key={navAdStartedAt}
+                className="vl-nav-ad-progressBar"
+                style={{
+                  animationDuration: `${NAV_AD_SECONDS}s`
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

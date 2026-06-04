@@ -144,7 +144,6 @@
   height: 180px;
   object-fit: cover;
   display: block;
-  opacity: 0.2;
 }
 
 @media (max-width: 900px) {
@@ -380,6 +379,7 @@
   object-fit: contain;
   display: block;
   margin: 0 auto 22px;
+  border-radius: 3px;
 }
 
 .vl-nav-ad-progressTrack {

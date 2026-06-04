@@ -1,17 +1,22 @@
 // frontend/src/components/ParkingLotInfoWindow.jsx
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { InfoWindow } from "@vis.gl/react-google-maps";
+import toast from "react-hot-toast";
+import { MdDirectionsWalk, MdContentCopy } from "react-icons/md";
+
 import {
   formatTimeYYYYMMDD_HHMMSS,
   minutesAgo,
   minSecAgo,
 } from "../utils/time";
-import toast from "react-hot-toast";
-import { MdDirectionsWalk, MdContentCopy } from "react-icons/md";
 
 import lotImage from "../assets/lots_demo_img.jpg";
 import sponsorImage from "../assets/sponser_demo_img.jpeg";
 
 import "./ParkingLotInfoWindow.css";
+
+const NAV_AD_SECONDS = 6;
 
 function toVacancyNum(v) {
   if (v === "" || v == null) return null;
@@ -54,6 +59,44 @@ function openGoogleNavFromLot(lot) {
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
+function getGoogleNavUrl(lot) {
+  if (!lot) return "";
+
+  const lat = lot.lat ?? lot.latitude;
+  const lng = lot.lng ?? lot.longitude;
+
+  if (lat != null && lng != null) {
+    const dest = `${lat},${lng}`;
+
+    return (
+      `https://www.google.com/maps/dir/?api=1` +
+      `&destination=${encodeURIComponent(dest)}` +
+      `&travelmode=driving`
+    );
+  }
+
+  if (lot.addressZh) {
+    return (
+      `https://www.google.com/maps/dir/?api=1` +
+      `&destination=${encodeURIComponent(lot.addressZh)}` +
+      `&travelmode=driving`
+    );
+  }
+
+  return "";
+}
+
+function openGoogleNav(lot, { sameTab = false } = {}) {
+  const url = getGoogleNavUrl(lot);
+  if (!url) return;
+
+  if (sameTab) {
+    window.location.assign(url);
+  } else {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+}
+
 async function copyToClipboard(text) {
   if (text == null) return;
   const value = String(text).trim();
@@ -92,189 +135,322 @@ export default function ParkingLotInfoWindow({
 }) {
   if (!active) return null;
 
-  return (
-    <InfoWindow
-      position={{ lat: active.lat, lng: active.lng }}
-      onCloseClick={() => setActive?.(null)}
-    >
-      <div
-        className="iw-content-wrapper"
-        onClick={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
-        onPointerDown={(e) => e.stopPropagation()}
-        onTouchStart={(e) => e.stopPropagation()}
-      >
+  const [navAdOpen, setNavAdOpen] = useState(false);
+  const [navCountdown, setNavCountdown] = useState(NAV_AD_SECONDS);
+  const [navAdStartedAt, setNavAdStartedAt] = useState(null);
 
-        <div className="iw-sheet-hero">
-          <div className="iw-sheet-hero-img-div">
-            <img
-              className="iw-sheet-hero-img"
-              onClick={() => openGoogleNavFromLot(active)}
-              //src="https://placehold.co/340x240/f9f9f9/999999/png?text=Parking"
-              src={lotImage}
-              alt=""
-              loading="lazy"
-            />
-          </div>
-          <div className="iw-sheet-sponsor-img-div">
-            <div style={{ position: "relative" }}>
+  const hasBottomSheetSponsor = !!active?.adAssets?.bottomSheetExample?.url;
+
+  const bottomSheetSponsorUrl = hasBottomSheetSponsor
+    ? active.adAssets.bottomSheetExample.url
+    : sponsorImage;
+
+  const navigationAdUrl =
+    active?.adAssets?.navigationSquare?.url ||
+    active?.adAssets?.bottomSheetExample?.url ||
+    sponsorImage;
+
+
+  //------------------
+  // UseEffects
+  //------------------
+  useEffect(() => {
+    if (!navAdOpen || !navAdStartedAt) return;
+
+    const interval = setInterval(() => {
+      const elapsedMs = Date.now() - navAdStartedAt;
+      const remainingMs = Math.max(NAV_AD_SECONDS * 1000 - elapsedMs, 0);
+
+      setNavCountdown(Math.ceil(remainingMs / 1000));
+
+      if (remainingMs <= 0) {
+        clearInterval(interval);
+        setNavCountdown(0);
+      }
+    }, 250);
+
+    return () => clearInterval(interval);
+  }, [navAdOpen, navAdStartedAt]);
+
+  useEffect(() => {
+    if (!active) {
+      setNavAdOpen(false);
+      setNavCountdown(NAV_AD_SECONDS);
+      setNavAdStartedAt(null);
+    }
+  }, [active]);
+
+  useEffect(() => {
+    if (!active) return;
+
+    const realNavigationAdUrl =
+      active?.adAssets?.navigationSquare?.url ||
+      active?.adAssets?.bottomSheetExample?.url;
+
+    if (!realNavigationAdUrl) return;
+
+    const img = new Image();
+    img.src = realNavigationAdUrl;
+  }, [active]);
+
+
+  function startNavigationWithAd() {
+    if (!active) return;
+
+    setNavCountdown(NAV_AD_SECONDS);
+    setNavAdStartedAt(Date.now());
+    setNavAdOpen(true);
+  }
+
+  function proceedNavigationFromAd() {
+    if (!active) return;
+
+    setNavAdOpen(false);
+    setNavAdStartedAt(null);
+    setNavCountdown(NAV_AD_SECONDS);
+
+    openGoogleNav(active, { sameTab: true });
+  }
+
+  //------------------
+  // Return
+  //------------------
+  return (
+    <>
+      <InfoWindow
+        position={{ lat: active.lat, lng: active.lng }}
+        onCloseClick={() => setActive?.(null)}
+      >
+        <div
+          className="iw-content-wrapper"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+        >
+
+          <div className="iw-sheet-hero">
+            <div className="iw-sheet-hero-img-div">
               <img
-                className="iw-sheet-sponsor-img"
-                //src="https://placehold.co/340x340/f9f9f9/999999/png?text=Sponsor"
-                src={sponsorImage}
+                className="iw-sheet-hero-img"
+                onClick={() => openGoogleNavFromLot(active)}
+                //src="https://placehold.co/340x240/f9f9f9/999999/png?text=Parking"
+                src={lotImage}
                 alt=""
                 loading="lazy"
               />
-              <span className="iw-sheet-sponsor-example-label">範例</span>
             </div>
-            <div className="iw-sheet-sponsor-distance-label-div">
-              <MdDirectionsWalk size={16} />
-              <div className="iw-sheet-sponsor-meta-div">
-                <span style={{ fontSize: "11px" }}>店家步行距離 10m 內</span>
+            <div className="iw-sheet-sponsor-img-div">
+              <div style={{ position: "relative" }}>
+                <img
+                  className="iw-sheet-sponsor-img"
+                  src={bottomSheetSponsorUrl}
+                  style={{ opacity: hasBottomSheetSponsor ? "1" : "0.2" }}
+                  alt=""
+                  loading="lazy"
+                />
+
+                {!hasBottomSheetSponsor && (
+                  <span className="iw-sheet-sponsor-example-label">範例</span>
+                )}
+              </div>
+              <div className="iw-sheet-sponsor-distance-label-div">
+                <MdDirectionsWalk size={16} />
+                <div className="iw-sheet-sponsor-meta-div">
+                  <span style={{ fontSize: "11px" }}>店家步行距離 10m 內</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div style={{ minWidth: 120 }}>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              borderBottom: "1px solid #eee",
-              padding: "0px 3px 10px 3px",
-              marginTop: "10px",
-            }}
-          >
+          <div style={{ minWidth: 120 }}>
             <div
               style={{
                 display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
+                flexDirection: "column",
+                borderBottom: "1px solid #eee",
+                padding: "0px 3px 10px 3px",
+                marginTop: "10px",
               }}
             >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                }}
+              >
+                <div className="iw-actions"
+                  style={{
+                    display: "flex",
+                    fontSize: 15,
+                    fontWeight: 700,
+                    marginBottom: "6px",
+                    marginRight: "20px",
+                    alignItems: "center",
+                    gap: "7px",
+                  }}
+                >
+                  <div
+                    className="vl-copyBtn"
+                    aria-label="複製停車場名稱"
+                    title="複製停車場名稱"
+                    onClick={() => copyToClipboard(active.name)}
+                  >
+                    <MdContentCopy size={14} />
+                  </div>
+                  <span style={{ marginTop: "3px" }}>{active.name}</span>
+                </div>
+
+                <div
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: "700",
+                    color: getVacancyTextColor(active.vacancy),
+                    marginBottom: "6px",
+                    flexShrink: "0",
+                    marginTop: "4px"
+                  }}
+                >
+                  空位：
+                  <span>
+                    {active.vacancy ?? "未知"}
+                  </span>
+                </div>
+              </div>
+
               <div className="iw-actions"
                 style={{
                   display: "flex",
-                  fontSize: 15,
-                  fontWeight: 700,
-                  marginBottom: "6px",
-                  marginRight: "20px",
                   alignItems: "center",
-                  gap: "7px",
+                  gap: "10px",
                 }}
               >
                 <div
                   className="vl-copyBtn"
                   aria-label="複製停車場名稱"
                   title="複製停車場名稱"
-                  onClick={() => copyToClipboard(active.name)}
+                  onClick={() => copyToClipboard(active.addressZh)}
                 >
-                  <MdContentCopy size={14} />
+                  <MdContentCopy size={12} />
                 </div>
-                <span style={{ marginTop: "3px" }}>{active.name}</span>
-              </div>
-
-              <div
-                style={{
-                  fontSize: "14px",
-                  fontWeight: "700",
-                  color: getVacancyTextColor(active.vacancy),
-                  marginBottom: "6px",
-                  flexShrink: "0",
-                  marginTop: "4px"
-                }}
-              >
-                空位：
-                <span>
-                  {active.vacancy ?? "未知"}
-                </span>
+                <span style={{ fontSize: "11.5px", fontWeight: "400", color: "#666", marginTop: "2.5px" }}>{active.addressZh}</span>
               </div>
             </div>
-
-            <div className="iw-actions"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-              }}
-            >
-              <div
-                className="vl-copyBtn"
-                aria-label="複製停車場名稱"
-                title="複製停車場名稱"
-                onClick={() => copyToClipboard(active.addressZh)}
-              >
-                <MdContentCopy size={12} />
-              </div>
-              <span style={{ fontSize: "11.5px", fontWeight: "400", color: "#666", marginTop: "2.5px" }}>{active.addressZh}</span>
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              flexDirection: "column",
-              padding: "6px 3px 0px 6px",
-            }}
-          >
-            {(() => {
-              const m = minutesAgo(active.lastUpdated);
-              if (m == null) return null;
-              if (m <= 3) return null;
-
-              return (
-                <div
-                  style={{
-                    marginTop: "6px",
-                    fontSize: "11px",
-                    color: "#ea4336",
-                    fontWeight: "900",
-                  }}
-                >
-                  資料可能延遲（{m} 分鐘）
-                </div>
-              );
-            })()}
 
             <div
               style={{
                 display: "flex",
-                gap: "5px",
+                justifyContent: "space-between",
+                flexDirection: "column",
+                padding: "6px 3px 0px 6px",
               }}
             >
-              <div style={{ marginTop: 6, fontSize: 10.5 }}>
-                最近更新：{formatTimeYYYYMMDD_HHMMSS(active.lastUpdated)}
-              </div>
+              {(() => {
+                const m = minutesAgo(active.lastUpdated);
+                if (m == null) return null;
+                if (m <= 3) return null;
 
-              <div style={{ marginTop: 6, fontSize: 10.5 }}>
-                {(() => {
-                  const ms = minSecAgo(active.lastUpdated);
-                  if (!ms) return null;
+                return (
+                  <div
+                    style={{
+                      marginTop: "6px",
+                      fontSize: "11px",
+                      color: "#ea4336",
+                      fontWeight: "900",
+                    }}
+                  >
+                    資料可能延遲（{m} 分鐘）
+                  </div>
+                );
+              })()}
 
-                  return (
-                    <div style={{ marginTop: 0, fontSize: 10.5 }}>
-                      （{ms.min} 分 {String(ms.sec).padStart(2, "0")} 秒前）
-                    </div>
-                  );
-                })()}
+              <div
+                style={{
+                  display: "flex",
+                  gap: "5px",
+                }}
+              >
+                <div style={{ marginTop: 6, fontSize: 10.5 }}>
+                  最近更新：{formatTimeYYYYMMDD_HHMMSS(active.lastUpdated)}
+                </div>
+
+                <div style={{ marginTop: 6, fontSize: 10.5 }}>
+                  {(() => {
+                    const ms = minSecAgo(active.lastUpdated);
+                    if (!ms) return null;
+
+                    return (
+                      <div style={{ marginTop: 0, fontSize: 10.5 }}>
+                        （{ms.min} 分 {String(ms.sec).padStart(2, "0")} 秒前）
+                      </div>
+                    );
+                  })()}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="iw-actions iw-nav-outer-div">
-        <button
-          className="iw-navBtn"
-          onClick={() => openGoogleNavFromLot(active)}
-          type="button"
-        >
-          開始導航
-        </button>
-      </div>
-    </InfoWindow>
+        <div className="iw-actions iw-nav-outer-div">
+          <button
+            className="iw-navBtn"
+            onClick={startNavigationWithAd}
+            type="button"
+          >
+            開始導航
+          </button>
+        </div>
+      </InfoWindow>
+
+      {navAdOpen &&
+        createPortal(
+          <div
+            className="iw-nav-ad-layer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="iw-nav-ad-modal">
+              {navCountdown <= 0 && (
+                <button
+                  className="iw-nav-ad-close"
+                  type="button"
+                  onClick={proceedNavigationFromAd}
+                  aria-label="開始導航"
+                >
+                  <span>×</span>
+                </button>
+              )}
+
+              <div
+                className="iw-nav-ad-title"
+                style={{ color: navCountdown > 0 ? "#111" : "#ffff00" }}
+              >
+                {navCountdown > 0
+                  ? `正在準備導航：還剩 ${navCountdown} 秒...`
+                  : "_"}
+              </div>
+
+              <img
+                className="iw-nav-ad-img"
+                src={navigationAdUrl}
+                alt="advertisement"
+              />
+
+              <div className="iw-nav-ad-progressTrack">
+                <div
+                  key={navAdStartedAt}
+                  className="iw-nav-ad-progressBar"
+                  style={{
+                    animationDuration: `${NAV_AD_SECONDS}s`,
+                  }}
+                />
+              </div>
+            </div>
+          </div>,
+        document.body
+      )}
+        
+    </>
   );
 }
 

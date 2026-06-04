@@ -96,5 +96,102 @@
 }
 
 
+/*----------------------------*/
+/* InfoWindow Countdown Ad Modal */
+/*----------------------------*/
+
+.iw-nav-ad-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.iw-nav-ad-modal {
+  position: relative;
+  width: min(82vw, 330px);
+  background: #fff;
+  border-radius: 18px;
+  padding: 42px 16px 26px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.22);
+  text-align: center;
+}
+
+.iw-nav-ad-title {
+  color: #111;
+  padding: 4px 0px 0px 0px;
+  margin: -33px 0px 9px 0px;
+}
+
+.iw-nav-ad-img {
+  width: 100%;
+  max-height: 250px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 22px;
+  border-radius: 3px;
+}
+
+.iw-nav-ad-progressTrack {
+  width: 100%;
+  height: 6px;
+  background: #e7e7e7;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.iw-nav-ad-progressBar {
+  height: 100%;
+  width: 100%;
+  background: #7fb34d;
+  border-radius: 999px;
+  transform-origin: left center;
+  animation-name: iwNavAdShrink;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes iwNavAdShrink {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.iw-nav-ad-close {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: #f3f3f3;
+  color: #777;
+  font-size: 18px;
+  line-height: 20px;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  margin: 7px 0px 10px 0px;
+}
+
+.iw-nav-ad-close span {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 3px;
+}
+
 
 

@@ -112,6 +112,15 @@ export default function LotBottomSheet({
   const [navCountdown, setNavCountdown] = useState(NAV_AD_SECONDS);
   const [navAdStartedAt, setNavAdStartedAt] = useState(null);
 
+  const hasBottomSheetSponsor = !!active?.adAssets?.bottomSheetExample?.url;
+  const bottomSheetSponsorUrl =
+    active?.adAssets?.bottomSheetExample?.url || sponsorImage;
+
+  const navigationAdUrl =
+    active?.adAssets?.navigationSquare?.url ||
+    active?.adAssets?.bottomSheetExample?.url ||
+    sponsorImage;
+
 
   //---------------------------
   // useEffects
@@ -147,6 +156,19 @@ export default function LotBottomSheet({
       setNavAdStartedAt(null);
     }
   }, [active]);
+
+  useEffect(() => {
+    if (!active || !open) return;
+
+    const realNavigationAdUrl =
+      active?.adAssets?.navigationSquare?.url ||
+      active?.adAssets?.bottomSheetExample?.url;
+
+    if (!realNavigationAdUrl) return;
+
+    const img = new Image();
+    img.src = realNavigationAdUrl;
+  }, [active, open]);
 
 
   //---------------------------
@@ -224,13 +246,17 @@ export default function LotBottomSheet({
               <div style={{ position: "relative" }}>
                 <img
                   className="vl-sheet-sponsor-img"
-                  //src="https://placehold.co/340x340/f9f9f9/999999/png?text=Sponsor"
-                  src={sponsorImage}
+                  src={bottomSheetSponsorUrl}
+                  style={{ opacity: hasBottomSheetSponsor ? "1" : "0.2" }}
                   alt=""
                   loading="lazy"
                 />
-                <span className="vl-sheet-sponsor-example-label">範例</span>
+
+                {!hasBottomSheetSponsor && (
+                  <span className="vl-sheet-sponsor-example-label">範例</span>
+                )}
               </div>
+
               <div className="vl-sheet-sponsor-distance-label-div">
                 <MdDirectionsWalk size={18} />
                 <div className="vl-sheet-sponsor-meta-div">
@@ -357,7 +383,7 @@ export default function LotBottomSheet({
 
             <img
               className="vl-nav-ad-img"
-              src={sponsorImage}
+              src={navigationAdUrl}
               alt="advertisement"
             />
 

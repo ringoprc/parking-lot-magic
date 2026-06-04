@@ -17,6 +17,7 @@ import { FaCheck } from "react-icons/fa6";
 import AdminLotsPage from "./pages/AdminLotsPage";
 import AdminDevicesPage from "./pages/AdminDevicesPage/AdminDevicesPage";
 import AdminLinkagePage from "./pages/AdminLinkagePage";
+import AdminLotAdsPage from "./pages/AdminLotAdsPage";
 
 import { useMyLocationAction } from "./hooks/useMyLocationAction";
 import { useMediaQuery } from "./hooks/useMediaQuery";
@@ -341,12 +342,14 @@ export default function App() {
   const showAdmin = new URLSearchParams(window.location.search).get("admin") === "1";
   const showDevices = new URLSearchParams(window.location.search).get("devices") === "1";
   const showLinkage = new URLSearchParams(window.location.search).get("link") === "1";
+  const showAdsManage = new URLSearchParams(window.location.search).get("ads") === "1";
 
   let page = null;
   if (showOcr) page = <DigitOcrTest />;
   else if (showAdmin) page = <AdminLotsPage apiBase={apiBase} />;
   else if (showDevices) page = <AdminDevicesPage apiBase={apiBase} />;
   else if (showLinkage) page = <AdminLinkagePage apiBase={apiBase} />;
+  else if (showAdsManage) page = <AdminLotAdsPage apiBase={apiBase} />;
   else page = (
     <APIProvider
       apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}

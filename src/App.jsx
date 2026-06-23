@@ -27,6 +27,84 @@ import DigitOcrTest from "./pages/DigitOcrTest";
 
 import "./App.css";
 
+function AdminMenuPage() {
+  const adminItems = [
+    {
+      title: "停車場清單管理",
+      description: "新增、編輯、檢查停車場基本資料。",
+      href: "?admin=lots",
+      badge: "Lots",
+    },
+    {
+      title: "設備與 AI 空位管理",
+      description: "查看手機設備、拍攝狀態、AI 辨識空位與拍照秒數設定。",
+      href: "?admin=devices",
+      badge: "Devices",
+    },
+    {
+      title: "停車場設備連結",
+      description: "管理停車場與拍攝設備之間的對應關係。",
+      href: "?admin=link",
+      badge: "Linkage",
+    },
+    {
+      title: "商家與廣告圖片管理",
+      description: "上傳與管理 bottom sheet、導航廣告、優惠券圖片。",
+      href: "?admin=ads",
+      badge: "Ads",
+    },
+    {
+      title: "OCR 測試工具",
+      description: "測試數字辨識流程與模型輸出。",
+      href: "?ocr=1",
+      badge: "Tool",
+    },
+  ];
+
+  return (
+    <div className="admin-menu-page">
+      <div className="admin-menu-shell">
+        <div className="admin-menu-topbar">
+          <a className="admin-menu-brand" href="/">
+            <img src={logo} alt="ParkingJi" className="admin-menu-logo" />
+            <div>
+              <div className="admin-menu-brand-title">停車急管家</div>
+              <div className="admin-menu-brand-subtitle">ParkingJi Admin</div>
+            </div>
+          </a>
+
+          <a className="admin-menu-map-link" href="/">
+            回到地圖
+          </a>
+        </div>
+
+        <div className="admin-menu-hero">
+          <div>
+            <div className="admin-menu-kicker">後台管理中心</div>
+            <h1>目前已建立的管理功能</h1>
+            <p>
+              之後新增後台頁面時，只要把入口加到這裡，就不用再記得每一組網址參數。
+            </p>
+          </div>
+        </div>
+
+        <div className="admin-menu-grid">
+          {adminItems.map((item) => (
+            <a className="admin-menu-card" href={item.href} key={item.href}>
+              <div className="admin-menu-card-head">
+                <span className="admin-menu-card-badge">{item.badge}</span>
+                <span className="admin-menu-card-arrow">›</span>
+              </div>
+              <h2>{item.title}</h2>
+              <p>{item.description}</p>
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function formatYmdHms(ts) {
   if (!ts) return null;
   const d = new Date(ts);
@@ -331,25 +409,26 @@ export default function App() {
 
 
   //-----------------------------
-  // OCR
+  // Routes
   //-----------------------------
+  const searchParams = new URLSearchParams(window.location.search);
 
-  const showOcr = new URLSearchParams(window.location.search).get("ocr") === "1";
+  const showOcr = searchParams.get("ocr") === "1";
 
-  //-----------------------------
-  // Admin
-  //-----------------------------
-  const showAdmin = new URLSearchParams(window.location.search).get("admin") === "1";
-  const showDevices = new URLSearchParams(window.location.search).get("devices") === "1";
-  const showLinkage = new URLSearchParams(window.location.search).get("link") === "1";
-  const showAdsManage = new URLSearchParams(window.location.search).get("ads") === "1";
+  const adminRoute = searchParams.get("admin");
+  const showAdminMenu = adminRoute === "1";
+  const showAdminLots = adminRoute === "lots" || searchParams.get("lots") === "1";
+  const showDevices = adminRoute === "devices" || searchParams.get("devices") === "1";
+  const showLinkage = adminRoute === "link" || searchParams.get("link") === "1";
+  const showAdsManage = adminRoute === "ads" || searchParams.get("ads") === "1";
 
   let page = null;
   if (showOcr) page = <DigitOcrTest />;
-  else if (showAdmin) page = <AdminLotsPage apiBase={apiBase} />;
+  else if (showAdminLots) page = <AdminLotsPage apiBase={apiBase} />;
   else if (showDevices) page = <AdminDevicesPage apiBase={apiBase} />;
   else if (showLinkage) page = <AdminLinkagePage apiBase={apiBase} />;
   else if (showAdsManage) page = <AdminLotAdsPage apiBase={apiBase} />;
+  else if (showAdminMenu) page = <AdminMenuPage />;
   else page = (
     <APIProvider
       apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
@@ -384,6 +463,10 @@ export default function App() {
               </div>
 
             </div>
+
+            <a className="title-bar-admin-link" href="?admin=1">
+              管理後台
+            </a>
           </div>
         </div>
 

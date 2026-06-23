@@ -144,6 +144,7 @@
   height: 180px;
   object-fit: cover;
   display: block;
+  cursor: pointer;
 }
 
 @media (max-width: 900px) {
@@ -182,6 +183,23 @@
   flex-direction: column;
   align-items: center;
   /*width: 100%;*/
+}
+
+.vl-nav-ad-modal.preview {
+  padding-top: 24px;
+}
+
+.vl-nav-ad-modal.preview .vl-nav-ad-img {
+  margin-bottom: 18px;
+}
+
+.vl-nav-ad-choiceRow.single {
+  gap: 0;
+}
+
+.vl-nav-ad-choiceRow.single .vl-nav-ad-choiceBtn {
+  width: 88%;
+  max-width: 280px;
 }
 
 .vl-sheet-body {
@@ -350,15 +368,19 @@
 .vl-nav-ad-layer {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: 10020;
   display: flex;
   align-items: center;
   justify-content: center;
   pointer-events: auto;
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
 }
 
 .vl-nav-ad-modal {
   position: relative;
+  z-index: 1;
   width: min(82vw, 330px);
   background: #fff;
   border-radius: 18px;
@@ -438,3 +460,66 @@
   justify-content: center;
   margin-bottom: 3px;
 }
+
+.vl-nav-ad-choiceRow {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 4%;
+  margin-top: 6px;
+}
+
+.vl-nav-ad-choiceBtn {
+  width: 45%;
+  min-height: 42px;
+  padding: 9px 8px;
+  border-radius: 12px;
+  border: 1px solid #2680f0;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.25;
+  cursor: pointer;
+  background: #fff;
+  color: #2680f0;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+/* Small screen */
+@media (max-width: 480px) {
+  .vl-nav-ad-choiceRow {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .vl-nav-ad-choiceBtn {
+    width: 90%;
+  }
+}
+
+.vl-nav-ad-choiceBtn:hover {
+  background: #2680f0;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.vl-nav-ad-choiceBtn.store {
+  border-color: #7fb34d;
+  color: #47751f;
+}
+
+.vl-nav-ad-choiceBtn.store:hover {
+  background: #7fb34d;
+  color: #fff;
+}
+
+.vl-nav-ad-choiceBtn.lot {
+  border-color: #2680f0;
+  color: #2680f0;
+}
+
+.vl-nav-ad-choiceBtn.lot:hover {
+  background: #2680f0;
+  color: #fff;
+}
+

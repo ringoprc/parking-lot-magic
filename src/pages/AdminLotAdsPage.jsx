@@ -33,6 +33,15 @@ async function safeJson(res) {
   }
 }
 
+function normalizeAdSponsor(lot) {
+  const adSponsor = lot?.adSponsor || {};
+
+  return {
+    storeName: adSponsor.storeName || "",
+    storeAddress: adSponsor.storeAddress || "",
+  };
+}
+
 export default function AdminLotAdsPage({ apiBase }) {
   const [adminKey, setAdminKey] = useState(() => localStorage.getItem("adminKey") || "");
 
@@ -43,6 +52,11 @@ export default function AdminLotAdsPage({ apiBase }) {
   const [selectedLot, setSelectedLot] = useState(null);
   const [assets, setAssets] = useState({});
   const [loadingAssets, setLoadingAssets] = useState(false);
+  const [adSponsorForm, setAdSponsorForm] = useState({
+    storeName: "",
+    storeAddress: "",
+  });
+  const [savingAdSponsor, setSavingAdSponsor] = useState(false);
 
   const [localFiles, setLocalFiles] = useState({});
   const [localPreviewUrls, setLocalPreviewUrls] = useState({});
@@ -71,7 +85,19 @@ export default function AdminLotAdsPage({ apiBase }) {
       const data = await safeJson(res);
       if (!res.ok) throw new Error(data?.error || "load lots failed");
 
-      setAllLots(Array.isArray(data?.rows) ? data.rows : []);
+      const rows = Array.isArray(data?.rows) ? data.rows : [];
+      setAllLots(rows);
+
+      if (selectedLot?._id) {
+        const refreshedSelectedLot = rows.find(
+          (row) => String(row._id) === String(selectedLot._id)
+        );
+
+        if (refreshedSelectedLot) {
+          setSelectedLot(refreshedSelectedLot);
+          setAdSponsorForm(normalizeAdSponsor(refreshedSelectedLot));
+        }
+      }
     } catch (e) {
       toast.error(String(e?.message || e));
     } finally {
@@ -92,6 +118,24 @@ export default function AdminLotAdsPage({ apiBase }) {
       if (!res.ok) throw new Error(data?.error || "load ad assets failed");
 
       setAssets(data?.adAssets || {});
+
+      if (data?.lot) {
+        const nextLot = {
+          ...lot,
+          ...data.lot,
+        };
+
+        setSelectedLot(nextLot);
+        setAdSponsorForm(normalizeAdSponsor(nextLot));
+
+        setAllLots((prev) =>
+          prev.map((row) =>
+            String(row._id) === String(nextLot._id)
+              ? { ...row, ...nextLot }
+              : row
+          )
+        );
+      }
     } catch (e) {
       toast.error(String(e?.message || e));
       setAssets({});
@@ -102,6 +146,7 @@ export default function AdminLotAdsPage({ apiBase }) {
 
   function onPickLot(lot) {
     setSelectedLot(lot);
+    setAdSponsorForm(normalizeAdSponsor(lot));
     setAssets({});
     setLocalFiles({});
     setLocalPreviewUrls({});
@@ -199,6 +244,49 @@ export default function AdminLotAdsPage({ apiBase }) {
     }
   }
 
+  async function saveAdSponsor() {
+    if (!adminKey) return toast.error("請先輸入管理員密碼");
+    if (!selectedLot?._id) return toast.error("請先選擇停車場");
+
+    setSavingAdSponsor(true);
+
+    try {
+      const res = await fetch(`${apiBase}/api/admin/lots/${selectedLot._id}/ad-sponsor`, {
+        method: "PATCH",
+        headers: {
+          ...headersAuth(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(adSponsorForm),
+      });
+
+      const data = await safeJson(res);
+      if (!res.ok) throw new Error(data?.error || "save ad sponsor failed");
+
+      const nextLot = {
+        ...selectedLot,
+        ...(data?.lot || {}),
+      };
+
+      setSelectedLot(nextLot);
+      setAdSponsorForm(normalizeAdSponsor(nextLot));
+
+      setAllLots((prev) =>
+        prev.map((row) =>
+          String(row._id) === String(nextLot._id)
+            ? { ...row, ...nextLot }
+            : row
+        )
+      );
+
+      toast.success("已更新廣告店家資訊");
+    } catch (e) {
+      toast.error(String(e?.message || e));
+    } finally {
+      setSavingAdSponsor(false);
+    }
+  }
+
   useEffect(() => {
     if (!adminKey) return;
     fetchAllLots();
@@ -216,7 +304,7 @@ export default function AdminLotAdsPage({ apiBase }) {
     if (!q) return allLots;
 
     return allLots.filter((l) => {
-      const s = `${l.lotId || ""} ${l.name || ""} ${l.addressZh || ""} ${l.district || ""}`.toLowerCase();
+      const s = `${l.lotId || ""} ${l.name || ""} ${l.addressZh || ""} ${l.district || ""} ${l.adSponsor?.storeName || ""} ${l.adSponsor?.storeAddress || ""}`.toLowerCase();
       return s.includes(q);
     });
   }, [allLots, lotSearch]);
@@ -224,7 +312,7 @@ export default function AdminLotAdsPage({ apiBase }) {
   return (
     <div className="ala-outer">
       <div className="ala-topbar">
-        <div className="ala-title">停車場廣告圖片管理</div>
+        <div className="ala-title">商家廣告圖片管理</div>
 
         <div className="ala-adminkey">
           <div className="ala-label">管理員密碼</div>
@@ -284,6 +372,11 @@ export default function AdminLotAdsPage({ apiBase }) {
                           {l.lotId ? `lotId: ${l.lotId}` : ""}
                           {l.district ? ` · ${l.district}` : ""}
                         </div>
+                        {l.adSponsor?.storeName ? (
+                          <div className="ala-item-sub">
+                            廣告店家：{l.adSponsor.storeName}
+                          </div>
+                        ) : null}
                       </div>
                     </button>
                   );
@@ -300,13 +393,55 @@ export default function AdminLotAdsPage({ apiBase }) {
         <div className="ala-col ala-maincol">
           <div className="ala-colhdr">
             {selectedLot ? (
-              <>
-                <div className="ala-lotname">{selectedLot.name || "(no name)"}</div>
-                <div className="ala-lotsub">
-                  {selectedLot.lotId ? `lotId: ${selectedLot.lotId}` : ""}
-                  {selectedLot.district ? ` · ${selectedLot.district}` : ""}
+              <div className="ala-selected-head">
+                <div className="ala-selected-lot-info">
+                  <div className="ala-lotname">{selectedLot.name || "(no name)"}</div>
+                  <div className="ala-lotsub">
+                    {selectedLot.lotId ? `lotId: ${selectedLot.lotId}` : ""}
+                    {selectedLot.district ? ` · ${selectedLot.district}` : ""}
+                  </div>
                 </div>
-              </>
+
+                <div className="ala-ad-sponsor-form">
+                  <div className="ala-field">
+                    <label>廣告店家名稱</label>
+                    <input
+                      className="ala-input ala-sponsor-input"
+                      value={adSponsorForm.storeName}
+                      onChange={(e) =>
+                        setAdSponsorForm((prev) => ({
+                          ...prev,
+                          storeName: e.target.value,
+                        }))
+                      }
+                      placeholder="例如：Times 咖啡"
+                    />
+                  </div>
+
+                  <div className="ala-field">
+                    <label>店家地址</label>
+                    <input
+                      className="ala-input ala-sponsor-input"
+                      value={adSponsorForm.storeAddress}
+                      onChange={(e) =>
+                        setAdSponsorForm((prev) => ({
+                          ...prev,
+                          storeAddress: e.target.value,
+                        }))
+                      }
+                      placeholder="例如：台北市中山區..."
+                    />
+                  </div>
+
+                  <button
+                    className="ala-btn primary ala-save-sponsor-btn"
+                    disabled={savingAdSponsor}
+                    onClick={saveAdSponsor}
+                  >
+                    {savingAdSponsor ? "儲存中..." : "儲存店家資訊"}
+                  </button>
+                </div>
+              </div>
             ) : (
               <div className="ala-empty small">請先選擇停車場</div>
             )}

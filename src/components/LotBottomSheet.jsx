@@ -15,7 +15,7 @@ import sponsorImage from "../assets/sponser_demo_img.jpeg";
 
 import "./LotBottomSheet.css";
 
-const NAV_AD_SECONDS = 6;
+const NAV_AD_SECONDS = 3;
 
 function toVacancyNum(v) {
   if (v === "" || v == null) return null;
@@ -68,6 +68,39 @@ function openGoogleNav(active, { sameTab = false } = {}) {
   }
 }
 
+function getGoogleNavUrlFromDestination(destination) {
+  const value = String(destination || "").trim();
+  if (!value) return "";
+
+  return (
+    `https://www.google.com/maps/dir/?api=1` +
+    `&destination=${encodeURIComponent(value)}` +
+    `&travelmode=driving`
+  );
+}
+
+function openGoogleNavToDestination(destination, { sameTab = false } = {}) {
+  const url = getGoogleNavUrlFromDestination(destination);
+  if (!url) return false;
+
+  if (sameTab) {
+    window.location.assign(url);
+  } else {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  return true;
+}
+
+function getAdStoreDestination(active) {
+  const storeName = String(active?.adSponsor?.storeName || "").trim();
+  const storeAddress = String(active?.adSponsor?.storeAddress || "").trim();
+
+  if (!storeAddress) return "";
+
+  return [storeName, storeAddress].filter(Boolean).join(" ");
+}
+
 async function copyToClipboard(text) {
   if (text == null) return;
   const value = String(text).trim();
@@ -111,6 +144,7 @@ export default function LotBottomSheet({
   const [navAdOpen, setNavAdOpen] = useState(false);
   const [navCountdown, setNavCountdown] = useState(NAV_AD_SECONDS);
   const [navAdStartedAt, setNavAdStartedAt] = useState(null);
+  const [navAdMode, setNavAdMode] = useState("navigation"); // "navigation" | "sponsorPreview"
 
   const hasBottomSheetSponsor = !!active?.adAssets?.bottomSheetExample?.url;
   const bottomSheetSponsorUrl =
@@ -154,6 +188,7 @@ export default function LotBottomSheet({
       setNavAdOpen(false);
       setNavCountdown(NAV_AD_SECONDS);
       setNavAdStartedAt(null);
+      setNavAdMode("navigation");
     }
   }, [active]);
 
@@ -179,19 +214,61 @@ export default function LotBottomSheet({
     if (!active) return;
 
     setOpen(false); // close bottom info sheet
+    setNavAdMode("navigation");
     setNavCountdown(NAV_AD_SECONDS);
     setNavAdStartedAt(Date.now());
     setNavAdOpen(true);
   }
 
-  function proceedNavigationFromAd() {
+  function openSponsorAdPreview(e) {
+    e?.stopPropagation?.();
     if (!active) return;
 
+    setNavAdMode("sponsorPreview");
+    setNavCountdown(0);
+    setNavAdStartedAt(null);
+    setNavAdOpen(true);
+  }
+
+  function resetNavAdModal() {
     setNavAdOpen(false);
     setNavAdStartedAt(null);
     setNavCountdown(NAV_AD_SECONDS);
+    setNavAdMode("navigation");
+  }
 
+  function dismissNavAdModal(e) {
+    e?.stopPropagation?.();
+
+    const shouldClearSelectedLot = navAdMode === "navigation";
+
+    resetNavAdModal();
+
+    // For the countdown navigation modal, the bottom sheet was already closed,
+    // so remove the dark sheet layer and show the map again.
+    if (shouldClearSelectedLot) {
+      setOpen(false);
+      onClose?.();
+    }
+  }
+
+  function proceedNavigationFromAd() {
+    if (!active) return;
+
+    resetNavAdModal();
     openGoogleNav(active, { sameTab: true });
+  }
+
+  function proceedNavigationToStoreFromAd() {
+    const destination = getAdStoreDestination(active);
+
+    if (!destination) {
+      toast.error("尚未設定廣告店家地址");
+      return;
+    }
+
+    resetNavAdModal();
+    openGoogleNavToDestination(destination, { sameTab: true });
   }
 
   function close() {
@@ -250,6 +327,8 @@ export default function LotBottomSheet({
                   style={{ opacity: hasBottomSheetSponsor ? "1" : "0.2" }}
                   alt=""
                   loading="lazy"
+                  role="button"
+                  onClick={openSponsorAdPreview}
                 />
 
                 {!hasBottomSheetSponsor && (
@@ -360,10 +439,14 @@ export default function LotBottomSheet({
       {navAdOpen && (
         <div
           className="vl-nav-ad-layer"
-          onClick={(e) => e.stopPropagation()}
+          onClick={dismissNavAdModal}
         >
-          <div className="vl-nav-ad-modal">
+          <div
+            className={`vl-nav-ad-modal ${navAdMode === "sponsorPreview" ? "preview" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
 
+            {/*
             {navCountdown <= 0 && (
               <button
                 className="vl-nav-ad-close"
@@ -374,28 +457,53 @@ export default function LotBottomSheet({
                 <span>×</span>
               </button>
             )}
+            */}
 
-            <div className="vl-nav-ad-title" style={{ color: navCountdown > 0 ? "#111" : "#ffff00" }}>
-              {navCountdown > 0
-                ? `正在準備導航：還剩 ${navCountdown} 秒...`
-                : "_"}
-            </div>
+            {navAdMode === "navigation" && (
+              <div className="vl-nav-ad-title" style={{ color: navCountdown > 0 ? "#111" : "#ffff00" }}>
+                {navCountdown > 0
+                  ? `正在準備導航：還剩 ${navCountdown} 秒...`
+                  : "_"}
+              </div>
+            )}
 
             <img
               className="vl-nav-ad-img"
-              src={navigationAdUrl}
+              src={navAdMode === "sponsorPreview" ? bottomSheetSponsorUrl : navigationAdUrl}
               alt="advertisement"
             />
 
-            <div className="vl-nav-ad-progressTrack">
-              <div
-                key={navAdStartedAt}
-                className="vl-nav-ad-progressBar"
-                style={{
-                  animationDuration: `${NAV_AD_SECONDS}s`
-                }}
-              />
-            </div>
+            {navAdMode === "navigation" && navCountdown > 0 ? (
+              <div className="vl-nav-ad-progressTrack">
+                <div
+                  key={navAdStartedAt}
+                  className="vl-nav-ad-progressBar"
+                  style={{
+                    animationDuration: `${NAV_AD_SECONDS}s`
+                  }}
+                />
+              </div>
+            ) : (
+              <div className={`vl-nav-ad-choiceRow ${navAdMode === "sponsorPreview" ? "single" : ""}`}>
+                <button
+                  className="vl-nav-ad-choiceBtn store"
+                  type="button"
+                  onClick={proceedNavigationToStoreFromAd}
+                >
+                  導航至廣告店家
+                </button>
+
+                {navAdMode === "navigation" && (
+                  <button
+                    className="vl-nav-ad-choiceBtn lot"
+                    type="button"
+                    onClick={proceedNavigationFromAd}
+                  >
+                    繼續導航至停車場
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

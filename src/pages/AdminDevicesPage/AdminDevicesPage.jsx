@@ -795,7 +795,7 @@ export default function AdminDevicesPage({ apiBase }) {
                       className="admin-dev-zoomrange"
                       type="range"
                       min="1"
-                      max="4"
+                      max="ˊ"
                       step="0.1"
                       value={zoomMap[deviceId] ?? 1.0}
                       onChange={(e) => {

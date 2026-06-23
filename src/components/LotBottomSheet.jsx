@@ -460,7 +460,7 @@ export default function LotBottomSheet({
             */}
 
             {navAdMode === "navigation" && (
-              <div className="vl-nav-ad-title" style={{ color: navCountdown > 0 ? "#111" : "#ffff00" }}>
+              <div className="vl-nav-ad-title" style={{ color: navCountdown > 0 ? "#111" : "#ffffff" }}>
                 {navCountdown > 0
                   ? `正在準備導航：還剩 ${navCountdown} 秒...`
                   : "_"}

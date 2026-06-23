@@ -498,7 +498,7 @@ export default function ParkingLotInfoWindow({
               {navAdMode === "navigation" && (
                 <div
                   className="iw-nav-ad-title"
-                  style={{ color: navCountdown > 0 ? "#111" : "#ffff00" }}
+                  style={{ color: navCountdown > 0 ? "#111" : "#ffffff" }}
                 >
                   {navCountdown > 0
                     ? `正在準備導航：還剩 ${navCountdown} 秒...`

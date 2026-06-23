@@ -450,7 +450,8 @@ export default function AdminDevicesPage({ apiBase }) {
     const z = Number(zRaw);
     if (!Number.isFinite(z)) return;
 
-    const zoomRatio = Math.max(1.0, Math.min(4.0, z));
+    const zoomRatio = Math.max(1.0, Math.min(6.0, z));
+    console.log('zoomRatio:', zoomRatio);
 
     setZoomSavingMap((p) => ({ ...p, [deviceId]: true }));
     try {

@@ -481,6 +481,7 @@ export default function ParkingLotInfoWindow({
             <div
               className={`iw-nav-ad-modal ${navAdMode === "sponsorPreview" ? "preview" : ""}`}
               onClick={(e) => e.stopPropagation()}
+              style={{ paddingTop: navCountdown > 0 ? '42px' : '56px' }}
             >
               {/*
               {navCountdown <= 0 && (
@@ -502,7 +503,7 @@ export default function ParkingLotInfoWindow({
                 >
                   {navCountdown > 0
                     ? `正在準備導航：還剩 ${navCountdown} 秒...`
-                    : "_"}
+                    : ""}
                 </div>
               )}
 

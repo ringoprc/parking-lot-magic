@@ -444,6 +444,7 @@ export default function LotBottomSheet({
           <div
             className={`vl-nav-ad-modal ${navAdMode === "sponsorPreview" ? "preview" : ""}`}
             onClick={(e) => e.stopPropagation()}
+            style={{ paddingTop: navCountdown > 0 ? '42px' : '56px' }}
           >
 
             {/*
@@ -463,7 +464,7 @@ export default function LotBottomSheet({
               <div className="vl-nav-ad-title" style={{ color: navCountdown > 0 ? "#111" : "#ffffff" }}>
                 {navCountdown > 0
                   ? `正在準備導航：還剩 ${navCountdown} 秒...`
-                  : "_"}
+                  : ""}
               </div>
             )}
 

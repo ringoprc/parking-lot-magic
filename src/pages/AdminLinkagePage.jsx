@@ -54,6 +54,7 @@ export default function AdminLinkagePage({ apiBase }) {
   const [deviceSuggestions, setDeviceSuggestions] = useState([]);
   const [loadingSuggest, setLoadingSuggest] = useState(false);
   const [deviceSuggestionsLoaded, setDeviceSuggestionsLoaded] = useState(false);
+  const [deviceSuggestionsTotalCount, setDeviceSuggestionsTotalCount] = useState(0);
 
   //--------------------------------------------
   // Modals
@@ -170,21 +171,28 @@ export default function AdminLinkagePage({ apiBase }) {
 
   async function suggestDevices(q) {
     if (!adminKey) return;
+
     const query = q.trim();
     setDeviceSuggestionsLoaded(false);
-
     setLoadingSuggest(true);
+
     try {
-      const qs = new URLSearchParams({ query });
+      const qs = new URLSearchParams({
+        query,
+        limit: "20",
+      });
+      console.log('1');
       const res = await fetch(`${apiBase}/api/admin/devices/suggest?${qs.toString()}`, {
         headers: headersAuth(),
       });
+      console.log('2');
       const data = await safeJson(res);
       if (!res.ok) throw new Error(data?.error || "suggest failed");
       setDeviceSuggestions(Array.isArray(data?.rows) ? data.rows : []);
+      setDeviceSuggestionsTotalCount(Number(data?.totalCount ?? 0));
     } catch (e) {
-      // don’t spam errors while typing if endpoint not ready
       setDeviceSuggestions([]);
+      setDeviceSuggestionsTotalCount(0);
     } finally {
       setLoadingSuggest(false);
       setDeviceSuggestionsLoaded(true);
@@ -735,7 +743,13 @@ export default function AdminLinkagePage({ apiBase }) {
                   {(deviceSuggestionsLoaded || loadingSuggest) && (
                     <>
                       <div className="al-suggest-title-label-div">
-                        <p className="mb-0">可選擇的裝置列表 ({filteredDeviceSuggestions?.length || 0})</p>
+                        <p className="mb-0">
+                          可選擇的裝置列表 ({
+                            deviceQuery?.trim()
+                              ? filteredDeviceSuggestions?.length || 0
+                              : deviceSuggestionsTotalCount || 0
+                          })
+                        </p>
                       </div>
                    
                       <div className="al-suggest">
@@ -769,7 +783,7 @@ export default function AdminLinkagePage({ apiBase }) {
                             ))}
                           </div>
                         ) : (
-                          !loadingSuggest ? (
+                          loadingSuggest ? (
                             <div className="al-suggest-loading">
                               <Spinner className="al-custom-spinner" size="sm" /> 正在載入
                             </div>
@@ -799,7 +813,7 @@ export default function AdminLinkagePage({ apiBase }) {
                       <div className="al-item-main">
                         <div className="al-item-title">{d.deviceId}</div>
                         <div className="al-item-sub">
-                          {d.status ? `status: ${d.status}` : ""}
+                          {d.status ? `狀態（ok/down/unknown）: ${d.status}` : ""}
                         </div>
                       </div>
                       <button

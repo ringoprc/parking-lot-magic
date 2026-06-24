@@ -130,6 +130,34 @@ function getAdStoreDestination(lot) {
   return [storeName, storeAddress].filter(Boolean).join(" ");
 }
 
+function toDisplayInt(value) {
+  if (value === "" || value == null) return null;
+
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return null;
+
+  return Math.trunc(n);
+}
+
+function getAdSponsorMetaText(active) {
+  //const distanceToLotM = toDisplayInt(active?.adSponsor?.distanceToLotM);
+  const walkMinutes = toDisplayInt(active?.adSponsor?.walkMinutes);
+
+  const parts = [];
+
+  {/*
+  if (distanceToLotM != null) {
+    parts.push(`距離停車場 ${distanceToLotM} 公尺`);
+  }
+  */}
+
+  if (walkMinutes != null) {
+    parts.push(`距離停車場步行 ${walkMinutes} 分鐘內`);
+  }
+
+  return parts.join("・");
+}
+
 async function copyToClipboard(text) {
   if (text == null) return;
   const value = String(text).trim();
@@ -171,7 +199,7 @@ export default function ParkingLotInfoWindow({
   const [navAdOpen, setNavAdOpen] = useState(false);
   const [navCountdown, setNavCountdown] = useState(NAV_AD_SECONDS);
   const [navAdStartedAt, setNavAdStartedAt] = useState(null);
-   const [navAdMode, setNavAdMode] = useState("navigation"); // "navigation" | "sponsorPreview"
+  const [navAdMode, setNavAdMode] = useState("navigation"); // "navigation" | "sponsorPreview"
 
   const hasBottomSheetSponsor = !!active?.adAssets?.bottomSheetExample?.url;
 
@@ -184,6 +212,7 @@ export default function ParkingLotInfoWindow({
     active?.adAssets?.bottomSheetExample?.url ||
     sponsorImage;
 
+  const adSponsorMetaText = getAdSponsorMetaText(active);
 
   //------------------
   // UseEffects
@@ -323,12 +352,15 @@ export default function ParkingLotInfoWindow({
                   <span className="iw-sheet-sponsor-example-label">範例</span>
                 )}
               </div>
-              <div className="iw-sheet-sponsor-distance-label-div">
-                <MdDirectionsWalk size={16} />
-                <div className="iw-sheet-sponsor-meta-div">
-                  <span style={{ fontSize: "11px" }}>店家步行距離 10m 內</span>
+
+              {adSponsorMetaText && (
+                <div className="vl-sheet-sponsor-distance-label-div">
+                  <MdDirectionsWalk size={18} />
+                  <div className="vl-sheet-sponsor-meta-div">
+                    <span style={{ fontSize: "10px" }}>{adSponsorMetaText}</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -481,7 +513,14 @@ export default function ParkingLotInfoWindow({
             <div
               className={`iw-nav-ad-modal ${navAdMode === "sponsorPreview" ? "preview" : ""}`}
               onClick={(e) => e.stopPropagation()}
-              style={{ paddingTop: navAdMode === "sponsorPreview" ? '24px' : (navCountdown > 0 ? '42px' : '46px') }}
+              style={{ 
+                paddingTop: navAdMode === "sponsorPreview" 
+                  ? (!adSponsorMetaText ? '36px' : '24px') 
+                  : (navCountdown > 0 ? '48px' : (!adSponsorMetaText ? '58px' : '40px')),
+                paddingBottom: navAdMode === "sponsorPreview" 
+                  ? (!adSponsorMetaText ? '26px' : '24px') 
+                  : (navCountdown > 0 ? '24px' : (!adSponsorMetaText ? '28px' : '20px')) 
+              }}
             >
               {/*
               {navCountdown <= 0 && (
@@ -507,9 +546,11 @@ export default function ParkingLotInfoWindow({
                 </div>
               )}
 
-              <div className="iw-nav-ad-sponsor-meta-div">
-                <span>{`>> 店家步行距離 10m 內`}</span>
-              </div>
+              {adSponsorMetaText && (
+                <div className="iw-nav-ad-sponsor-meta-div">
+                  <span>{`>> ${adSponsorMetaText}`}</span>
+                </div>
+              )}
 
               <img
                 className="iw-nav-ad-img"

@@ -366,6 +366,13 @@
   min-width: 0;
 }
 
+@media (max-width: 1180px){
+  .ala-selected-lot-info {
+    flex: 0 1 0px;
+    min-width: 0;
+  }
+}
+
 .ala-ad-sponsor-form {
   flex: 1 1 auto;
   min-width: 520px;

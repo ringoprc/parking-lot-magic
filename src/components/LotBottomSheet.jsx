@@ -101,6 +101,34 @@ function getAdStoreDestination(active) {
   return [storeName, storeAddress].filter(Boolean).join(" ");
 }
 
+function toDisplayInt(value) {
+  if (value === "" || value == null) return null;
+
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return null;
+
+  return Math.trunc(n);
+}
+
+function getAdSponsorMetaText(active) {
+  //const distanceToLotM = toDisplayInt(active?.adSponsor?.distanceToLotM);
+  const walkMinutes = toDisplayInt(active?.adSponsor?.walkMinutes);
+
+  const parts = [];
+
+  {/*
+  if (distanceToLotM != null) {
+    parts.push(`距離停車場 ${distanceToLotM} 公尺`);
+  }
+  */}
+
+  if (walkMinutes != null) {
+    parts.push(`距離停車場步行 ${walkMinutes} 分鐘內`);
+  }
+
+  return parts.join("・");
+}
+
 async function copyToClipboard(text) {
   if (text == null) return;
   const value = String(text).trim();
@@ -155,6 +183,7 @@ export default function LotBottomSheet({
     active?.adAssets?.bottomSheetExample?.url ||
     sponsorImage;
 
+  const adSponsorMetaText = getAdSponsorMetaText(active);
 
   //---------------------------
   // useEffects
@@ -336,12 +365,14 @@ export default function LotBottomSheet({
                 )}
               </div>
 
-              <div className="vl-sheet-sponsor-distance-label-div">
-                <MdDirectionsWalk size={18} />
-                <div className="vl-sheet-sponsor-meta-div">
-                  <span style={{ fontSize: "10px" }}>店家步行距離 10m 內</span>
+              {adSponsorMetaText && (
+                <div className="vl-sheet-sponsor-distance-label-div">
+                  <MdDirectionsWalk size={18} />
+                  <div className="vl-sheet-sponsor-meta-div">
+                    <span style={{ fontSize: "10px" }}>{adSponsorMetaText}</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -444,7 +475,14 @@ export default function LotBottomSheet({
           <div
             className={`vl-nav-ad-modal ${navAdMode === "sponsorPreview" ? "preview" : ""}`}
             onClick={(e) => e.stopPropagation()}
-            style={{ paddingTop: navAdMode === "sponsorPreview" ? '24px' : (navCountdown > 0 ? '42px' : '46px') }}
+            style={{ 
+              paddingTop: navAdMode === "sponsorPreview" 
+                ? (!adSponsorMetaText ? '32px' : '24px') 
+                : (navCountdown > 0 ? '48px' : (!adSponsorMetaText ? '56px' : '42px')),
+              paddingBottom: navAdMode === "sponsorPreview" 
+                ? (!adSponsorMetaText ? '26px' : '24px') 
+                : (navCountdown > 0 ? '24px' : (!adSponsorMetaText ? '30px' : '28px')) 
+            }}
           >
 
             {/*
@@ -468,9 +506,11 @@ export default function LotBottomSheet({
               </div>
             )}
 
-            <div className="vl-nav-ad-sponsor-meta-div">
-              <span>{`>> 店家步行距離 10m 內`}</span>
-            </div>
+            {adSponsorMetaText && (
+              <div className="vl-nav-ad-sponsor-meta-div">
+                <span>{`>> ${adSponsorMetaText}`}</span>
+              </div>
+            )}
 
             <img
               className="vl-nav-ad-img"

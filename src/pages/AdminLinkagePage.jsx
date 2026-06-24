@@ -181,11 +181,9 @@ export default function AdminLinkagePage({ apiBase }) {
         query,
         limit: "20",
       });
-      console.log('1');
       const res = await fetch(`${apiBase}/api/admin/devices/suggest?${qs.toString()}`, {
         headers: headersAuth(),
       });
-      console.log('2');
       const data = await safeJson(res);
       if (!res.ok) throw new Error(data?.error || "suggest failed");
       setDeviceSuggestions(Array.isArray(data?.rows) ? data.rows : []);

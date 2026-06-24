@@ -395,6 +395,18 @@
   margin: -33px 0px 9px 0px;
 }
 
+.vl-nav-ad-sponsor-meta-div {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0px 20px 4px 2px;
+}
+
+.vl-nav-ad-sponsor-meta-div > span {
+  font-size: 11px;
+  font-weight: 400;
+  color: #888;
+}
+
 .vl-nav-ad-img {
   width: 100%;
   max-height: 250px;

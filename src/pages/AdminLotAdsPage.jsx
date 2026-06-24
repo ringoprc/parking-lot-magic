@@ -39,13 +39,39 @@ function normalizeAdSponsor(lot) {
   return {
     storeName: adSponsor.storeName || "",
     storeAddress: adSponsor.storeAddress || "",
+    distanceToLotM: adSponsor.distanceToLotM ?? "",
+    walkMinutes: adSponsor.walkMinutes ?? "",
   };
+}
+
+function hasTextValue(v) {
+  return typeof v === "string" ? v.trim().length > 0 : !!v;
+}
+
+function hasLotAdAsset(lot, slotKey) {
+  const asset = lot?.adAssets?.[slotKey];
+
+  if (!asset) return false;
+  if (typeof asset === "string") return asset.trim().length > 0;
+
+  return !!(
+    asset.url ||
+    asset.object ||
+    asset.gcsObject ||
+    asset.path ||
+    asset.uploadedAt
+  );
 }
 
 export default function AdminLotAdsPage({ apiBase }) {
   const [adminKey, setAdminKey] = useState(() => localStorage.getItem("adminKey") || "");
 
   const [lotSearch, setLotSearch] = useState("");
+  const [lotFilters, setLotFilters] = useState({
+    hasStoreAddress: false,
+    hasBottomSheetExample: false,
+    hasNavigationSquare: false,
+  });
   const [allLots, setAllLots] = useState([]);
   const [loadingLots, setLoadingLots] = useState(false);
 
@@ -55,6 +81,8 @@ export default function AdminLotAdsPage({ apiBase }) {
   const [adSponsorForm, setAdSponsorForm] = useState({
     storeName: "",
     storeAddress: "",
+    distanceToLotM: "",
+    walkMinutes: "",
   });
   const [savingAdSponsor, setSavingAdSponsor] = useState(false);
 
@@ -69,6 +97,13 @@ export default function AdminLotAdsPage({ apiBase }) {
 
   function headersAuth() {
     return { "x-admin-key": adminKey };
+  }
+
+  function toggleLotFilter(key) {
+    setLotFilters((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
   }
 
   async function fetchAllLots() {
@@ -251,13 +286,27 @@ export default function AdminLotAdsPage({ apiBase }) {
     setSavingAdSponsor(true);
 
     try {
+
+      const payload = {
+        storeName: adSponsorForm.storeName,
+        storeAddress: adSponsorForm.storeAddress,
+        distanceToLotM:
+          adSponsorForm.distanceToLotM === ""
+            ? null
+            : Number(adSponsorForm.distanceToLotM),
+        walkMinutes:
+          adSponsorForm.walkMinutes === ""
+            ? null
+            : Number(adSponsorForm.walkMinutes),
+      };
+
       const res = await fetch(`${apiBase}/api/admin/lots/${selectedLot._id}/ad-sponsor`, {
         method: "PATCH",
         headers: {
           ...headersAuth(),
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(adSponsorForm),
+        body: JSON.stringify(payload),
       });
 
       const data = await safeJson(res);
@@ -287,6 +336,48 @@ export default function AdminLotAdsPage({ apiBase }) {
     }
   }
 
+  async function clearAdSponsor() {
+    if (!adminKey) return toast.error("請先輸入管理員密碼");
+    if (!selectedLot?._id) return toast.error("請先選擇停車場");
+
+    const ok = window.confirm("確定要清除這個停車場的廣告店家資訊嗎？");
+    if (!ok) return;
+
+    setSavingAdSponsor(true);
+
+    try {
+      const res = await fetch(`${apiBase}/api/admin/lots/${selectedLot._id}/ad-sponsor`, {
+        method: "DELETE",
+        headers: headersAuth(),
+      });
+
+      const data = await safeJson(res);
+      if (!res.ok) throw new Error(data?.error || "clear ad sponsor failed");
+
+      const nextLot = {
+        ...selectedLot,
+        ...(data?.lot || {}),
+      };
+
+      setSelectedLot(nextLot);
+      setAdSponsorForm(normalizeAdSponsor(nextLot));
+
+      setAllLots((prev) =>
+        prev.map((row) =>
+          String(row._id) === String(nextLot._id)
+            ? { ...row, ...nextLot }
+            : row
+        )
+      );
+
+      toast.success("已清除廣告店家資訊");
+    } catch (e) {
+      toast.error(String(e?.message || e));
+    } finally {
+      setSavingAdSponsor(false);
+    }
+  }
+
   useEffect(() => {
     if (!adminKey) return;
     fetchAllLots();
@@ -301,13 +392,36 @@ export default function AdminLotAdsPage({ apiBase }) {
 
   const visibleLots = useMemo(() => {
     const q = lotSearch.trim().toLowerCase();
-    if (!q) return allLots;
 
     return allLots.filter((l) => {
       const s = `${l.lotId || ""} ${l.name || ""} ${l.addressZh || ""} ${l.district || ""} ${l.adSponsor?.storeName || ""} ${l.adSponsor?.storeAddress || ""}`.toLowerCase();
-      return s.includes(q);
+
+      if (q && !s.includes(q)) return false;
+
+      if (
+        lotFilters.hasStoreAddress &&
+        !hasTextValue(l.adSponsor?.storeAddress)
+      ) {
+        return false;
+      }
+
+      if (
+        lotFilters.hasBottomSheetExample &&
+        !hasLotAdAsset(l, "bottomSheetExample")
+      ) {
+        return false;
+      }
+
+      if (
+        lotFilters.hasNavigationSquare &&
+        !hasLotAdAsset(l, "navigationSquare")
+      ) {
+        return false;
+      }
+
+      return true;
     });
-  }, [allLots, lotSearch]);
+  }, [allLots, lotSearch, lotFilters]);
 
   return (
     <div className="ala-outer">
@@ -348,6 +462,42 @@ export default function AdminLotAdsPage({ apiBase }) {
             </div>
 
             <div className="ala-hint">點選停車場 → 右側上傳廣告圖片</div>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+                marginTop: 10,
+                fontSize: 13,
+              }}
+            >
+              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={lotFilters.hasStoreAddress}
+                  onChange={() => toggleLotFilter("hasStoreAddress")}
+                />
+                僅顯示已有商家地址
+              </label>
+
+              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={lotFilters.hasBottomSheetExample}
+                  onChange={() => toggleLotFilter("hasBottomSheetExample")}
+                />
+                僅顯示已有底部資訊卡圖片
+              </label>
+
+              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={lotFilters.hasNavigationSquare}
+                  onChange={() => toggleLotFilter("hasNavigationSquare")}
+                />
+                僅顯示已有導航準備廣告圖
+              </label>
+            </div>
           </div>
 
           <div className="ala-scroll">
@@ -433,13 +583,60 @@ export default function AdminLotAdsPage({ apiBase }) {
                     />
                   </div>
 
-                  <button
-                    className="ala-btn primary ala-save-sponsor-btn"
-                    disabled={savingAdSponsor}
-                    onClick={saveAdSponsor}
-                  >
-                    {savingAdSponsor ? "儲存中..." : "儲存店家資訊"}
-                  </button>
+                  <div className="ala-field">
+                    <label>距離停車場（公尺）</label>
+                    <input
+                      className="ala-input ala-sponsor-input"
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={adSponsorForm.distanceToLotM}
+                      onChange={(e) =>
+                        setAdSponsorForm((prev) => ({
+                          ...prev,
+                          distanceToLotM: e.target.value,
+                        }))
+                      }
+                      placeholder="例如：120"
+                    />
+                  </div>
+
+                  <div className="ala-field">
+                    <label>步行時間（分鐘內）</label>
+                    <input
+                      className="ala-input ala-sponsor-input"
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={adSponsorForm.walkMinutes}
+                      onChange={(e) =>
+                        setAdSponsorForm((prev) => ({
+                          ...prev,
+                          walkMinutes: e.target.value,
+                        }))
+                      }
+                      placeholder="例如：3"
+                    />
+                  </div>
+
+                  <div className="ala-sponsor-actions">
+                    <button
+                      className="ala-btn primary ala-save-sponsor-btn"
+                      disabled={savingAdSponsor}
+                      onClick={saveAdSponsor}
+                    >
+                      {savingAdSponsor ? "儲存中..." : "儲存店家資訊"}
+                    </button>
+
+                    <button
+                      className="ala-btn danger ala-save-sponsor-btn"
+                      disabled={savingAdSponsor}
+                      onClick={clearAdSponsor}
+                    >
+                      清除店家資訊
+                    </button>
+                  </div>
+
                 </div>
               </div>
             ) : (

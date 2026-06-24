@@ -444,7 +444,7 @@ export default function LotBottomSheet({
           <div
             className={`vl-nav-ad-modal ${navAdMode === "sponsorPreview" ? "preview" : ""}`}
             onClick={(e) => e.stopPropagation()}
-            style={{ paddingTop: navCountdown > 0 ? '42px' : '56px' }}
+            style={{ paddingTop: navAdMode === "sponsorPreview" ? '24px' : (navCountdown > 0 ? '42px' : '46px') }}
           >
 
             {/*
@@ -467,6 +467,10 @@ export default function LotBottomSheet({
                   : ""}
               </div>
             )}
+
+            <div className="vl-nav-ad-sponsor-meta-div">
+              <span>{`>> 店家步行距離 10m 內`}</span>
+            </div>
 
             <img
               className="vl-nav-ad-img"

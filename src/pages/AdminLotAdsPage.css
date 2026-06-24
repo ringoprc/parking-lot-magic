@@ -115,6 +115,8 @@
   padding: 14px 15px;
   border-bottom: 1px solid #f0f0f0;
   flex-shrink: 0;
+  overflow: scroll;
+  scrollbar-width: thin;
 }
 
 .ala-searchrow {
@@ -366,11 +368,18 @@
 
 .ala-ad-sponsor-form {
   flex: 1 1 auto;
-  min-width: 420px;
+  min-width: 520px;
   display: grid;
-  grid-template-columns: minmax(150px, 220px) minmax(220px, 1fr) auto;
+  grid-template-columns: minmax(140px, 200px) minmax(220px, 1fr) 130px 130px auto;
   gap: 10px;
   align-items: end;
+}
+
+.ala-sponsor-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 0px 16px 0px 0px;
 }
 
 .ala-field {
@@ -406,6 +415,11 @@
   .ala-ad-sponsor-form {
     width: 100%;
     min-width: 0;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ala-sponsor-actions {
+    grid-column: 1 / -1;
   }
 }
 
@@ -416,6 +430,11 @@
 
   .ala-save-sponsor-btn {
     width: 100%;
+  }
+
+  .ala-sponsor-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 

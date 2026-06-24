@@ -481,7 +481,7 @@ export default function ParkingLotInfoWindow({
             <div
               className={`iw-nav-ad-modal ${navAdMode === "sponsorPreview" ? "preview" : ""}`}
               onClick={(e) => e.stopPropagation()}
-              style={{ paddingTop: navCountdown > 0 ? '42px' : '56px' }}
+              style={{ paddingTop: navAdMode === "sponsorPreview" ? '24px' : (navCountdown > 0 ? '42px' : '46px') }}
             >
               {/*
               {navCountdown <= 0 && (
@@ -506,6 +506,10 @@ export default function ParkingLotInfoWindow({
                     : ""}
                 </div>
               )}
+
+              <div className="iw-nav-ad-sponsor-meta-div">
+                <span>{`>> 店家步行距離 10m 內`}</span>
+              </div>
 
               <img
                 className="iw-nav-ad-img"

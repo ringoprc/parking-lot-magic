@@ -15,7 +15,7 @@ import {
 } from "../../utils/time";
 
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
-import { FaCheck, FaPencilAlt, FaLink } from "react-icons/fa";
+import { FaCheck, FaPencilAlt, FaLink, FaBolt } from "react-icons/fa";
 import { 
   PiBatteryVerticalFull,
   PiBatteryVerticalHigh,
@@ -797,6 +797,12 @@ export default function AdminDevicesPage({ apiBase }) {
                 (r?.lot?.name ? "#333" : "#999");
 
               const batteryPct = r?.phone?.lastBatteryPct ?? null;
+              const isChargingRaw = r?.phone?.lastIsCharging;
+              const isCharging = isChargingRaw === true;
+              const chargingText =
+                isChargingRaw === true ? "充電中" :
+                isChargingRaw === false ? "非充電中" :
+                "充電狀態未知";
               const createdAt = r?.phone?.createdAt ?? null;
               const createdAgo = createdAt ? minSecAgo(new Date(createdAt)) : null;
               const uploadCountSinceBoot = r?.phone?.uploadCountSinceBoot ?? null;
@@ -853,12 +859,37 @@ export default function AdminDevicesPage({ apiBase }) {
                     {batteryPct == null ? (
                       <span style={{ color: "#bbb" }}>NA</span>
                     ) : (
-                      <>
-                        <span style={{ fontWeight: 700 }}>{batteryPct}</span>
-                        <span style={{ flexShrink: "0" }}>
-                          <BatteryIcon pct={batteryPct} size={16} />
-                        </span>
-                      </>
+                      <div>
+                        {isCharging && (
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "center"
+                            }}
+                          >
+                            <FaBolt
+                              size={10}
+                              title="充電中"
+                              style={{
+                                color: batteryColor(batteryPct),
+                                marginLeft: "-2px",
+                                flexShrink: 0,
+                              }}
+                            />
+                          </div>
+                        )}
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center"
+                          }}
+                        >
+                          <span style={{ fontWeight: 700 }}>{batteryPct}</span>
+                          <span style={{ flexShrink: "0", display: "inline-flex", alignItems: "center" }}>
+                            <BatteryIcon pct={batteryPct} size={16} />
+                          </span>
+                        </div>
+                      </div>
                     )}
                   </div>
 

@@ -291,7 +291,67 @@
   color: #1d4ed8;
 }
 
+.admin-dev-ai-mode-toggle {
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    height 0.15s ease,
+    box-shadow 0.15s ease;
+}
 
+.admin-dev-ai-mode-toggle:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Manual mode: same visual family as the normal toggle, but neutral/off */
+.admin-dev-ai-mode-toggle.is-off {
+  border-color: #d9dee7;
+  background: #fff;
+}
+
+.admin-dev-ai-mode-toggle.is-off .admin-dev-toggle-track {
+  background: #cfd6e2;
+}
+
+.admin-dev-ai-mode-toggle.is-off .admin-dev-toggle-label {
+  color: #374151;
+}
+
+/* Critical mode: big red warning */
+.admin-dev-ai-mode-toggle.is-danger {
+  height: 42px;
+  padding: 0 15px 0 8px;
+  border: 2px solid #dc2626;
+  background: #fef2f2;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.08);
+}
+
+.admin-dev-ai-mode-toggle.is-danger .admin-dev-toggle-track {
+  width: 48px;
+  height: 26px;
+  background: #dc2626;
+}
+
+.admin-dev-ai-mode-toggle.is-danger .admin-dev-toggle-thumb {
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  transform: translateX(22px);
+}
+
+.admin-dev-ai-mode-toggle.is-danger .admin-dev-toggle-label {
+  color: #b91c1c;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.admin-dev-ai-mode-toggle.is-danger:hover:not(:disabled) {
+  background: #fee2e2;
+  border-color: #b91c1c;
+}
 
 .admin-dev-search {
   display:flex;

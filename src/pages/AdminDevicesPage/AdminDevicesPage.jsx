@@ -28,6 +28,8 @@ const PAGE_SIZE_OPTIONS = [5, 10, 20, 40];
 const DEFAULT_PAGE_SIZE = 10;
 const CAPTURE_INTERVAL_OPTIONS = [5, 15, 30];
 const DEFAULT_CAPTURE_INTERVAL_SEC = 30;
+const VACANCY_MODE_MANUAL = "manual_confirm";
+const VACANCY_MODE_AUTO = "auto_apply_ai";
 
 //-----------------------
 // Helpers
@@ -95,9 +97,12 @@ export default function AdminDevicesPage({ apiBase }) {
   // sort
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortDir, setSortDir] = useState("desc");
+
   // inactive device visibility
   // inactive = phone.lastUploadAt is missing or more than 60 minutes ago
   const [showInactiveDevices, setShowInactiveDevices] = useState(true);
+  const [vacancyApplyMode, setVacancyApplyMode] = useState(VACANCY_MODE_MANUAL);
+  const [vacancyApplyModeSaving, setVacancyApplyModeSaving] = useState(false);
 
   // page
   const [page, setPage] = useState(1);
@@ -133,9 +138,9 @@ export default function AdminDevicesPage({ apiBase }) {
   }
 
 
-  //-----------------------------
-  // Fetch Lot Groups
-  //-----------------------------
+  //-------------------------------------
+  // Fetch Lot Groups and Update Mode
+  //-------------------------------------
   async function fetchGroups() {
     if (!adminKey) return;
     const res = await fetch(`${apiBase}/api/admin/parking-lot-groups`, {
@@ -146,13 +151,83 @@ export default function AdminDevicesPage({ apiBase }) {
     setGroups(Array.isArray(data?.rows) ? data.rows : []);
   }
 
+  async function fetchVacancyApplyMode(opts = {}) {
+    const { silent = false } = opts;
+
+    if (!adminKey) return;
+
+    try {
+      const res = await fetch(`${apiBase}/api/admin/devices/vacancy-apply-mode`, {
+        headers: { "x-admin-key": adminKey },
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "load vacancy apply mode failed");
+
+      const mode = data?.aiVacancyApplyMode === VACANCY_MODE_AUTO
+        ? VACANCY_MODE_AUTO
+        : VACANCY_MODE_MANUAL;
+
+      setVacancyApplyMode(mode);
+    } catch (e) {
+      if (!silent) toast.error(e?.message || "讀取空位套用模式失敗");
+    }
+  }
+
+  async function saveVacancyApplyMode(nextMode) {
+    if (!adminKey) return;
+    if (vacancyApplyModeSaving) return;
+
+    const mode = nextMode === VACANCY_MODE_AUTO
+      ? VACANCY_MODE_AUTO
+      : VACANCY_MODE_MANUAL;
+
+    const prevMode = vacancyApplyMode;
+
+    setVacancyApplyMode(mode);
+    setVacancyApplyModeSaving(true);
+
+    try {
+      const res = await fetch(`${apiBase}/api/admin/devices/vacancy-apply-mode`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": adminKey,
+        },
+        body: JSON.stringify({
+          aiVacancyApplyMode: mode,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "更新空位套用模式失敗");
+
+      const serverMode = data?.aiVacancyApplyMode === VACANCY_MODE_AUTO
+        ? VACANCY_MODE_AUTO
+        : VACANCY_MODE_MANUAL;
+
+      setVacancyApplyMode(serverMode);
+
+      toast.success(
+        serverMode === VACANCY_MODE_AUTO
+          ? "已切換為直接套用 AI 辨識結果"
+          : "已切換為人工確認模式"
+      );
+    } catch (e) {
+      setVacancyApplyMode(prevMode);
+      toast.error(e?.message || "更新空位套用模式失敗");
+    } finally {
+      setVacancyApplyModeSaving(false);
+    }
+  }
+
   // fetch groups after adminKey is available (and whenever adminKey changes)
   useEffect(() => {
     if (!adminKey) return;
     fetchGroups().catch(() => {});
+    fetchVacancyApplyMode({ silent: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminKey]);
-
 
   //-----------------------------
   // Fetch Filtered Lots
@@ -614,6 +689,37 @@ export default function AdminDevicesPage({ apiBase }) {
 
           <span className="admin-dev-toggle-label">
             {showInactiveDevices ? "顯示非拍攝中" : "隱藏非拍攝中"}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className={`admin-dev-toggle admin-dev-ai-mode-toggle ${
+            vacancyApplyMode === VACANCY_MODE_AUTO ? "is-on is-danger" : "is-off"
+          }`}
+          disabled={vacancyApplyModeSaving}
+          onClick={() => {
+            const nextMode =
+              vacancyApplyMode === VACANCY_MODE_AUTO
+                ? VACANCY_MODE_MANUAL
+                : VACANCY_MODE_AUTO;
+
+            saveVacancyApplyMode(nextMode);
+          }}
+          title={
+            vacancyApplyMode === VACANCY_MODE_AUTO
+              ? "目前 AI 辨識完成後會直接更新真實空位數"
+              : "目前 AI 辨識結果需要人工確認後才會更新真實空位數"
+          }
+        >
+          <span className="admin-dev-toggle-track">
+            <span className="admin-dev-toggle-thumb" />
+          </span>
+
+          <span className="admin-dev-toggle-label">
+            {vacancyApplyMode === VACANCY_MODE_AUTO
+              ? "直接套用 AI 辨識結果"
+              : "人工確認模式"}
           </span>
         </button>
       </div>

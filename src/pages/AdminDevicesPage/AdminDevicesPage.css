@@ -582,6 +582,157 @@
   border-bottom: 1px solid #f0f0f0;
 }
 
+.admin-dev-card-action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.admin-dev-card-action-btn {
+  border: 1px solid #2a8fe0;
+  background: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #2a8fe0;
+  z-index: 2;
+  padding: 0;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.admin-dev-card-action-btn:hover {
+  background: #f4f8ff;
+}
+
+.admin-dev-card-action-btn.prompt-edit {
+  border: 1px solid #4caf51;
+  color: #4caf51;
+}
+
+.admin-dev-card-action-btn.prompt-edit:hover {
+  background: #f4fff5;
+}
+
+.admin-dev-card-action-btn.has-prompt {
+  border-color: #7c3aed;
+  color: #ffffff;
+  background: #9f67ff;
+}
+
+.admin-dev-card-action-btn.has-prompt:hover {
+  border-color: #7c3aed;
+  color: #7c3aed;
+  background: #ffffff;
+}
+
+
+.admin-dev-prompt-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-dev-prompt-label {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.admin-dev-prompt-deviceid {
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.admin-dev-prompt-help {
+  font-size: 12px;
+  color: #555;
+  line-height: 1.5;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+.admin-dev-default-prompt-btn {
+  width: fit-content;
+  border-color: #7c3aed;
+  color: #7c3aed;
+}
+
+.admin-dev-prompt-textarea {
+  width: 100%;
+  min-height: 230px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #d9dee7;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.55;
+  resize: vertical;
+  outline: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+.admin-dev-prompt-textarea:focus {
+  border-color: #7c3aed;
+}
+
+.admin-dev-prompt-textarea::placeholder {
+  color: #babdc2;
+}
+
+.admin-dev-prompt-counter {
+  text-align: right;
+  font-size: 11px;
+  color: #777;
+}
+
+.admin-dev-prompt-footer {
+  gap: 0px;
+}
+
+.admin-dev-modal-btn {
+  min-width: 55px;
+  padding: 4px 7px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.admin-dev-modal-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.admin-dev-modal-cancel {
+  background: #fff;
+  color: #4b5563;
+  border: 1px solid #d1d5db;
+}
+
+.admin-dev-modal-cancel:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.admin-dev-modal-save {
+  background: #1677e8;
+  color: #fff;
+  border: 1px solid #1677e8;
+}
+
+.admin-dev-modal-save:hover:not(:disabled) {
+  background: #0f63c8;
+  border-color: #0f63c8;
+}
+
 .admin-dev-deviceid {
   padding: 0px 0px 0px 6px;
   font-size: 11px;

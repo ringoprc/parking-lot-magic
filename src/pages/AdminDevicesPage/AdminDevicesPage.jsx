@@ -5,6 +5,7 @@ import "./AdminDevicesPage.css";
 import { Spinner } from "reactstrap";
 
 import AdminDeviceLinkModal from "./AdminDeviceLinkModal";
+import AdminDevicePromptModal from "./AdminDevicePromptModal";
 
 import { 
   formatTime, 
@@ -116,11 +117,12 @@ export default function AdminDevicesPage({ apiBase }) {
   const [zoomSavingMap, setZoomSavingMap] = useState({}); // deviceId -> boolean
   const [captureIntervalMap, setCaptureIntervalMap] = useState({}); // deviceId -> 5 | 15 | 30
 
-  // -----------
   // link modal
-  // -----------
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [linkModalDevice, setLinkModalDevice] = useState(null);
+  // prompt modal
+  const [promptModalOpen, setPromptModalOpen] = useState(false);
+  const [promptModalDevice, setPromptModalDevice] = useState(null);
 
   //-----------------------------
   // Set Admin Key
@@ -503,7 +505,7 @@ export default function AdminDevicesPage({ apiBase }) {
 
 
   //-----------------------------
-  // DevicsLinkModal
+  // Modals Open and Close
   //-----------------------------
 
   function openLinkModal(row) {
@@ -514,6 +516,16 @@ export default function AdminDevicesPage({ apiBase }) {
   function closeLinkModal() {
     setLinkModalOpen(false);
     setLinkModalDevice(null);
+  }
+
+  function openPromptModal(row) {
+    setPromptModalDevice(row);
+    setPromptModalOpen(true);
+  }
+
+  function closePromptModal() {
+    setPromptModalOpen(false);
+    setPromptModalDevice(null);
   }
 
 
@@ -857,25 +869,20 @@ export default function AdminDevicesPage({ apiBase }) {
                     }}
                   >
 
-                    <div>
+                    <div className="admin-dev-card-action-buttons">
+                      <button
+                        type="button"
+                        title={r?.vlmPromptOverride?.trim() ? "已設定自訂提示詞" : "設定 VLM 提示詞"}
+                        onClick={() => openPromptModal(r)}
+                        className={`admin-dev-card-action-btn prompt-edit ${r?.vlmPromptOverride?.trim() ? "has-prompt" : ""}`}
+                      >
+                        <FaPencilAlt size={12} />
+                      </button>
                       <button
                         type="button"
                         title="設定停車場連結"
                         onClick={() => openLinkModal(r)}
-                        style={{
-                          border: "1px solid #2a8fe0",
-                          background: "#fff",
-                          width: "28px",
-                          height: "28px",
-                          borderRadius: "7px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          cursor: "pointer",
-                          color: "#2a8fe0",
-                          zIndex: 2,
-                          padding: 0,
-                        }}
+                        className="admin-dev-card-action-btn"
                       >
                         <FaLink size={13} />
                       </button>
@@ -994,6 +1001,14 @@ export default function AdminDevicesPage({ apiBase }) {
         apiBase={apiBase}
         adminKey={adminKey}
         onClose={closeLinkModal}
+        onSaved={() => load({ silent: true })}
+      />
+      <AdminDevicePromptModal
+        isOpen={promptModalOpen}
+        device={promptModalDevice}
+        apiBase={apiBase}
+        adminKey={adminKey}
+        onClose={closePromptModal}
         onSaved={() => load({ silent: true })}
       />
 

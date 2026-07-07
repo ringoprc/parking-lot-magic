@@ -1092,7 +1092,7 @@ export default function AdminDevicesPage({ apiBase }) {
                     />
 
                     <div className="admin-dev-evlabel">
-                      <span style={{ marginRight: "1px" }}>EV</span>
+                      <span style={{ marginRight: "1px" }}>亮</span>
                       <span>{formatExposureCompensationIndex(exposureCompensationIndex)}</span>
                     </div>
                   </div>

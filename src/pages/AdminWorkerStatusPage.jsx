@@ -4,6 +4,8 @@ import toast from "react-hot-toast";
 import { Spinner } from "reactstrap";
 import "./AdminWorkerStatusPage.css";
 
+import { MdOutlineArrowBackIos } from "react-icons/md";
+
 function formatDateTime(v) {
   if (!v) return "—";
 
@@ -113,6 +115,10 @@ export default function AdminWorkerStatusPage({ apiBase }) {
   return (
     <div className="aws-outer">
       <div className="aws-topbar">
+
+        <a className="aws-back-btn" href="/?admin=1" aria-label="回到管理選單">
+          <MdOutlineArrowBackIos size={18} />
+        </a>
         <div className="aws-title">AI Worker 狀態管理</div>
 
         <div className="aws-adminkey">

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import * as XLSX from "xlsx";
 
+import { MdOutlineArrowBackIos } from "react-icons/md";
 import { FiTrash2 } from "react-icons/fi";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
 
@@ -449,6 +450,10 @@ export default function AdminLotsPage({ apiBase }) {
       <div className="admin-lot-action-outer-row">
 
         <div className="admin-lot-title-row">
+          <a className="admin-lot-back-btn" href="/?admin=1" aria-label="回到管理選單">
+            <MdOutlineArrowBackIos size={18} />
+          </a>
+
           <div className="admin-lot-title">
             管理停車場資訊
           </div>

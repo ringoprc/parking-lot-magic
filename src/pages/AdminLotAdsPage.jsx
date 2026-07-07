@@ -4,6 +4,8 @@ import toast from "react-hot-toast";
 import { Spinner } from "reactstrap";
 import "./AdminLotAdsPage.css";
 
+import { MdOutlineArrowBackIos } from "react-icons/md";
+
 const ASSET_SLOTS = [
   {
     key: "bottomSheetExample",
@@ -426,6 +428,11 @@ export default function AdminLotAdsPage({ apiBase }) {
   return (
     <div className="ala-outer">
       <div className="ala-topbar">
+
+        <a className="ala-back-btn" href="/?admin=1" aria-label="回到管理選單">
+          <MdOutlineArrowBackIos size={18} />
+        </a>
+
         <div className="ala-title">商家廣告圖片管理</div>
 
         <div className="ala-adminkey">

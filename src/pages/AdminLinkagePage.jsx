@@ -8,6 +8,8 @@ import {
   Draggable,
 } from "@hello-pangea/dnd";
 
+import { MdOutlineArrowBackIos } from "react-icons/md";
+
 import "./AdminLinkagePage.css";
 
 function clamp(n, a, b) {
@@ -497,6 +499,11 @@ export default function AdminLinkagePage({ apiBase }) {
     <div className="al-outer">
       {/* Top admin key bar */}
       <div className="al-topbar">
+
+        <a className="al-back-btn" href="/?admin=1" aria-label="回到管理選單">
+          <MdOutlineArrowBackIos size={18} />
+        </a>
+
         <div className="al-title">停車場群組與裝置管理</div>
 
         <div className="al-adminkey">

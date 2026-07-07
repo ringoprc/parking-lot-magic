@@ -14,6 +14,7 @@ import {
   minSecAgo 
 } from "../../utils/time";
 
+import { MdOutlineArrowBackIos } from "react-icons/md";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
 import { FaCheck, FaPencilAlt, FaLink, FaBolt } from "react-icons/fa";
 import { 
@@ -726,6 +727,10 @@ export default function AdminDevicesPage({ apiBase }) {
     <div className="admin-dev-outer">
       {/* Header */}
       <div className="admin-dev-header">
+
+        <a className="admin-dev-back-btn" href="/?admin=1" aria-label="回到管理選單">
+          <MdOutlineArrowBackIos size={18} />
+        </a>
         <div className="admin-dev-title">裝置管理頁面</div>
 
         <div className="admin-dev-adminkey">

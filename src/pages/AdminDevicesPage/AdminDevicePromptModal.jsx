@@ -12,7 +12,9 @@ const DEFAULT_VLM_PROMPT = `請判讀這張停車場 LED 剩餘車位看板照�
 4. 如果 LED 反光、模糊、遮蔽或無法確定，請回傳 unknown，不要猜測。
 5. 請只回傳 JSON，不要加入其他說明文字。
 
-輸出格式：{"vacancy": "ooo"}，比如 {"vacancy": "000"}、{"vacancy": "128"}, 或 {"vacancy": "003"}`;
+判讀成功時，輸出格式：{"status": "ok", "vacancy": "ooo"}，比如 {"vacancy": "000"}、{"vacancy": "128"}, 或 {"vacancy": "003"}
+判讀失敗時，輸出格式：{"status": "unknown", "vacancy" "null"}
+`;
 
 export default function AdminDevicePromptModal({
   isOpen,

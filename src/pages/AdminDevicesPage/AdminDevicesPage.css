@@ -314,6 +314,20 @@
   color: #1d4ed8;
 }
 
+.admin-dev-ai-enabled-filter-toggle {
+  padding-right: 12px;
+}
+
+.admin-dev-ai-enabled-filter-toggle .admin-dev-toggle-label {
+  font-size: 12px;
+}
+
+@media (max-width: 600px) {
+  .admin-dev-ai-enabled-filter-toggle .admin-dev-toggle-label {
+    font-size: 11px;
+  }
+}
+
 .admin-dev-ai-mode-toggle {
   transition:
     background 0.15s ease,
@@ -964,6 +978,47 @@
 .admin-dev-bottom {
   padding: 7px 10px;
   border-top: 1px solid #f0f0f0;
+}
+
+.admin-dev-ai-processing-checkbox {
+  position: absolute;
+  left: 7px;
+  bottom: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  color: #777;
+  cursor: pointer;
+  user-select: none;
+  z-index: 3;
+}
+
+.admin-dev-ai-processing-checkbox input {
+  width: 12px;
+  height: 12px;
+  margin: 0;
+  accent-color: #1677e8;
+  cursor: pointer;
+}
+
+.admin-dev-ai-processing-checkbox span {
+  transform: translateY(-0.5px);
+}
+
+.admin-dev-ai-processing-checkbox.is-on {
+  color: #1677e8;
+}
+
+.admin-dev-ai-processing-checkbox.is-off {
+  color: #999;
+}
+
+.admin-dev-ai-processing-checkbox input:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .admin-dev-vrow {

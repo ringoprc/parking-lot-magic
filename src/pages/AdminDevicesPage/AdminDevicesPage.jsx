@@ -143,6 +143,7 @@ export default function AdminDevicesPage({ apiBase }) {
   // inactive device visibility
   // inactive = phone.lastUploadAt is missing or more than 60 minutes ago
   const [showInactiveDevices, setShowInactiveDevices] = useState(true);
+  const [onlyAiProcessingEnabled, setOnlyAiProcessingEnabled] = useState(false);
   const [vacancyApplyMode, setVacancyApplyMode] = useState(VACANCY_MODE_MANUAL);
   const [vacancyApplyModeSaving, setVacancyApplyModeSaving] = useState(false);
 
@@ -167,6 +168,8 @@ export default function AdminDevicesPage({ apiBase }) {
   const [exposureSavingMap, setExposureSavingMap] = useState({}); // deviceId -> boolean
 
   const [captureIntervalMap, setCaptureIntervalMap] = useState({}); // deviceId -> 5 | 15 | 30
+  const [aiProcessingEnabledMap, setAiProcessingEnabledMap] = useState({}); // deviceId -> boolean
+  const [aiProcessingSavingMap, setAiProcessingSavingMap] = useState({}); // deviceId -> boolean
 
   // link modal
   const [linkModalOpen, setLinkModalOpen] = useState(false);
@@ -288,6 +291,7 @@ export default function AdminDevicesPage({ apiBase }) {
       sortByOverride,
       sortDirOverride,
       showInactiveDevicesOverride,
+      onlyAiProcessingEnabledOverride,
     } = opts;
 
     const effSearch = (searchOverride ?? appliedSearch);
@@ -298,6 +302,9 @@ export default function AdminDevicesPage({ apiBase }) {
     const effSortDir = (sortDirOverride ?? sortDir);
     const effShowInactiveDevices = (
       showInactiveDevicesOverride ?? showInactiveDevices
+    );
+    const effOnlyAiProcessingEnabled = (
+      onlyAiProcessingEnabledOverride ?? onlyAiProcessingEnabled
     );
 
     if (!adminKey) {
@@ -317,6 +324,7 @@ export default function AdminDevicesPage({ apiBase }) {
         sortBy: effSortBy,
         sortDir: effSortDir,
         hideInactive: effShowInactiveDevices ? "0" : "1",
+        onlyAiProcessingEnabled: effOnlyAiProcessingEnabled ? "1" : "0",
       });
 
       const res = await fetch(`${apiBase}/api/admin/devices/phones?${qs.toString()}`, {
@@ -435,6 +443,19 @@ export default function AdminDevicesPage({ apiBase }) {
               : DEFAULT_CAPTURE_INTERVAL_SEC;
           }
         }
+
+        setAiProcessingEnabledMap((prev) => {
+          const copy = { ...prev };
+
+          for (const r of nextRows) {
+            const deviceId = r.deviceId;
+            if (!deviceId) continue;
+
+            copy[deviceId] = r?.aiProcessingEnabled !== false;
+          }
+
+          return copy;
+        });
 
         return copy;
       });
@@ -590,6 +611,69 @@ export default function AdminDevicesPage({ apiBase }) {
       }));
 
       toast.error(e?.message || "拍攝間隔更新失敗");
+    }
+  }
+
+  //-----------------------------
+  // Save AI Processing Enabled
+  //-----------------------------
+  async function handleAiProcessingEnabledChange(deviceId, checked) {
+    if (!adminKey) return;
+    if (!deviceId) return;
+
+    const nextValue = !!checked;
+    const prevValue = aiProcessingEnabledMap[deviceId] !== false;
+
+    setAiProcessingEnabledMap((prev) => ({
+      ...prev,
+      [deviceId]: nextValue,
+    }));
+
+    setAiProcessingSavingMap((prev) => ({
+      ...prev,
+      [deviceId]: true,
+    }));
+
+    try {
+      const res = await fetch(
+        `${apiBase}/api/admin/devices/${encodeURIComponent(deviceId)}/ai-processing-enabled`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-key": adminKey,
+          },
+          body: JSON.stringify({ aiProcessingEnabled: nextValue }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "AI 處理設定更新失敗");
+
+      setAiProcessingEnabledMap((prev) => ({
+        ...prev,
+        [deviceId]: data?.aiProcessingEnabled !== false,
+      }));
+      if (onlyAiProcessingEnabled && data?.aiProcessingEnabled === false) {
+        setRows((prev) => prev.filter((r) => r.deviceId !== deviceId));
+        setMeta((prev) => ({
+          ...prev,
+          total: Math.max(0, Number(prev?.total ?? 0) - 1),
+        }));
+      }
+      
+    } catch (e) {
+      setAiProcessingEnabledMap((prev) => ({
+        ...prev,
+        [deviceId]: prevValue,
+      }));
+
+      toast.error(e?.message || "AI 處理設定更新失敗");
+    } finally {
+      setAiProcessingSavingMap((prev) => ({
+        ...prev,
+        [deviceId]: false,
+      }));
     }
   }
 
@@ -813,6 +897,35 @@ export default function AdminDevicesPage({ apiBase }) {
 
         <button
           type="button"
+          className={`admin-dev-toggle admin-dev-ai-enabled-filter-toggle ${
+            onlyAiProcessingEnabled ? "is-on" : "is-off"
+          }`}
+          onClick={() => {
+            const next = !onlyAiProcessingEnabled;
+            setOnlyAiProcessingEnabled(next);
+            setPage(1);
+            load({
+              pageOverride: 1,
+              onlyAiProcessingEnabledOverride: next,
+            });
+          }}
+          title={
+            onlyAiProcessingEnabled
+              ? "目前只顯示已開啟 AI 辨識的裝置"
+              : "目前顯示所有裝置，不論 AI 辨識是否開啟"
+          }
+        >
+          <span className="admin-dev-toggle-track">
+            <span className="admin-dev-toggle-thumb" />
+          </span>
+
+          <span className="admin-dev-toggle-label">
+            僅顯示開啟AI辨識裝置
+          </span>
+        </button>
+
+        <button
+          type="button"
           className={`admin-dev-toggle admin-dev-ai-mode-toggle ${
             vacancyApplyMode === VACANCY_MODE_AUTO ? "is-on is-danger" : "is-off"
           }`}
@@ -990,6 +1103,9 @@ export default function AdminDevicesPage({ apiBase }) {
             <div className="admin-dev-grid">
             {rows.map((r) => {
               const deviceId = r.deviceId;
+              const aiProcessingEnabled = aiProcessingEnabledMap[deviceId] !== false;
+              const aiProcessingSaving = !!aiProcessingSavingMap[deviceId];
+
               const vacancy = r?.lot?.vacancy ?? "";
               const aiVacancy =
                 r?.phone?.aiLastResult?.status === "ok"
@@ -1023,6 +1139,7 @@ export default function AdminDevicesPage({ apiBase }) {
                 new Date(aiLastProcessedAt).getTime() < new Date(lastUploadAt).getTime();
 
               const aiProcessedAtColor =
+                !aiProcessingEnabled ? "#c7c7c7" :
                 !aiLastProcessedAt ? "#999" :
                 aiProcessedSecAgo >= 180 ? "#de1802" : //紅
                 //isAiBehindLatestImage ? "#e67e22" :  //橙
@@ -1298,6 +1415,19 @@ export default function AdminDevicesPage({ apiBase }) {
                   </div>
 
                   <div className="admin-dev-bottom" style={{ position: "relative" }}>
+
+                    <label
+                      className={`admin-dev-ai-processing-checkbox ${aiProcessingEnabled ? "is-on" : "is-off"}`}
+                      title={aiProcessingEnabled ? "此裝置會進入 AI 辨識排程" : "此裝置不會進入 AI 辨識排程"}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={aiProcessingEnabled}
+                        disabled={aiProcessingSaving}
+                        onChange={(e) => handleAiProcessingEnabledChange(deviceId, e.target.checked)}
+                      />
+                      <span>AI</span>
+                    </label>
 
                     <div className="admin-dev-vrow">
                       <div className="admin-dev-vlabel">

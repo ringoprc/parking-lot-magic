@@ -1,0 +1,329 @@
+/* frontend/src/pages/AdminWorkerStatusPage.css */
+
+.aws-outer {
+  padding: 14px;
+  height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.aws-topbar {
+  display: flex;
+  align-items: center;
+  row-gap: 10px;
+  column-gap: 50px;
+  padding-left: 10px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.aws-title {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.aws-adminkey {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.aws-label {
+  color: #555;
+  font-size: 14px;
+}
+
+.aws-input {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  border-radius: 999px;
+  font-size: 14px;
+  min-width: 280px;
+  outline: none;
+}
+
+.aws-input:focus {
+  border: 1px solid #2196f3;
+}
+
+.aws-btn {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background: #fff;
+  font-size: 14px;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.aws-btn:hover {
+  border-color: #2196f3;
+}
+
+.aws-btn.primary {
+  border-color: #2196f3;
+  color: #1976d2;
+  background: #f3f9ff;
+}
+
+.aws-summary-row {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.aws-summary-card {
+  border: 1px solid #ddd;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #fff;
+}
+
+.aws-summary-card.alive {
+  border-color: #22c55e;
+  background: #f0fdf4;
+}
+
+.aws-summary-card.down {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+.aws-summary-label {
+  font-size: 12px;
+  color: #666;
+}
+
+.aws-summary-value {
+  margin-top: 4px;
+  font-size: 28px;
+  font-weight: 900;
+  color: #222;
+}
+
+.aws-summary-value.small {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.aws-body {
+  margin-top: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+  border-top: 1px solid #eee;
+  padding-top: 12px;
+}
+
+.aws-center {
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #007eb6;
+  font-size: 13px;
+}
+
+.aws-spinner {
+  --bs-spinner-width: 18px !important;
+  --bs-spinner-height: 18px !important;
+  --bs-spinner-border-width: 1px !important;
+}
+
+.aws-empty {
+  padding: 60px 12px;
+  color: #888;
+  text-align: center;
+  font-size: 14px;
+}
+
+.aws-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
+  gap: 12px;
+  padding-right: 8px;
+}
+
+.aws-worker-card {
+  border: 1.5px solid #ddd;
+  border-radius: 16px;
+  padding: 14px;
+  background: #fff;
+}
+
+.aws-worker-card.alive {
+  border-color: #22c55e;
+}
+
+.aws-worker-card.down {
+  border-color: #dc2626;
+  background: #fff7f7;
+}
+
+.aws-worker-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.aws-worker-main {
+  min-width: 0;
+}
+
+.aws-worker-title {
+  font-size: 17px;
+  font-weight: 900;
+  color: #222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aws-worker-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #666;
+}
+
+.aws-status-pill {
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  border: 1px solid #ddd;
+}
+
+.aws-status-pill.alive {
+  color: #15803d;
+  background: #dcfce7;
+  border-color: #86efac;
+}
+
+.aws-status-pill.down {
+  color: #b91c1c;
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+.aws-worker-meta-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.aws-meta-label {
+  font-size: 11px;
+  color: #777;
+  margin-bottom: 3px;
+}
+
+.aws-meta-value {
+  font-size: 13px;
+  font-weight: 800;
+  color: #222;
+  word-break: break-word;
+}
+
+.aws-meta-hint {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #777;
+}
+
+.aws-meta-hint.danger {
+  color: #dc2626;
+  font-weight: 800;
+}
+
+.aws-image-object {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 12px;
+  background: #f8f8f8;
+}
+
+.aws-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  color: #444;
+  white-space: nowrap;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.aws-error-box {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #fca5a5;
+  background: #fef2f2;
+}
+
+.aws-error-time {
+  font-size: 11px;
+  color: #991b1b;
+}
+
+.aws-error-message {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #7f1d1d;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 900px) {
+  .aws-summary-row {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
+
+  .aws-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .aws-worker-meta-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .aws-outer {
+    padding: 12px;
+  }
+
+  .aws-topbar {
+    padding-left: 0;
+    column-gap: 10px;
+  }
+
+  .aws-adminkey {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .aws-input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .aws-summary-row {
+    grid-template-columns: 1fr;
+  }
+
+  .aws-worker-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -18,6 +18,7 @@ import AdminLotsPage from "./pages/AdminLotsPage";
 import AdminDevicesPage from "./pages/AdminDevicesPage/AdminDevicesPage";
 import AdminLinkagePage from "./pages/AdminLinkagePage";
 import AdminLotAdsPage from "./pages/AdminLotAdsPage";
+import AdminWorkerStatusPage from "./pages/AdminWorkerStatusPage";
 
 import { useMyLocationAction } from "./hooks/useMyLocationAction";
 import { useMediaQuery } from "./hooks/useMediaQuery";
@@ -52,6 +53,12 @@ function AdminMenuPage() {
       description: "上傳與管理 bottom sheet、導航廣告、優惠券圖片。",
       href: "?admin=ads",
       badge: "Ads",
+    },
+    {
+      title: "AI 辨識用設備管理",
+      description: "管理用於搭載 AI 模型並辨識影像的機器",
+      href: "?admin=workers",
+      badge: "Workers",
     },
     {
       title: "OCR 測試工具",
@@ -421,6 +428,7 @@ export default function App() {
   const showDevices = adminRoute === "devices" || searchParams.get("devices") === "1";
   const showLinkage = adminRoute === "link" || searchParams.get("link") === "1";
   const showAdsManage = adminRoute === "ads" || searchParams.get("ads") === "1";
+  const showWorkers = adminRoute === "workers" || searchParams.get("workers") === "1";
 
   let page = null;
   if (showOcr) page = <DigitOcrTest />;
@@ -428,6 +436,7 @@ export default function App() {
   else if (showDevices) page = <AdminDevicesPage apiBase={apiBase} />;
   else if (showLinkage) page = <AdminLinkagePage apiBase={apiBase} />;
   else if (showAdsManage) page = <AdminLotAdsPage apiBase={apiBase} />;
+  else if (showWorkers) page = <AdminWorkerStatusPage apiBase={apiBase} />;
   else if (showAdminMenu) page = <AdminMenuPage />;
   else page = (
     <APIProvider

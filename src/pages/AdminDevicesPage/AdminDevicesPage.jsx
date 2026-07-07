@@ -28,6 +28,9 @@ const PAGE_SIZE_OPTIONS = [5, 10, 20, 40];
 const DEFAULT_PAGE_SIZE = 10;
 const CAPTURE_INTERVAL_OPTIONS = [5, 15, 30];
 const DEFAULT_CAPTURE_INTERVAL_SEC = 30;
+const DEFAULT_EXPOSURE_COMPENSATION_INDEX = 0;
+const DEFAULT_EXPOSURE_COMPENSATION_MIN = -6;
+const DEFAULT_EXPOSURE_COMPENSATION_MAX = 6;
 const VACANCY_MODE_MANUAL = "manual_confirm";
 const VACANCY_MODE_AUTO = "auto_apply_ai";
 
@@ -38,6 +41,13 @@ const VACANCY_MODE_AUTO = "auto_apply_ai";
 function toNum(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
+}
+
+function finiteNumberOrDefault(v, fallback) {
+  if (v === null || v === undefined || v === "") return fallback;
+
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
 }
 
 function batteryLevel(pct) {
@@ -54,6 +64,37 @@ function batteryColor(pct) {
   if (p >= 75) return "#4caf50"; // green
   if (p >= 20) return "#e67e22"; // orange
   return "#de1802";              // red
+}
+
+function clampExposureCompensationIndex(
+  value,
+  min = DEFAULT_EXPOSURE_COMPENSATION_MIN,
+  max = DEFAULT_EXPOSURE_COMPENSATION_MAX
+) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return DEFAULT_EXPOSURE_COMPENSATION_INDEX;
+
+  const safeMin = finiteNumberOrDefault(
+    min,
+    DEFAULT_EXPOSURE_COMPENSATION_MIN
+  );
+
+  const safeMax = finiteNumberOrDefault(
+    max,
+    DEFAULT_EXPOSURE_COMPENSATION_MAX
+  );
+
+  const lo = Math.min(safeMin, safeMax);
+  const hi = Math.max(safeMin, safeMax);
+
+  return Math.max(lo, Math.min(hi, Math.round(n)));
+}
+
+function formatExposureCompensationIndex(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "0";
+  if (n > 0) return `+${n}`;
+  return String(n);
 }
 
 function BatteryIcon({ pct, size = 16 }) {
@@ -118,8 +159,12 @@ export default function AdminDevicesPage({ apiBase }) {
   const vacancyTouchedRef = useRef({});
   const [confirmAllLoading, setConfirmAllLoading] = useState(false);
 
-  const [zoomMap, setZoomMap] = useState({});          // deviceId -> number (1.0..4.0)
+  const [zoomMap, setZoomMap] = useState({});          // deviceId -> number (1.0..6.0)
   const [zoomSavingMap, setZoomSavingMap] = useState({}); // deviceId -> boolean
+
+  const [exposureCompensationMap, setExposureCompensationMap] = useState({}); // deviceId -> integer
+  const [exposureSavingMap, setExposureSavingMap] = useState({}); // deviceId -> boolean
+
   const [captureIntervalMap, setCaptureIntervalMap] = useState({}); // deviceId -> 5 | 15 | 30
 
   // link modal
@@ -331,6 +376,37 @@ export default function AdminDevicesPage({ apiBase }) {
             copy[deviceId] = Number.isFinite(z) ? z : 1.0;
           }
         }
+        return copy;
+      });
+
+      setExposureCompensationMap((prev) => {
+        const copy = { ...prev };
+
+        for (const r of nextRows) {
+          const deviceId = r.deviceId;
+          if (!deviceId) continue;
+
+          if (copy[deviceId] == null) {
+            const min = finiteNumberOrDefault(
+              r?.exposureCompensationMin,
+              DEFAULT_EXPOSURE_COMPENSATION_MIN
+            );
+
+            const max = finiteNumberOrDefault(
+              r?.exposureCompensationMax,
+              DEFAULT_EXPOSURE_COMPENSATION_MAX
+            );
+
+            const raw =
+              r?.exposureCompensationIndex ??
+              r?.phone?.exposureCompensationIndex ??
+              r?.config?.exposureCompensationIndex ??
+              DEFAULT_EXPOSURE_COMPENSATION_INDEX;
+
+            copy[deviceId] = clampExposureCompensationIndex(raw, min, max);
+          }
+        }
+
         return copy;
       });
 
@@ -550,6 +626,44 @@ export default function AdminDevicesPage({ apiBase }) {
       toast.error(e?.message || "zoom update failed");
     } finally {
       setZoomSavingMap((p) => ({ ...p, [deviceId]: false }));
+    }
+  }
+
+  async function saveExposureCompensation(deviceId, valueOverride) {
+    if (!adminKey) return;
+    if (!deviceId) return;
+
+    const raw = valueOverride ?? exposureCompensationMap[deviceId];
+    const exposureCompensationIndex = clampExposureCompensationIndex(raw);
+
+    setExposureSavingMap((p) => ({ ...p, [deviceId]: true }));
+
+    try {
+      const res = await fetch(
+        `${apiBase}/api/admin/devices/${encodeURIComponent(deviceId)}/config`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-key": adminKey,
+          },
+          body: JSON.stringify({ exposureCompensationIndex }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "EV update failed");
+
+      setExposureCompensationMap((p) => ({
+        ...p,
+        [deviceId]: clampExposureCompensationIndex(
+          data?.exposureCompensationIndex ?? exposureCompensationIndex
+        ),
+      }));
+    } catch (e) {
+      toast.error(e?.message || "EV update failed");
+    } finally {
+      setExposureSavingMap((p) => ({ ...p, [deviceId]: false }));
     }
   }
 
@@ -913,6 +1027,22 @@ export default function AdminDevicesPage({ apiBase }) {
               const createdAgo = createdAt ? minSecAgo(new Date(createdAt)) : null;
               const uploadCountSinceBoot = r?.phone?.uploadCountSinceBoot ?? null;
 
+              const exposureMin = finiteNumberOrDefault(
+                r?.exposureCompensationMin,
+                DEFAULT_EXPOSURE_COMPENSATION_MIN
+              );
+
+              const exposureMax = finiteNumberOrDefault(
+                r?.exposureCompensationMax,
+                DEFAULT_EXPOSURE_COMPENSATION_MAX
+              );
+
+              const exposureCompensationIndex = clampExposureCompensationIndex(
+                exposureCompensationMap[deviceId] ?? DEFAULT_EXPOSURE_COMPENSATION_INDEX,
+                exposureMin,
+                exposureMax
+              );
+
               return (
                 <div key={deviceId} className="admin-dev-card">
                   <div className="admin-dev-zoombar" title="Zoom">
@@ -931,7 +1061,39 @@ export default function AdminDevicesPage({ apiBase }) {
                       onTouchEnd={() => saveZoom(deviceId)}
                     />
                     <div className="admin-dev-zoomlabel">
-                      {(Number(zoomMap[deviceId] ?? 1.0)).toFixed(1)}x
+                      <span>{(Number(zoomMap[deviceId] ?? 1.0)).toFixed(1)}</span>
+                      <span>x</span>
+                    </div>
+                  </div>
+
+                  <div className="admin-dev-evbar" title="曝光補償 / EV">
+                    <input
+                      className="admin-dev-evrange"
+                      type="range"
+                      min={exposureMin}
+                      max={exposureMax}
+                      step="1"
+                      value={exposureCompensationIndex}
+                      disabled={!!exposureSavingMap[deviceId]}
+                      onChange={(e) => {
+                        const v = clampExposureCompensationIndex(
+                          e.target.value,
+                          exposureMin,
+                          exposureMax
+                        );
+
+                        setExposureCompensationMap((p) => ({
+                          ...p,
+                          [deviceId]: v,
+                        }));
+                      }}
+                      onMouseUp={(e) => saveExposureCompensation(deviceId, e.currentTarget.value)}
+                      onTouchEnd={(e) => saveExposureCompensation(deviceId, e.currentTarget.value)}
+                    />
+
+                    <div className="admin-dev-evlabel">
+                      <span style={{ marginRight: "1px" }}>EV</span>
+                      <span>{formatExposureCompensationIndex(exposureCompensationIndex)}</span>
                     </div>
                   </div>
 

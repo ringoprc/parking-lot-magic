@@ -551,9 +551,9 @@
 /* ------------------------------ */
 .admin-dev-zoombar {
   position: absolute;
-  left: 11px;
+  left: 12px;
   bottom: 54px;
-  width: 30px;
+  width: 25px;
   display: flex;
   flex-direction: column;
   border-radius: 10px;
@@ -571,13 +571,88 @@
   width: 12vh;
   transform: rotate(-90deg);
   transform-origin: center;
+  accent-color: #1677e8;
 }
 
 .admin-dev-zoomlabel {
   margin-top: 3vh;
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 700;
   color: #333;
+}
+
+/* ------------------------------ */
+/* EV / Exposure control bar      */
+/* ------------------------------ */
+.admin-dev-evbar {
+  position: absolute;
+  left: 42px;
+  bottom: 54px;
+  width: 25px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 10px;
+  z-index: 999;
+  border: 1px solid #ccc;
+  align-items: center;
+  height: calc(100% - 140px);
+  justify-content: center;
+  gap: 3vh;
+  padding-top: 5.7vh;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.admin-dev-evrange {
+  width: 12vh;
+  transform: rotate(-90deg);
+  transform-origin: center;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+}
+
+/* Chrome / Safari / Edge */
+.admin-dev-evrange::-webkit-slider-runnable-track {
+  height: 7px;
+  border: 1px solid #b2b2b2;
+  border-radius: 999px;
+  background: #efefef;
+}
+
+.admin-dev-evrange::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  background: #f59e0b;
+  border: none;
+  margin-top: -5px;
+  cursor: pointer;
+}
+
+/* Firefox */
+.admin-dev-evrange::-moz-range-track {
+  height: 7px;
+  border-radius: 999px;
+  background: #d7d7d7;
+}
+
+.admin-dev-evrange::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #f59e0b;
+  border: none;
+  cursor: pointer;
+}
+
+.admin-dev-evlabel {
+  margin-top: 3.6vh;
+  font-size: 9px;
+  font-weight: 800;
+  color: #333;
+  white-space: nowrap;
 }
 
 /* ---------------------------- */

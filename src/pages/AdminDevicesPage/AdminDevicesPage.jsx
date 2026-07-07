@@ -1008,6 +1008,26 @@ export default function AdminDevicesPage({ apiBase }) {
                 shotSecAgo >= 60 ? "#de1802" :
                 shotSecAgo >= 40 ? "#e67e22" :
                 (r?.lot?.name ? "#333" : "#999");
+              const aiLastProcessedAt = r?.phone?.aiLastProcessedAt ?? null;
+              const aiProcessedAgo = aiLastProcessedAt
+                ? minSecAgo(new Date(aiLastProcessedAt))
+                : null;
+
+              const aiProcessedSecAgo = aiLastProcessedAt
+                ? Math.floor((Date.now() - new Date(aiLastProcessedAt).getTime()) / 1000)
+                : null;
+
+              const isAiBehindLatestImage =
+                aiLastProcessedAt &&
+                lastUploadAt &&
+                new Date(aiLastProcessedAt).getTime() < new Date(lastUploadAt).getTime();
+
+              const aiProcessedAtColor =
+                !aiLastProcessedAt ? "#999" :
+                aiProcessedSecAgo >= 180 ? "#de1802" : //紅
+                //isAiBehindLatestImage ? "#e67e22" :  //橙
+                aiProcessedSecAgo >= 120 ? "#e67e22" :  //橙
+                (r?.lot?.name ? "#333" : "#999");
 
               // confirmedAgo color rules: > 60s red, > 30s orange
               const lastConfirmedAt = r?.lot?.lastConfirmedAt ?? null;
@@ -1015,11 +1035,11 @@ export default function AdminDevicesPage({ apiBase }) {
                 ? Math.floor((Date.now() - new Date(lastConfirmedAt).getTime()) / 1000)
                 : null;
               const confirmedAgo = lastConfirmedAt ? minSecAgo(new Date(lastConfirmedAt)) : null;
-              const confirmedAtColor =
-                confirmedSecAgo == null ? (r?.lot?.name ? "#333" : "#999") :
-                confirmedSecAgo >= 60 ? "#de1802" :
-                confirmedSecAgo >= 30 ? "#e67e22" :
-                (r?.lot?.name ? "#333" : "#999");
+              const confirmedAtColor = r?.lot?.name ? "#333" : "#999";
+                //confirmedSecAgo == null ? (r?.lot?.name ? "#333" : "#999") :
+                //confirmedSecAgo >= 60 ? "#de1802" :
+                //confirmedSecAgo >= 30 ? "#e67e22" :
+                //(r?.lot?.name ? "#333" : "#999");
 
               const batteryPct = r?.phone?.lastBatteryPct ?? null;
               const isChargingRaw = r?.phone?.lastIsCharging;
@@ -1232,6 +1252,22 @@ export default function AdminDevicesPage({ apiBase }) {
                           <span>
                             （{String(uploadedAgo.min).padStart(2, "0")} 分 {String(uploadedAgo.sec).padStart(2, "0")} 秒前）
                           </span>
+                        ) : null}
+                      </span>
+
+                      <span
+                        className="admin-dev-card-ai-time"
+                        style={{ fontSize: "8px", marginTop: "1.5px", color: aiProcessedAtColor }}
+                      >
+                        AI辨識：
+                        {aiLastProcessedAt ? formatTimeYYYYMMDD_HHMMSS(new Date(aiLastProcessedAt)) : "—"}
+                        {aiProcessedAgo ? (
+                          <span>
+                            （{String(aiProcessedAgo.min).padStart(2, "0")} 分 {String(aiProcessedAgo.sec).padStart(2, "0")} 秒前）
+                          </span>
+                        ) : null}
+                        {isAiBehindLatestImage ? (
+                          <span>非最新</span>
                         ) : null}
                       </span>
                       {/*

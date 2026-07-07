@@ -928,6 +928,18 @@
   scrollbar-width: none;
 }
 
+.admin-dev-card-ai-time {
+  font-size: 8px;
+  margin-top: 1.5px;
+  color: rgb(51, 51, 51);
+  letter-spacing: 0px;
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: scroll;
+  text-overflow: clip;
+  scrollbar-width: none;
+}
+
 .admin-dev-imgwrap {
   position: relative;
   max-height: 20vh;

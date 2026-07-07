@@ -479,7 +479,18 @@ export default function AdminDevicesPage({ apiBase }) {
 
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adminKey, isAdminConfirmed, page, groupId, appliedSearch, pageSize, sortBy, sortDir, showInactiveDevices]);
+  }, [
+    adminKey,
+    isAdminConfirmed,
+    page,
+    groupId,
+    appliedSearch,
+    pageSize,
+    sortBy,
+    sortDir,
+    showInactiveDevices,
+    onlyAiProcessingEnabled,
+  ]);
 
   
   //-----------------------------
@@ -760,7 +771,15 @@ export default function AdminDevicesPage({ apiBase }) {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, groupId, pageSize, sortBy, sortDir, showInactiveDevices]);
+  }, [
+    page,
+    groupId,
+    pageSize,
+    sortBy,
+    sortDir,
+    showInactiveDevices,
+    onlyAiProcessingEnabled,
+  ]);
 
   const pageCount = useMemo(() => {
     const total = toNum(meta?.total) ?? 0;

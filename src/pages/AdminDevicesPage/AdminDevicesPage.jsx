@@ -672,7 +672,7 @@ export default function AdminDevicesPage({ apiBase }) {
           total: Math.max(0, Number(prev?.total ?? 0) - 1),
         }));
       }
-      
+
     } catch (e) {
       setAiProcessingEnabledMap((prev) => ({
         ...prev,
@@ -827,7 +827,7 @@ export default function AdminDevicesPage({ apiBase }) {
   // Return JSX
   //-----------------------------
   return (
-    <div className="admin-dev-outer">
+    <div className="admin-dev-outer" style={{ paddingTop: "2px", paddingBottom: "0px" }}>
       {/* Header */}
       <div className="admin-dev-header">
 
@@ -843,6 +843,10 @@ export default function AdminDevicesPage({ apiBase }) {
               className="admin-dev-input admin-password"
               value={adminKey}
               onChange={(e) => persistAdminKey(e.target.value)}
+              style={{
+                padding: "2px 10px",
+                marginRight: "6px"
+              }}
               placeholder="admin key"
             />
             <button className="admin-dev-btn apply-password" 
@@ -851,6 +855,9 @@ export default function AdminDevicesPage({ apiBase }) {
                 setAppliedSearch(s);
                 setPage(1);
                 load({ searchOverride: s, pageOverride: 1 });
+              }}
+              style={{
+                padding: "2px 12px"
               }}
             >
               重新載入
@@ -862,7 +869,7 @@ export default function AdminDevicesPage({ apiBase }) {
       <div 
         style={{ 
           display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap",
-          marginTop: "6px", marginBottom: "4px"
+          marginTop: "3px", marginBottom: "1px"
        }}
       >
         <span style={{ fontSize: "12px", color: "#666" }}>排序</span>

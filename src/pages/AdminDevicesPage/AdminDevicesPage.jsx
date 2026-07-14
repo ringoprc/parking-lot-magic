@@ -725,12 +725,28 @@ export default function AdminDevicesPage({ apiBase }) {
     }
   }
 
-  async function saveExposureCompensation(deviceId, valueOverride) {
+  async function saveExposureCompensation(
+    deviceId,
+    valueOverride,
+    minOverride,
+    maxOverride
+  ) {
     if (!adminKey) return;
     if (!deviceId) return;
 
     const raw = valueOverride ?? exposureCompensationMap[deviceId];
-    const exposureCompensationIndex = clampExposureCompensationIndex(raw);
+
+    const exposureCompensationIndex = clampExposureCompensationIndex(
+      raw,
+      minOverride,
+      maxOverride
+    );
+
+    // Optimistic UI update. Do not use `data` here.
+    setExposureCompensationMap((p) => ({
+      ...p,
+      [deviceId]: exposureCompensationIndex,
+    }));
 
     setExposureSavingMap((p) => ({ ...p, [deviceId]: true }));
 
@@ -750,10 +766,13 @@ export default function AdminDevicesPage({ apiBase }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "EV update failed");
 
+      // Normalize to server response, but keep using the phone-specific min/max.
       setExposureCompensationMap((p) => ({
         ...p,
         [deviceId]: clampExposureCompensationIndex(
-          data?.exposureCompensationIndex ?? exposureCompensationIndex
+          data?.exposureCompensationIndex ?? exposureCompensationIndex,
+          minOverride,
+          maxOverride
         ),
       }));
     } catch (e) {
@@ -1255,8 +1274,22 @@ export default function AdminDevicesPage({ apiBase }) {
                           [deviceId]: v,
                         }));
                       }}
-                      onMouseUp={(e) => saveExposureCompensation(deviceId, e.currentTarget.value)}
-                      onTouchEnd={(e) => saveExposureCompensation(deviceId, e.currentTarget.value)}
+                      onMouseUp={(e) =>
+                        saveExposureCompensation(
+                          deviceId,
+                          e.currentTarget.value,
+                          exposureMin,
+                          exposureMax
+                        )
+                      }
+                      onTouchEnd={(e) =>
+                        saveExposureCompensation(
+                          deviceId,
+                          e.currentTarget.value,
+                          exposureMin,
+                          exposureMax
+                        )
+                      }
                     />
 
                     <div className="admin-dev-evlabel">

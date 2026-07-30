@@ -160,7 +160,9 @@ function VacancyPin({ vacancy, active, pulse }) {
 }
 
 
-const MAX_RENDERED_MARKERS = 250;
+const MAX_RENDERED_MARKERS_MOBILE = 150;
+const MAX_RENDERED_MARKERS_DESKTOP = 250;
+
 const VIEWPORT_PADDING_RATIO = 0.15;
 
 function isLngInside(lng, west, east) {
@@ -180,6 +182,10 @@ function VisibleParkingMarkers({
 }) {
   const map = useMap();
   const [viewport, setViewport] = useState(null);
+
+  const markerLimit = isMobile
+    ? MAX_RENDERED_MARKERS_MOBILE
+    : MAX_RENDERED_MARKERS_DESKTOP;
 
   useEffect(() => {
     if (!map) return;
@@ -241,7 +247,7 @@ function VisibleParkingMarkers({
 
     // At a wide zoom, even the viewport can contain hundreds of lots.
     // Keep the closest markers to the camera center instead of mounting all DOM nodes.
-    if (inView.length > MAX_RENDERED_MARKERS) {
+    if (inView.length > markerLimit) {
       inView.sort((a, b) => {
         const aLat = a.lat - viewport.centerLat;
         const aLng = a.lng - viewport.centerLng;
@@ -249,7 +255,7 @@ function VisibleParkingMarkers({
         const bLng = b.lng - viewport.centerLng;
         return aLat * aLat + aLng * aLng - (bLat * bLat + bLng * bLng);
       });
-      inView.length = MAX_RENDERED_MARKERS;
+      inView.length = markerLimit;
     }
 
     if (
@@ -258,12 +264,12 @@ function VisibleParkingMarkers({
       Number.isFinite(active.lng) &&
       !inView.some((lot) => lot.lotId === active.lotId)
     ) {
-      if (inView.length >= MAX_RENDERED_MARKERS) inView.pop();
+      if (inView.length >= markerLimit) inView.pop();
       inView.push(active);
     }
 
     return inView;
-  }, [lots, viewport, active]);
+  }, [lots, viewport, active, markerLimit]);
 
   return visibleLots.map((lot) => (
     <AdvancedMarker

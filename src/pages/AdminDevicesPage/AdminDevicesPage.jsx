@@ -699,7 +699,7 @@ export default function AdminDevicesPage({ apiBase }) {
     const z = Number(zRaw);
     if (!Number.isFinite(z)) return;
 
-    const zoomRatio = Math.max(1.0, Math.min(6.0, z));
+    const zoomRatio = Math.max(1.0, Math.min(10.0, z));
     console.log('zoomRatio:', zoomRatio);
 
     setZoomSavingMap((p) => ({ ...p, [deviceId]: true }));
@@ -1237,7 +1237,7 @@ export default function AdminDevicesPage({ apiBase }) {
                       className="admin-dev-zoomrange"
                       type="range"
                       min="1"
-                      max="6"
+                      max="10"
                       step="0.5"
                       value={zoomMap[deviceId] ?? 1.0}
                       onChange={(e) => {

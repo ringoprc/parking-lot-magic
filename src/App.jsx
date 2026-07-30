@@ -132,6 +132,13 @@ function formatDist(m) {
   return `${(m / 1000).toFixed(m < 10000 ? 1 : 0)} 公里`;
 }
 
+function isLngInside(lng, west, east) {
+  // Also handles bounds crossing the international date line.
+  return west <= east
+    ? lng >= west && lng <= east
+    : lng >= west || lng <= east;
+}
+
 export default function App() {
 
   const DEFAULT_CENTER = { lat: 25.0522, lng: 121.5203 };
@@ -145,6 +152,8 @@ export default function App() {
   const [focus, setFocus] = useState(null); // { lat, lng, viewport? }
   const [searchCenter, setSearchCenter] = useState(null); // { lat, lng }
   const [queryCenter, setQueryCenter] = useState(null); // initial
+
+  const [mapViewport, setMapViewport] = useState(null);
 
   const [myPos, setMyPos] = useState(null); // {lat,lng}
   const [myAcc, setMyAcc] = useState(null); // meters
@@ -349,41 +358,109 @@ export default function App() {
     return s ? `清單最近更新時間 ${s}` : null;
   }, [meta?.lastSheetFetchAt]);
 
-  const displayedLots = useMemo(() => {
-    if (!searchCenter) {
-      return [...validLots]
-        .sort((a, b) => String(a.lotId).localeCompare(String(b.lotId)))
-        .slice(0, 30);
-    }
+  const visibleLots = useMemo(() => {
+    // Before Google Maps reports its first real viewport,
+    // temporarily fall back to the complete valid lot list.
+    if (!mapViewport) return validLots;
 
-    const withDist = validLots
-      .map((l) => ({
-        ...l,
-        _dist: haversineMeters(searchCenter, { lat: l.lat, lng: l.lng }),
-      }))
+    const {
+      north,
+      south,
+      east,
+      west,
+    } = mapViewport;
+
+    return validLots.filter((lot) => {
+      return (
+        lot.lat >= south &&
+        lot.lat <= north &&
+        isLngInside(lot.lng, west, east)
+      );
+    });
+  }, [validLots, mapViewport]);
+
+  const displayedLots = useMemo(() => {
+    const mapCenter =
+      mapViewport?.centerLat != null && mapViewport?.centerLng != null
+        ? {
+            lat: mapViewport.centerLat,
+            lng: mapViewport.centerLng,
+          }
+        : null;
+
+    // When searching, order by distance from the searched place.
+    // Otherwise, order by distance from the middle of the current map.
+    const orderCenter = searchCenter ?? mapCenter;
+
+    const ordered = visibleLots
+      .map((lot) => {
+        const distance = orderCenter
+          ? haversineMeters(orderCenter, {
+              lat: lot.lat,
+              lng: lot.lng,
+            })
+          : 0;
+
+        return {
+          lot,
+          distance,
+        };
+      })
       .sort((a, b) => {
-        const d = a._dist - b._dist;
-        if (d !== 0) return d;
-        return String(a.lotId).localeCompare(String(b.lotId));
+        const distanceDifference = a.distance - b.distance;
+
+        if (distanceDifference !== 0) {
+          return distanceDifference;
+        }
+
+        return String(a.lot.lotId).localeCompare(
+          String(b.lot.lotId)
+        );
       });
 
-    // show closest ~30 (tweak as you like)
-    return withDist.slice(0, 30);
-  }, [validLots, searchCenter]);
+    return ordered.slice(0, 30).map(({ lot, distance }) => {
+      // LotsList uses _dist only when a searched location is active.
+      if (searchCenter) {
+        return {
+          ...lot,
+          _dist: distance,
+        };
+      }
+
+      return lot;
+    });
+  }, [
+    visibleLots,
+    searchCenter,
+    mapViewport?.centerLat,
+    mapViewport?.centerLng,
+  ]);
 
   const listTitle = useMemo(() => {
+    const visibleCount = visibleLots.length;
 
-    const totalActive = meta?.totalActive ?? displayedLots.length;
-    if (!searchCenter || !focus?.name) return `點此搜尋所有停車場 (${totalActive})`;
+    const countText =
+      displayedLots.length < visibleCount
+        ? `${displayedLots.length}/${visibleCount}`
+        : String(visibleCount);
 
-    const km = (RADIUS_M / 1000);
-    const kmText = Number.isInteger(km) ? String(km) : km.toFixed(1);
+    if (!searchCenter || !focus?.name) {
+      return `目前地圖範圍內停車場 (${countText})`;
+    }
 
-    const suffix = totalActive != null 
-      ? ` (${displayedLots.length}/${totalActive})` 
-      : ` (${displayedLots.length})`;
-    return `距離 [ ${focus.name} ] ${kmText}km 內${suffix}`;
-  }, [searchCenter, focus?.name, displayedLots.length, RADIUS_M, meta]);
+    const km = RADIUS_M / 1000;
+    const kmText = Number.isInteger(km)
+      ? String(km)
+      : km.toFixed(1);
+
+    return `距離 [ ${focus.name} ] ${kmText}km 內・目前地圖範圍 (${countText})`;
+  }, [
+    visibleLots.length,
+    displayedLots.length,
+    searchCenter,
+    focus?.name,
+    RADIUS_M,
+  ]);
 
   function handleClearPick() {
     setSearchCenter(null);     // 解除 filtered lots
@@ -628,6 +705,7 @@ export default function App() {
           <div className="map-wrap">
             <ParkingMap
               lots={validLots}
+              onViewportChange={setMapViewport}
               active={active}
               setActive={setActive}
               lastSheetFetchAt={meta?.lastSheetFetchAt}

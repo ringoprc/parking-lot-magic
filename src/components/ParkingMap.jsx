@@ -96,17 +96,13 @@ function MyLocationLayer({ myPos, accuracyM }) {
   );
 }
 
-function FitAndFly({ lots, flyToRef, focus }) {
+function FitAndFly({ flyToRef }) {
   const map = useMap();
-  const userMovedRef = useRef(false);
-  const didInitialFitRef = useRef(false);
 
   useEffect(() => {
     if (!map) return;
 
     flyToRef.current = ({ lat, lng, zoom }) => {
-      // mark that we're intentionally moving the camera (not user)
-      // but still allow user to take over after
       map.panTo({ lat, lng });
 
       if (typeof zoom === "number") {
@@ -120,7 +116,6 @@ function FitAndFly({ lots, flyToRef, focus }) {
           const id = window.setInterval(() => {
             z += dir;
 
-            // clamp + stop condition (works even if start was fractional)
             if ((dir > 0 && z >= target) || (dir < 0 && z <= target)) {
               map.setZoom(target);
               window.clearInterval(id);
@@ -130,49 +125,11 @@ function FitAndFly({ lots, flyToRef, focus }) {
             map.setZoom(z);
           }, 80);
 
-          window.setTimeout(() => window.clearInterval(id), 1500); // safety
+          window.setTimeout(() => window.clearInterval(id), 1500);
         }
       }
     };
   }, [map, flyToRef]);
-
-  useEffect(() => {
-    if (!map) return;
-
-    const onDrag = () => { userMovedRef.current = true; };
-    const onZoom = () => { userMovedRef.current = true; };
-
-    const l1 = map.addListener("dragstart", onDrag);
-    const l2 = map.addListener("zoom_changed", onZoom);
-
-    return () => {
-      l1?.remove?.();
-      l2?.remove?.();
-    };
-  }, [map]);
-
-  useEffect(() => {
-    if (!map) return;
-    if (didInitialFitRef.current) return;
-
-    if (focus?.lat != null && focus?.lng != null) return;
-
-    const pts = (lots || [])
-      .filter((l) => typeof l.lat === "number" && typeof l.lng === "number")
-      .map((l) => ({ lat: l.lat, lng: l.lng }));
-
-    if (pts.length === 0) return;
-    if (userMovedRef.current) return;
-
-    const g = window.google;
-    if (!g?.maps?.LatLngBounds) return;
-
-    const bounds = new g.maps.LatLngBounds();
-    pts.forEach((p) => bounds.extend(p));
-    map.fitBounds(bounds, 80);
-
-    didInitialFitRef.current = true;
-  }, [map, lots, focus?.lat, focus?.lng]);
 
   return null;
 }
@@ -203,6 +160,145 @@ function VacancyPin({ vacancy, active, pulse }) {
 }
 
 
+const MAX_RENDERED_MARKERS = 250;
+const VIEWPORT_PADDING_RATIO = 0.15;
+
+function isLngInside(lng, west, east) {
+  // Normal case. The second branch also supports bounds crossing the date line.
+  return west <= east ? lng >= west && lng <= east : lng >= west || lng <= east;
+}
+
+function VisibleParkingMarkers({
+  lots,
+  active,
+  setActive,
+  pulseLotId,
+  triggerLotPulse,
+  flyToRef,
+  isMobile,
+  onViewportChange,
+}) {
+  const map = useMap();
+  const [viewport, setViewport] = useState(null);
+
+  useEffect(() => {
+    if (!map) return;
+
+    const updateViewport = () => {
+      const bounds = map.getBounds?.();
+      const center = map.getCenter?.();
+      const zoom = map.getZoom?.();
+      if (!bounds || !center || !Number.isFinite(zoom)) return;
+
+      const ne = bounds.getNorthEast();
+      const sw = bounds.getSouthWest();
+
+      const nextViewport = {
+        north: ne.lat(),
+        east: ne.lng(),
+        south: sw.lat(),
+        west: sw.lng(),
+        centerLat: center.lat(),
+        centerLng: center.lng(),
+        zoom,
+      };
+
+      setViewport(nextViewport);
+      onViewportChange?.(nextViewport);
+    };
+
+    // Render only after Google Maps has real bounds, then update after each pan/zoom.
+    const frameId = window.requestAnimationFrame(updateViewport);
+    const idleListener = map.addListener("idle", updateViewport);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      idleListener?.remove?.();
+    };
+  }, [map, onViewportChange]);
+
+  const visibleLots = useMemo(() => {
+    if (!viewport) return active ? [active] : [];
+
+    const latPadding =
+      Math.abs(viewport.north - viewport.south) * VIEWPORT_PADDING_RATIO;
+    const lngPadding =
+      Math.abs(viewport.east - viewport.west) * VIEWPORT_PADDING_RATIO;
+
+    const north = viewport.north + latPadding;
+    const south = viewport.south - latPadding;
+    const east = viewport.east + lngPadding;
+    const west = viewport.west - lngPadding;
+
+    const inView = (lots || []).filter((lot) => {
+      if (!Number.isFinite(lot.lat) || !Number.isFinite(lot.lng)) return false;
+      return (
+        lot.lat >= south &&
+        lot.lat <= north &&
+        isLngInside(lot.lng, west, east)
+      );
+    });
+
+    // At a wide zoom, even the viewport can contain hundreds of lots.
+    // Keep the closest markers to the camera center instead of mounting all DOM nodes.
+    if (inView.length > MAX_RENDERED_MARKERS) {
+      inView.sort((a, b) => {
+        const aLat = a.lat - viewport.centerLat;
+        const aLng = a.lng - viewport.centerLng;
+        const bLat = b.lat - viewport.centerLat;
+        const bLng = b.lng - viewport.centerLng;
+        return aLat * aLat + aLng * aLng - (bLat * bLat + bLng * bLng);
+      });
+      inView.length = MAX_RENDERED_MARKERS;
+    }
+
+    if (
+      active?.lotId &&
+      Number.isFinite(active.lat) &&
+      Number.isFinite(active.lng) &&
+      !inView.some((lot) => lot.lotId === active.lotId)
+    ) {
+      if (inView.length >= MAX_RENDERED_MARKERS) inView.pop();
+      inView.push(active);
+    }
+
+    return inView;
+  }, [lots, viewport, active]);
+
+  return visibleLots.map((lot) => (
+    <AdvancedMarker
+      key={lot.lotId}
+      position={{ lat: lot.lat, lng: lot.lng }}
+      onClick={() => {
+        setActive?.(lot);
+        triggerLotPulse?.(lot.lotId);
+
+        const zRaw = map?.getZoom?.();
+        const curZ = Number.isFinite(zRaw) ? zRaw : null;
+        const shouldZoomIn = curZ == null || curZ < 15;
+
+        const z = curZ ?? 16;
+        const baseOffset = 0.003;
+        const offset = baseOffset * Math.pow(curZ < 16 ? 1 : 2, 16 - z);
+        const flyToOffsetZoom = isMobile ? -offset : offset;
+
+        flyToRef.current?.({
+          lat: lot.lat + flyToOffsetZoom,
+          lng: lot.lng,
+          ...(shouldZoomIn ? { zoom: 16 } : {}),
+        });
+      }}
+    >
+      <VacancyPin
+        vacancy={lot.vacancy}
+        active={active?.lotId === lot.lotId}
+        pulse={lot.lotId === pulseLotId}
+      />
+    </AdvancedMarker>
+  ));
+}
+
+
 export default function ParkingMap({
   lots,
   active,
@@ -218,6 +314,7 @@ export default function ParkingMap({
   requestMyLocation,       // function from parent (does geolocation)
   myPos,
   myAcc,
+  onViewportChange,
 }) {
 
   const map = useMap();
@@ -253,11 +350,7 @@ export default function ParkingMap({
         {/*<MyLocationLayer myPos={myPos} accuracyM={myAcc} />*/}
 
         {/*<CloseInfoOnMapClick setActive={setActive} />*/}
-        <FitAndFly 
-          lots={lots} 
-          flyToRef={flyToRef} 
-          focus={focus} 
-        />
+        <FitAndFly flyToRef={flyToRef} />
 
         {/* Search focus marker (special pin) */}
         {focus?.lat != null && focus?.lng != null && (
@@ -276,41 +369,16 @@ export default function ParkingMap({
           </AdvancedMarker>
         )}
 
-        {lots.map((l) => (
-          <AdvancedMarker
-            key={l.lotId}
-            position={{ lat: l.lat, lng: l.lng }}
-            onClick={() => {
-              setActive?.(l);
-              triggerLotPulse(l.lotId);
-              // tune this based on your sheet height
-              const offsetY = Math.round(window.innerHeight * 0);
-              const zRaw = map?.getZoom?.();
-              const curZ = Number.isFinite(zRaw) ? zRaw : null;
-
-              // Only zoom in when they are clearly far (e.g. < 15)
-              const shouldZoomIn = curZ == null || curZ < 15;
-
-              const z = curZ ?? 16;
-              const baseOffset = 0.003;
-              const offset = baseOffset * Math.pow((curZ < 16 ? 1 : 2), 16 - z);
-              const flyToOffsetZoom = isMobile ? -offset : offset;
-
-              console.log('z:', z);
-              console.log('flyToOffsetZoom:', flyToOffsetZoom);
-
-              flyToRef.current?.({
-                lat: l.lat + flyToOffsetZoom,
-                lng: l.lng,
-                ...(shouldZoomIn ? { zoom: 16 } : {}),
-              });
-            }}
-          >
-            <VacancyPin vacancy={l.vacancy} active={active?.lotId === l.lotId} 
-              pulse={l.lotId === pulseLotId}
-            />
-          </AdvancedMarker>
-        ))}
+        <VisibleParkingMarkers
+          lots={lots}
+          active={active}
+          setActive={setActive}
+          pulseLotId={pulseLotId}
+          triggerLotPulse={triggerLotPulse}
+          flyToRef={flyToRef}
+          isMobile={isMobile}
+          onViewportChange={onViewportChange}
+        />
 
         {!isMobile && active && (
           <ParkingLotInfoWindow

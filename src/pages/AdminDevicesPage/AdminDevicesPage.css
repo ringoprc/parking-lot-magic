@@ -314,6 +314,83 @@
   color: #1d4ed8;
 }
 
+/* Three-state device activity filter */
+.admin-dev-activity-filter {
+  display: inline-grid;
+  grid-template-columns: repeat(3, max-content);
+  align-items: stretch;
+
+  padding: 3px;
+  border: 1px solid #d8d8d8;
+  border-radius: 999px;
+  background: #f3f3f3;
+}
+
+.admin-dev-activity-option {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+
+  padding: 5px 11px;
+
+  color: #666;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.admin-dev-activity-option:hover:not(.is-selected) {
+  background: rgba(0, 0, 0, 0.055);
+  color: #333;
+}
+
+.admin-dev-activity-option.is-selected {
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+/* No activity filtering */
+.admin-dev-activity-option.mode-all.is-selected {
+  background: #5f6368;
+}
+
+/* Healthy / currently uploading */
+.admin-dev-activity-option.mode-recent.is-selected {
+  background: #188038;
+}
+
+/* Devices needing attention */
+.admin-dev-activity-option.mode-inactive.is-selected {
+  background: #c5221f;
+}
+
+.admin-dev-activity-option:focus-visible {
+  outline: 2px solid #276ef1;
+  outline-offset: 2px;
+}
+
+@media (max-width: 700px) {
+  .admin-dev-activity-filter {
+    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-radius: 14px;
+  }
+
+  .admin-dev-activity-option {
+    padding: 7px 6px;
+    white-space: normal;
+    text-align: center;
+  }
+}
+
 .admin-dev-ai-enabled-filter-toggle {
   padding-right: 12px;
 }

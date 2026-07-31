@@ -34,6 +34,27 @@ const DEFAULT_EXPOSURE_COMPENSATION_MIN = -6;
 const DEFAULT_EXPOSURE_COMPENSATION_MAX = 6;
 const VACANCY_MODE_MANUAL = "manual_confirm";
 const VACANCY_MODE_AUTO = "auto_apply_ai";
+const DEVICE_ACTIVITY_ALL = "all";
+const DEVICE_ACTIVITY_RECENT = "recent";
+const DEVICE_ACTIVITY_INACTIVE = "inactive";
+
+const DEVICE_ACTIVITY_OPTIONS = [
+  {
+    value: DEVICE_ACTIVITY_ALL,
+    label: "顯示全部",
+    title: "顯示所有裝置，不限制最近拍攝時間",
+  },
+  {
+    value: DEVICE_ACTIVITY_RECENT,
+    label: "隱藏非拍攝中",
+    title: "僅顯示最近 5 分鐘內曾上傳圖像的裝置",
+  },
+  {
+    value: DEVICE_ACTIVITY_INACTIVE,
+    label: "僅顯示不在拍攝中",
+    title: "僅顯示超過 5 分鐘未上傳圖像，或從未上傳圖像的裝置",
+  },
+];
 
 //-----------------------
 // Helpers
@@ -140,9 +161,22 @@ export default function AdminDevicesPage({ apiBase }) {
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortDir, setSortDir] = useState("desc");
 
-  // inactive device visibility
-  // inactive = phone.lastUploadAt is missing or more than 60 minutes ago
-  const [showInactiveDevices, setShowInactiveDevices] = useState(true);
+  // Device visibility based on the latest image upload time.
+  const [deviceActivityMode, setDeviceActivityMode] = useState(() => {
+    const saved = localStorage.getItem("adminDeviceActivityMode");
+
+    // Migrate the old third-state name.
+    const normalizedSaved =
+      saved === "shooting"
+        ? DEVICE_ACTIVITY_INACTIVE
+        : saved;
+
+    return DEVICE_ACTIVITY_OPTIONS.some(
+      (option) => option.value === normalizedSaved
+    )
+      ? normalizedSaved
+      : DEVICE_ACTIVITY_ALL;
+  });
   const [onlyAiProcessingEnabled, setOnlyAiProcessingEnabled] = useState(false);
   const [vacancyApplyMode, setVacancyApplyMode] = useState(VACANCY_MODE_MANUAL);
   const [vacancyApplyModeSaving, setVacancyApplyModeSaving] = useState(false);
@@ -290,7 +324,7 @@ export default function AdminDevicesPage({ apiBase }) {
       pageSizeOverride,
       sortByOverride,
       sortDirOverride,
-      showInactiveDevicesOverride,
+      deviceActivityModeOverride,
       onlyAiProcessingEnabledOverride,
     } = opts;
 
@@ -300,9 +334,8 @@ export default function AdminDevicesPage({ apiBase }) {
     const effPageSize = (pageSizeOverride ?? pageSize);
     const effSortBy = (sortByOverride ?? sortBy);
     const effSortDir = (sortDirOverride ?? sortDir);
-    const effShowInactiveDevices = (
-      showInactiveDevicesOverride ?? showInactiveDevices
-    );
+    const effDeviceActivityMode =
+      deviceActivityModeOverride ?? deviceActivityMode;
     const effOnlyAiProcessingEnabled = (
       onlyAiProcessingEnabledOverride ?? onlyAiProcessingEnabled
     );
@@ -323,7 +356,7 @@ export default function AdminDevicesPage({ apiBase }) {
         search: effSearch,
         sortBy: effSortBy,
         sortDir: effSortDir,
-        hideInactive: effShowInactiveDevices ? "0" : "1",
+        activityMode: effDeviceActivityMode,
         onlyAiProcessingEnabled: effOnlyAiProcessingEnabled ? "1" : "0",
       });
 
@@ -488,7 +521,7 @@ export default function AdminDevicesPage({ apiBase }) {
     pageSize,
     sortBy,
     sortDir,
-    showInactiveDevices,
+    deviceActivityMode,
     onlyAiProcessingEnabled,
   ]);
 
@@ -796,7 +829,7 @@ export default function AdminDevicesPage({ apiBase }) {
     pageSize,
     sortBy,
     sortDir,
-    showInactiveDevices,
+    deviceActivityMode,
     onlyAiProcessingEnabled,
   ]);
 
@@ -917,28 +950,49 @@ export default function AdminDevicesPage({ apiBase }) {
           <option value="deviceId_desc">裝置 ID：Z → A</option>
         </select>
 
-        <button
-          type="button"
-          className={`admin-dev-toggle ${showInactiveDevices ? "is-on" : "is-off"}`}
-          onClick={() => {
-            const next = !showInactiveDevices;
-            setShowInactiveDevices(next);
-            setPage(1);
-            load({
-              pageOverride: 1,
-              showInactiveDevicesOverride: next,
-            });
-          }}
-          title={showInactiveDevices ? "目前會顯示非拍攝中的裝置" : "目前會隱藏非拍攝中的裝置"}
+        <div
+          className="admin-dev-activity-filter"
+          role="group"
+          aria-label="裝置拍攝狀態篩選"
         >
-          <span className="admin-dev-toggle-track">
-            <span className="admin-dev-toggle-thumb" />
-          </span>
+          {DEVICE_ACTIVITY_OPTIONS.map((option) => {
+            const selected = deviceActivityMode === option.value;
 
-          <span className="admin-dev-toggle-label">
-            {showInactiveDevices ? "顯示非拍攝中" : "隱藏非拍攝中"}
-          </span>
-        </button>
+            return (
+              <button
+                key={option.value}
+                type="button"
+                className={[
+                  "admin-dev-activity-option",
+                  `mode-${option.value}`,
+                  selected ? "is-selected" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                aria-pressed={selected}
+                title={option.title}
+                onClick={() => {
+                  if (selected) return;
+
+                  setDeviceActivityMode(option.value);
+                  localStorage.setItem(
+                    "adminDeviceActivityMode",
+                    option.value
+                  );
+
+                  setPage(1);
+
+                  load({
+                    pageOverride: 1,
+                    deviceActivityModeOverride: option.value,
+                  });
+                }}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
 
         <button
           type="button"

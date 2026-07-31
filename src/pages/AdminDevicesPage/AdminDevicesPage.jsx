@@ -46,7 +46,7 @@ const DEVICE_ACTIVITY_OPTIONS = [
   },
   {
     value: DEVICE_ACTIVITY_RECENT,
-    label: "隱藏非拍攝中",
+    label: "僅顯示正在拍攝中",
     title: "僅顯示最近 5 分鐘內曾上傳圖像的裝置",
   },
   {

@@ -1383,7 +1383,8 @@ export default function AdminDevicesPage({ apiBase }) {
                       <span style={{ color: "#bbb" }}>NA</span>
                     ) : (
                       <div>
-                        {isCharging && (
+                        {/* Deliberately making 100% battery shown as currently changing*/}
+                        {(isCharging || batteryPct===100) && (
                           <div
                             style={{
                               display: "flex",

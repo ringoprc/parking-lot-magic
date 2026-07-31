@@ -926,7 +926,7 @@ export default function AdminDevicesPage({ apiBase }) {
       >
         <span style={{ fontSize: "12px", color: "#666" }}>排序</span>
         <select
-          className="admin-dev-select"
+          className="admin-dev-select admin-sorting"
           value={`${sortBy}_${sortDir}`}
           onChange={(e) => {
             const [nextSortBy, nextSortDir] = String(e.target.value).split("_");

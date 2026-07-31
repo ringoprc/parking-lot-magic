@@ -267,7 +267,7 @@ export default function AdminDeviceLinkModal({
             <div style={{ fontSize: "12px", color: "#666", marginBottom: "4px" }}>搜尋停車場</div>
 
             <input
-              className="admin-dev-input modal-search-input"
+              className="admin-dev-input modal-search-input admin-device-link-modal-search-input"
               value={lotSearchText}
               onChange={(e) => {
                 setLotSearchText(e.target.value);

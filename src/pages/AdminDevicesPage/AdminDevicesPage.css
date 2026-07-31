@@ -97,6 +97,9 @@
   .admin-dev-input.modal-search-input {
     min-width: 80vw; 
   }
+  .admin-dev-input.modal-search-input.admin-device-link-modal-search-input {
+    min-width: 88vw; 
+  }
 }
 
 @media (max-width: 600px) {

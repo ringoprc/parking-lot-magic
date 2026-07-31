@@ -614,6 +614,7 @@
 @media (max-width: 600px) {
   .admin-dev-body {
     padding-right: 6px;
+    padding-bottom: 76px;
   }    
 }
 

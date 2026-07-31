@@ -19,6 +19,7 @@
 
 @media (max-width: 600px) {
   .admin-dev-header {
+    padding: 4px 0px;
     gap: 6px;
   }
 }

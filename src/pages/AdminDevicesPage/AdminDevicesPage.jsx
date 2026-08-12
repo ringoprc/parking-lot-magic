@@ -6,6 +6,7 @@ import { Spinner } from "reactstrap";
 
 import AdminDeviceLinkModal from "./AdminDeviceLinkModal";
 import AdminDevicePromptModal from "./AdminDevicePromptModal";
+import AdminDeviceBatteryModal from "./AdminDeviceBatteryModal";
 
 import { 
   formatTime, 
@@ -13,6 +14,7 @@ import {
   minutesAgo, 
   minSecAgo 
 } from "../../utils/time";
+import { getEffectiveChargingStatus } from "../../utils/deviceBattery";
 
 import { MdOutlineArrowBackIos } from "react-icons/md";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
@@ -211,6 +213,8 @@ export default function AdminDevicesPage({ apiBase }) {
   // prompt modal
   const [promptModalOpen, setPromptModalOpen] = useState(false);
   const [promptModalDevice, setPromptModalDevice] = useState(null);
+  // battery modal
+  const [batteryModalDeviceId, setBatteryModalDeviceId] = useState(null);
 
   //-----------------------------
   // Set Admin Key
@@ -874,6 +878,9 @@ export default function AdminDevicesPage({ apiBase }) {
   }
 
 
+  const batteryModalRow = batteryModalDeviceId
+    ? rows.find((r) => r.deviceId === batteryModalDeviceId) ?? null
+    : null;
 
   //-----------------------------
   // Return JSX
@@ -1259,11 +1266,16 @@ export default function AdminDevicesPage({ apiBase }) {
 
               const batteryPct = r?.phone?.lastBatteryPct ?? null;
               const isChargingRaw = r?.phone?.lastIsCharging;
-              const isCharging = isChargingRaw === true;
-              const chargingText =
-                isChargingRaw === true ? "充電中" :
-                isChargingRaw === false ? "非充電中" :
-                "充電狀態未知";
+              const lastChargingAt = r?.phone?.lastChargingAt ?? null;
+
+              const {
+                isEffectivelyCharging,
+              } = getEffectiveChargingStatus({
+                batteryPct,
+                lastIsCharging: isChargingRaw,
+                lastChargingAt,
+              });
+                
               const createdAt = r?.phone?.createdAt ?? null;
               const createdAgo = createdAt ? minSecAgo(new Date(createdAt)) : null;
               const uploadCountSinceBoot = r?.phone?.uploadCountSinceBoot ?? null;
@@ -1373,10 +1385,21 @@ export default function AdminDevicesPage({ apiBase }) {
 
                   <div
                     className="admin-dev-battery-badge"
-                    title={batteryPct == null ? "Battery" : `Battery: ${batteryPct}%`}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`查看 ${deviceId} 電池狀態`}
+                    title="查看電池與充電資訊"
+                    onClick={() => setBatteryModalDeviceId(deviceId)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setBatteryModalDeviceId(deviceId);
+                      }
+                    }}
                     style={{ 
                       color: batteryColor(batteryPct),
-                      border: `1px solid ${batteryColor(batteryPct)}`
+                      border: `1px solid ${batteryColor(batteryPct)}`,
+                      cursor: "pointer",
                     }}
                   >
                     {batteryPct == null ? (
@@ -1384,7 +1407,7 @@ export default function AdminDevicesPage({ apiBase }) {
                     ) : (
                       <div>
                         {/* Deliberately making 100% battery shown as currently changing*/}
-                        {(isCharging || batteryPct===100) && (
+                        {isEffectivelyCharging && (
                           <div
                             style={{
                               display: "flex",
@@ -1578,6 +1601,12 @@ export default function AdminDevicesPage({ apiBase }) {
           )
         )}
       </div>
+
+      <AdminDeviceBatteryModal
+        isOpen={!!batteryModalRow}
+        device={batteryModalRow}
+        onClose={() => setBatteryModalDeviceId(null)}
+      />
 
       <AdminDeviceLinkModal
         isOpen={linkModalOpen}

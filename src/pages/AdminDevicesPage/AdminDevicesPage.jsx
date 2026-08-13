@@ -1087,7 +1087,7 @@ export default function AdminDevicesPage({ apiBase }) {
               className="admin-dev-input search-device-id"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="搜尋裝置 ID..."
+              placeholder="搜尋裝置 ID、停車場名稱、Lot ID..."
               onKeyDown={(e) => {
                 if (e.key === "Enter") onSearchSubmit();
               }}
@@ -1410,7 +1410,7 @@ export default function AdminDevicesPage({ apiBase }) {
                     ) : (
                       <div>
                         {/* Deliberately making 100% battery shown as currently changing*/}
-                        {isEffectivelyCharging && (
+                        {(isEffectivelyCharging || batteryPct===100) && (
                           <div
                             style={{
                               display: "flex",

@@ -122,7 +122,7 @@ export default function AdminDeviceBatteryModal({
   });
 
   const chargingText =
-    isEffectivelyCharging
+    (isEffectivelyCharging || batteryPct===100)
       ? "充電中"
       : lastIsCharging === false
         ? "非充電中"

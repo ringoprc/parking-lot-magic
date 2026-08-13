@@ -865,7 +865,7 @@
 .admin-dev-card-action-buttons {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   flex-shrink: 0;
 }
 
@@ -887,6 +887,15 @@
 
 .admin-dev-card-action-btn:hover {
   background: #f4f8ff;
+}
+
+.admin-dev-card-action-btn.location {
+  border-color: #e67e22;
+  color: #e67e22;
+}
+
+.admin-dev-card-action-btn.location:hover {
+  background: #fff8f1;
 }
 
 .admin-dev-card-action-btn.prompt-edit {
@@ -1177,4 +1186,315 @@
   color: white;
 }
 
+
+/* -------------------------------- */
+/* Device Location Modal            */
+/* -------------------------------- */
+
+.admin-dev-location-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2200;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 18px;
+
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.admin-dev-location-modal {
+  width: min(920px, 94vw);
+  max-height: 92vh;
+
+  display: flex;
+  flex-direction: column;
+
+  background: #fff;
+  border-radius: 14px;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 14px 45px rgba(0, 0, 0, 0.24);
+}
+
+.admin-dev-location-modal-header {
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  padding: 12px 16px;
+
+  border-bottom: 1px solid #eee;
+}
+
+.admin-dev-location-modal-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #333;
+}
+
+.admin-dev-location-modal-device {
+  margin-top: 2px;
+
+  font-size: 10px;
+  color: #999;
+
+  word-break: break-all;
+}
+
+.admin-dev-location-modal-close {
+  border: 0;
+  background: transparent;
+
+  color: #777;
+  font-size: 25px;
+  line-height: 1;
+
+  padding: 0 2px;
+
+  cursor: pointer;
+}
+
+.admin-dev-location-modal-message {
+  padding: 50px 20px;
+
+  text-align: center;
+  font-size: 13px;
+  color: #888;
+}
+
+.admin-dev-location-summary {
+  flex: 0 0 auto;
+
+  padding: 11px 16px 9px;
+
+  border-bottom: 1px solid #eee;
+}
+
+.admin-dev-location-summary-main {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+
+  flex-wrap: wrap;
+
+  font-size: 14px;
+}
+
+.admin-dev-location-summary-main > div {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.admin-dev-location-summary-label {
+  color: #888;
+  font-size: 11px;
+}
+
+.admin-dev-location-summary-time {
+  margin-top: 7px;
+
+  font-family: monospace;
+  font-size: 11px;
+  color: #555;
+}
+
+.admin-dev-location-summary-received {
+  margin-top: 2px;
+
+  font-family: monospace;
+  font-size: 10px;
+  color: #999;
+}
+
+
+/* Map */
+
+.admin-dev-location-map {
+  height: 330px;
+  min-height: 240px;
+
+  flex: 0 0 auto;
+
+  border-bottom: 1px solid #ddd;
+}
+
+.admin-dev-location-map-note {
+  margin-top: 6px;
+  font-size: 10px;
+  color: #999;
+}
+
+.admin-dev-location-sequence-marker {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 999px;
+
+  background: #34a853;
+  border: 3px solid #137333;
+
+  color: #fff;
+
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.28);
+
+  transform: translateY(-4px);
+}
+
+/* Latest/current position */
+.admin-dev-location-sequence-marker.is-latest {
+  background: #f9ab00;
+  border-color: #c57b00;
+
+  color: #202124;
+
+  min-width: 34px;
+  height: 34px;
+
+  font-size: 12px;
+
+  box-shadow:
+    0 2px 7px rgba(0, 0, 0, 0.32);
+}
+
+
+/* History */
+
+.admin-dev-location-history-header {
+  flex: 0 0 auto;
+
+  display: flex;
+  justify-content: space-between;
+
+  padding: 9px 14px;
+
+  font-size: 12px;
+  font-weight: 700;
+  color: #555;
+
+  border-bottom: 1px solid #eee;
+}
+
+.admin-dev-location-history {
+  flex: 1 1 auto;
+
+  min-height: 130px;
+
+  overflow-y: auto;
+
+  scrollbar-width: thin;
+}
+
+.admin-dev-location-history-row {
+  display: grid;
+
+  grid-template-columns:
+    42px
+    minmax(0, 1fr)
+    80px;
+
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 7px 14px;
+
+  border-bottom: 1px solid #f2f2f2;
+}
+
+.admin-dev-location-history-row:hover {
+  background: #fafafa;
+}
+
+.admin-dev-location-history-index {
+  font-size: 10px;
+  color: #aaa;
+
+  font-family: monospace;
+}
+
+.admin-dev-location-history-coordinates {
+  min-width: 0;
+
+  font-size: 12px;
+  color: #333;
+
+  font-family: monospace;
+}
+
+.admin-dev-location-history-time {
+  margin-top: 2px;
+
+  font-size: 9px;
+  color: #999;
+}
+
+.admin-dev-location-history-accuracy {
+  text-align: right;
+
+  font-size: 11px;
+  color: #777;
+
+  white-space: nowrap;
+}
+
+
+@media (max-width: 600px) {
+  .admin-dev-location-modal-backdrop {
+    padding: 8px;
+  }
+
+  .admin-dev-location-modal {
+    width: 96vw;
+    max-height: 94vh;
+  }
+
+  .admin-dev-location-summary-main {
+    gap: 8px 16px;
+  }
+
+  .admin-dev-location-map {
+    height: 260px;
+    min-height: 220px;
+  }
+
+  .admin-dev-location-history-row {
+    grid-template-columns:
+      28px
+      minmax(0, 1fr)
+      65px;
+
+    padding:
+      7px 9px;
+
+    gap: 5px;
+  }
+
+  .admin-dev-location-history-coordinates {
+    font-size: 10px;
+  }
+
+  .admin-dev-location-history-accuracy {
+    font-size: 9px;
+  }
+}
 

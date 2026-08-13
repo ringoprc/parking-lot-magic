@@ -7,6 +7,7 @@ import { Spinner } from "reactstrap";
 import AdminDeviceLinkModal from "./AdminDeviceLinkModal";
 import AdminDevicePromptModal from "./AdminDevicePromptModal";
 import AdminDeviceBatteryModal from "./AdminDeviceBatteryModal";
+import AdminDeviceLocationModal from "./AdminDeviceLocationModal";
 
 import { 
   formatTime, 
@@ -17,7 +18,7 @@ import {
 import { getEffectiveChargingStatus } from "../../utils/deviceBattery";
 
 import { MdOutlineArrowBackIos } from "react-icons/md";
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
+import { FaChevronLeft, FaChevronRight, FaLocationDot } from "react-icons/fa6";
 import { FaCheck, FaPencilAlt, FaLink, FaBolt } from "react-icons/fa";
 import { 
   PiBatteryVerticalFull,
@@ -215,6 +216,8 @@ export default function AdminDevicesPage({ apiBase }) {
   const [promptModalDevice, setPromptModalDevice] = useState(null);
   // battery modal
   const [batteryModalDeviceId, setBatteryModalDeviceId] = useState(null);
+  // location modal
+  const [locationModalDeviceId, setLocationModalDeviceId] = useState(null);
 
   //-----------------------------
   // Set Admin Key
@@ -1275,7 +1278,7 @@ export default function AdminDevicesPage({ apiBase }) {
                 lastIsCharging: isChargingRaw,
                 lastChargingAt,
               });
-                
+
               const createdAt = r?.phone?.createdAt ?? null;
               const createdAgo = createdAt ? minSecAgo(new Date(createdAt)) : null;
               const uploadCountSinceBoot = r?.phone?.uploadCountSinceBoot ?? null;
@@ -1464,6 +1467,16 @@ export default function AdminDevicesPage({ apiBase }) {
                       >
                         <FaLink size={13} />
                       </button>
+                      <button
+                        type="button"
+                        title="查看裝置位置"
+                        onClick={() =>
+                          setLocationModalDeviceId(deviceId)
+                        }
+                        className="admin-dev-card-action-btn location"
+                      >
+                        <FaLocationDot size={13} />
+                      </button>
                     </div>
 
                     <div className="admin-dev-lotmeta">
@@ -1606,6 +1619,16 @@ export default function AdminDevicesPage({ apiBase }) {
         isOpen={!!batteryModalRow}
         device={batteryModalRow}
         onClose={() => setBatteryModalDeviceId(null)}
+      />
+
+      <AdminDeviceLocationModal
+        isOpen={!!locationModalDeviceId}
+        deviceId={locationModalDeviceId}
+        apiBase={apiBase}
+        adminKey={adminKey}
+        onClose={() =>
+          setLocationModalDeviceId(null)
+        }
       />
 
       <AdminDeviceLinkModal

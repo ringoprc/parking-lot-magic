@@ -510,7 +510,16 @@ export default function App() {
   let page = null;
   if (showOcr) page = <DigitOcrTest />;
   else if (showAdminLots) page = <AdminLotsPage apiBase={apiBase} />;
-  else if (showDevices) page = <AdminDevicesPage apiBase={apiBase} />;
+  else if (showDevices) {
+    page = (
+      <APIProvider
+        apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+        libraries={["places", "marker"]}
+      >
+        <AdminDevicesPage apiBase={apiBase} />
+      </APIProvider>
+    );
+  }
   else if (showLinkage) page = <AdminLinkagePage apiBase={apiBase} />;
   else if (showAdsManage) page = <AdminLotAdsPage apiBase={apiBase} />;
   else if (showWorkers) page = <AdminWorkerStatusPage apiBase={apiBase} />;

@@ -13,24 +13,14 @@ import {
 
 import lotImage from "../assets/lots_demo_img.jpg";
 import sponsorImage from "../assets/sponser_demo_img.jpeg";
+import {
+  getAvailabilityDisplayValue,
+  getAvailabilityTextColor,
+} from "../utils/availability";
 
 import "./ParkingLotInfoWindow.css";
 
 const NAV_AD_SECONDS = 3;
-
-function toVacancyNum(v) {
-  if (v === "" || v == null) return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
-
-function getVacancyTextColor(v) {
-  const n = toVacancyNum(v);
-  if (n == null) return "#b6b6b6";
-  if (n === 0) return "#C5221F";
-  if (n <= 5) return "#C58F00";
-  return "#0F7B2E";
-}
 
 function openGoogleNavFromLot(lot) {
   if (!lot) return;
@@ -407,7 +397,7 @@ export default function ParkingLotInfoWindow({
                   style={{
                     fontSize: "14px",
                     fontWeight: "700",
-                    color: getVacancyTextColor(active.vacancy),
+                    color: getAvailabilityTextColor(active),
                     marginBottom: "6px",
                     flexShrink: "0",
                     marginTop: "4px"
@@ -415,7 +405,7 @@ export default function ParkingLotInfoWindow({
                 >
                   空位：
                   <span>
-                    {active.vacancy ?? "未知"}
+                    {getAvailabilityDisplayValue(active)}
                   </span>
                 </div>
               </div>
@@ -597,4 +587,3 @@ export default function ParkingLotInfoWindow({
     </>
   );
 }
-

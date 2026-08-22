@@ -1,5 +1,5 @@
 // frontend/src/components/ParkingMap.jsx
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Map,
   AdvancedMarker,
@@ -12,13 +12,11 @@ import { TiLocationArrow } from "react-icons/ti";
 
 import ParkingLotInfoWindow from "./ParkingLotInfoWindow";
 import LotBottomSheet from "./LotBottomSheet";
-
-function getPinColorsFromVacancy(v) {
-  if (v == null) return { bg: "#9AA0A6", border: "#5F6368", glyph: "#FFFFFF" }; // unknown = 灰
-  if (v === 0) return { bg: "#EA4335", border: "#C5221F", glyph: "#FFFFFF" }; // 0 = 紅
-  if (v <= 5) return { bg: "#FBBC04", border: "#C58F00", glyph: "#202124" };  // 少 = 黃
-  return { bg: "#34A853", border: "#0F7B2E", glyph: "#FFFFFF" };              // 多 = 綠
-}
+import {
+  getAvailabilityLongLabel,
+  getAvailabilityPinPresentation,
+  isBooleanAvailability,
+} from "../utils/availability";
 
 function getOffsetCenterLatLng(map, lat, lng, offsetYPx) {
   const g = window.google;
@@ -134,12 +132,17 @@ function FitAndFly({ flyToRef }) {
   return null;
 }
 
-function VacancyPin({ vacancy, active, pulse }) {
-  const { bg, border, glyph } = getPinColorsFromVacancy(vacancy);
+function VacancyPin({ lot, pulse }) {
+  const { bg, border, glyph, label } = getAvailabilityPinPresentation(lot);
 
   return (
     <div
-      className={"vl-pin vl-pin--num " + (pulse ? "pulse" : "")}
+      className={
+        "vl-pin vl-pin--num " +
+        (isBooleanAvailability(lot) ? "vl-pin--boolean " : "") +
+        (pulse ? "pulse" : "")
+      }
+      aria-label={`${lot?.name || "停車場"}：${getAvailabilityLongLabel(lot)}`}
       style={{
         "--pin-bg": bg,
         borderColor: border,
@@ -149,26 +152,60 @@ function VacancyPin({ vacancy, active, pulse }) {
       {pulse ? (
         <>
           <div className="vl-pin-pulse" />
-          <div className="vl-pin-num">{vacancy ?? "?"}</div>
+          <div className="vl-pin-num">{label}</div>
         </>
       ) : (
-        <div className="vl-pin-num">{vacancy ?? "?"}</div>
+        <div className="vl-pin-num">{label}</div>
       )}
     </div>
 
   );
 }
 
+const ParkingMarker = memo(function ParkingMarker({
+  lot,
+  pulse,
+  setActive,
+  triggerLotPulse,
+  flyToRef,
+  isMobile,
+}) {
+  const map = useMap();
 
-const MAX_RENDERED_MARKERS_MOBILE = 150;
-const MAX_RENDERED_MARKERS_DESKTOP = 250;
+  // Keep the LatLngLiteral identity stable while the viewport changes. Passing a
+  // fresh object makes AdvancedMarker assign `marker.position` again, which can
+  // briefly repaint every marker after an otherwise harmless map pan.
+  const position = useMemo(
+    () => ({ lat: lot.lat, lng: lot.lng }),
+    [lot.lat, lot.lng]
+  );
 
-const VIEWPORT_PADDING_RATIO = 0.15;
+  const handleClick = useCallback(() => {
+    setActive?.(lot);
+    triggerLotPulse?.(lot.lotId);
 
-function isLngInside(lng, west, east) {
-  // Normal case. The second branch also supports bounds crossing the date line.
-  return west <= east ? lng >= west && lng <= east : lng >= west || lng <= east;
-}
+    const zRaw = map?.getZoom?.();
+    const curZ = Number.isFinite(zRaw) ? zRaw : null;
+    const shouldZoomIn = curZ == null || curZ < 15;
+
+    const z = curZ ?? 16;
+    const baseOffset = 0.003;
+    const offset = baseOffset * Math.pow(curZ < 16 ? 1 : 2, 16 - z);
+    const flyToOffsetZoom = isMobile ? -offset : offset;
+
+    flyToRef.current?.({
+      lat: lot.lat + flyToOffsetZoom,
+      lng: lot.lng,
+      ...(shouldZoomIn ? { zoom: 16 } : {}),
+    });
+  }, [flyToRef, isMobile, lot, map, setActive, triggerLotPulse]);
+
+  return (
+    <AdvancedMarker position={position} onClick={handleClick}>
+      <VacancyPin lot={lot} pulse={pulse} />
+    </AdvancedMarker>
+  );
+});
 
 function VisibleParkingMarkers({
   lots,
@@ -181,11 +218,6 @@ function VisibleParkingMarkers({
   onViewportChange,
 }) {
   const map = useMap();
-  const [viewport, setViewport] = useState(null);
-
-  const markerLimit = isMobile
-    ? MAX_RENDERED_MARKERS_MOBILE
-    : MAX_RENDERED_MARKERS_DESKTOP;
 
   useEffect(() => {
     if (!map) return;
@@ -209,7 +241,6 @@ function VisibleParkingMarkers({
         zoom,
       };
 
-      setViewport(nextViewport);
       onViewportChange?.(nextViewport);
     };
 
@@ -223,85 +254,43 @@ function VisibleParkingMarkers({
     };
   }, [map, onViewportChange]);
 
-  const visibleLots = useMemo(() => {
-    if (!viewport) return active ? [active] : [];
-
-    const latPadding =
-      Math.abs(viewport.north - viewport.south) * VIEWPORT_PADDING_RATIO;
-    const lngPadding =
-      Math.abs(viewport.east - viewport.west) * VIEWPORT_PADDING_RATIO;
-
-    const north = viewport.north + latPadding;
-    const south = viewport.south - latPadding;
-    const east = viewport.east + lngPadding;
-    const west = viewport.west - lngPadding;
-
-    const inView = (lots || []).filter((lot) => {
-      if (!Number.isFinite(lot.lat) || !Number.isFinite(lot.lng)) return false;
-      return (
-        lot.lat >= south &&
-        lot.lat <= north &&
-        isLngInside(lot.lng, west, east)
-      );
-    });
-
-    // At a wide zoom, even the viewport can contain hundreds of lots.
-    // Keep the closest markers to the camera center instead of mounting all DOM nodes.
-    if (inView.length > markerLimit) {
-      inView.sort((a, b) => {
-        const aLat = a.lat - viewport.centerLat;
-        const aLng = a.lng - viewport.centerLng;
-        const bLat = b.lat - viewport.centerLat;
-        const bLng = b.lng - viewport.centerLng;
-        return aLat * aLat + aLng * aLng - (bLat * bLat + bLng * bLng);
-      });
-      inView.length = markerLimit;
-    }
+  const markerLots = useMemo(() => {
+    const nextLots = [...(lots || [])];
 
     if (
       active?.lotId &&
       Number.isFinite(active.lat) &&
       Number.isFinite(active.lng) &&
-      !inView.some((lot) => lot.lotId === active.lotId)
+      !nextLots.some((lot) => lot.lotId === active.lotId)
     ) {
-      if (inView.length >= markerLimit) inView.pop();
-      inView.push(active);
+      nextLots.push(active);
     }
 
-    return inView;
-  }, [lots, viewport, active, markerLimit]);
+    return nextLots;
+  }, [active, lots]);
 
-  return visibleLots.map((lot) => (
-    <AdvancedMarker
-      key={lot.lotId}
-      position={{ lat: lot.lat, lng: lot.lng }}
-      onClick={() => {
-        setActive?.(lot);
-        triggerLotPulse?.(lot.lotId);
-
-        const zRaw = map?.getZoom?.();
-        const curZ = Number.isFinite(zRaw) ? zRaw : null;
-        const shouldZoomIn = curZ == null || curZ < 15;
-
-        const z = curZ ?? 16;
-        const baseOffset = 0.003;
-        const offset = baseOffset * Math.pow(curZ < 16 ? 1 : 2, 16 - z);
-        const flyToOffsetZoom = isMobile ? -offset : offset;
-
-        flyToRef.current?.({
-          lat: lot.lat + flyToOffsetZoom,
-          lng: lot.lng,
-          ...(shouldZoomIn ? { zoom: 16 } : {}),
-        });
-      }}
-    >
-      <VacancyPin
-        vacancy={lot.vacancy}
-        active={active?.lotId === lot.lotId}
-        pulse={lot.lotId === pulseLotId}
-      />
-    </AdvancedMarker>
-  ));
+  return useMemo(
+    () =>
+      markerLots.map((lot) => (
+        <ParkingMarker
+          key={lot.lotId}
+          lot={lot}
+          pulse={lot.lotId === pulseLotId}
+          setActive={setActive}
+          triggerLotPulse={triggerLotPulse}
+          flyToRef={flyToRef}
+          isMobile={isMobile}
+        />
+      )),
+    [
+      flyToRef,
+      isMobile,
+      pulseLotId,
+      markerLots,
+      setActive,
+      triggerLotPulse,
+    ]
+  );
 }
 
 
@@ -425,5 +414,3 @@ export default function ParkingMap({
     </div>
   );
 }
-
-

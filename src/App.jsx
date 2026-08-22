@@ -1,5 +1,5 @@
 // frontend/src/App.jsx
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLots } from "./hooks/useLots";
 import { haversineMeters } from "./utils/geo";
 
@@ -338,14 +338,14 @@ export default function App() {
   const [pulseLotId, setPulseLotId] = useState(null);
   const pulseTimerRef = useRef(null);
 
-  function triggerLotPulse(lotId, ms = 9999999) {
+  const triggerLotPulse = useCallback((lotId, ms = 9999999) => {
     setPulseLotId(lotId);
     if (pulseTimerRef.current) window.clearTimeout(pulseTimerRef.current);
     pulseTimerRef.current = window.setTimeout(() => {
       setPulseLotId(null);
       pulseTimerRef.current = null;
     }, ms);
-  }
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -745,5 +745,4 @@ export default function App() {
     </>
   );
 }
-
 

@@ -889,6 +889,10 @@ div .gm-style-iw {
   line-height: 1;
 }
 
+.vl-pin--boolean .vl-pin-num {
+  font-size: 14px;
+}
+
 /* inner dot (optional) */
 .vl-pin-dot {
   position: absolute;
@@ -1213,4 +1217,3 @@ div .gm-style-iw {
     font-size: 11px;
   }
 }
-

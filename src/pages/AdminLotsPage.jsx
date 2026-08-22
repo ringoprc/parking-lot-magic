@@ -118,6 +118,8 @@ export default function AdminLotsPage({ apiBase }) {
         const parts = toLocalParts(r.lastUpdated);
         return {
           ...r,
+          availabilityMode: r.availabilityMode ?? "count",
+          hasAvailableSpace: r.hasAvailableSpace ?? null,
           lat: r.location?.coordinates?.[1] ?? "",
           lng: r.location?.coordinates?.[0] ?? "",
           yyyy: parts.yyyy,
@@ -154,6 +156,9 @@ export default function AdminLotsPage({ apiBase }) {
     district: "",
     lat: "",
     lng: "",
+    availabilityMode: "count",
+    vacancy: "",
+    hasAvailableSpace: null,
     isActive: true,
     note: "",
   });
@@ -166,6 +171,9 @@ export default function AdminLotsPage({ apiBase }) {
       district: district === "all" ? "" : district,
       lat: "",
       lng: "",
+      availabilityMode: "count",
+      vacancy: "",
+      hasAvailableSpace: null,
       isActive: true,
       note: "",
     });
@@ -211,6 +219,9 @@ export default function AdminLotsPage({ apiBase }) {
       isActive: !!addForm.isActive,
       lat: addForm.lat,
       lng: addForm.lng,
+      availabilityMode: addForm.availabilityMode,
+      vacancy: addForm.vacancy,
+      hasAvailableSpace: addForm.hasAvailableSpace,
     };
 
     const res = await fetch(`${apiBase}/api/admin/lots`, {
@@ -353,7 +364,9 @@ export default function AdminLotsPage({ apiBase }) {
         district: r.district,
         lat: r.location?.coordinates?.[1],
         lng: r.location?.coordinates?.[0],
+        availabilityMode: r.availabilityMode ?? "count",
         vacancy: r.vacancy,
+        hasAvailableSpace: r.hasAvailableSpace,
         status: r.status,
         lastUpdated: r.lastUpdated,
         note: r.note,
@@ -389,7 +402,9 @@ export default function AdminLotsPage({ apiBase }) {
       r.district,
       r.lat,
       r.lng,
+      r.availabilityMode ?? "count",
       r.vacancy ?? "",
+      r.hasAvailableSpace ?? "",
       r.yyyy ?? "",
       r.mm ?? "",
       r.dd ?? "",
@@ -432,7 +447,9 @@ export default function AdminLotsPage({ apiBase }) {
     120, // district
     140, // lat
     140, // lng
+    120, // availabilityMode
     100, // vacancy
+    120, // hasAvailableSpace
     70,  // yyyy
     60,  // mm
     60,  // dd
@@ -602,7 +619,7 @@ export default function AdminLotsPage({ apiBase }) {
           }}>
             <tr>
               {[
-                "複製","lotId","停車場名稱","地址","區域","lat 緯度","lng 經度","空位數",
+                "複製","lotId","停車場名稱","地址","區域","lat 緯度","lng 經度","空位類型","空位數","是否有空位",
                 "年","月","日","時","分","狀態","備註","顯示於地圖", "刪除"
               ].map((h, idx) => (
                 <th key={h} 
@@ -705,13 +722,42 @@ export default function AdminLotsPage({ apiBase }) {
                     />
                   </td>
 
+                  <td style={cellStyle(isDirty, "#fff7d6")}>
+                    <select
+                      className="admin-lot-td-select"
+                      value={r.availabilityMode || "count"}
+                      onChange={(e) => updateCell(r._id, "availabilityMode", e.target.value)}
+                    >
+                      <option value="count">數量</option>
+                      <option value="boolean">有／無</option>
+                    </select>
+                  </td>
+
                   {/* vacancy (editable: light yellow like sheet) */}
                   <td style={cellStyle(isDirty, "#fff7d6")}>
                     <input className="admin-lot-td-input" 
                       value={r.vacancy ?? ""} 
                       onChange={(e) => updateCell(r._id, "vacancy", e.target.value)} 
+                      disabled={r.availabilityMode === "boolean"}
                       style={{ width: 70 }} 
                     />
+                  </td>
+
+                  <td style={cellStyle(isDirty, "#fff7d6")}>
+                    <select
+                      className="admin-lot-td-select"
+                      value={r.hasAvailableSpace == null ? "" : String(r.hasAvailableSpace)}
+                      onChange={(e) => updateCell(
+                        r._id,
+                        "hasAvailableSpace",
+                        e.target.value === "" ? null : e.target.value === "true"
+                      )}
+                      disabled={r.availabilityMode !== "boolean"}
+                    >
+                      <option value="">未知</option>
+                      <option value="true">有</option>
+                      <option value="false">無</option>
+                    </select>
                   </td>
 
                   {["yyyy","mm","dd","hh","min"].map((k) => (
@@ -892,6 +938,46 @@ export default function AdminLotsPage({ apiBase }) {
                   />
                 </label>
 
+                <label style={{ display: "grid", gap: 6 }}>
+                  <div style={{ fontSize: 12, color: "#666" }}>空位類型</div>
+                  <select
+                    value={addForm.availabilityMode}
+                    onChange={(e) => setAddForm((p) => ({ ...p, availabilityMode: e.target.value }))}
+                    style={{ padding: "8px 10px", border: "1px solid #ddd", borderRadius: 8 }}
+                  >
+                    <option value="count">數量</option>
+                    <option value="boolean">有／無</option>
+                  </select>
+                </label>
+
+                {addForm.availabilityMode === "count" ? (
+                  <label style={{ display: "grid", gap: 6 }}>
+                    <div style={{ fontSize: 12, color: "#666" }}>空位數</div>
+                    <input
+                      value={addForm.vacancy}
+                      onChange={(e) => setAddForm((p) => ({ ...p, vacancy: e.target.value }))}
+                      inputMode="numeric"
+                      style={{ padding: "8px 10px", border: "1px solid #ddd", borderRadius: 8 }}
+                    />
+                  </label>
+                ) : (
+                  <label style={{ display: "grid", gap: 6 }}>
+                    <div style={{ fontSize: 12, color: "#666" }}>是否有空位</div>
+                    <select
+                      value={addForm.hasAvailableSpace == null ? "" : String(addForm.hasAvailableSpace)}
+                      onChange={(e) => setAddForm((p) => ({
+                        ...p,
+                        hasAvailableSpace: e.target.value === "" ? null : e.target.value === "true",
+                      }))}
+                      style={{ padding: "8px 10px", border: "1px solid #ddd", borderRadius: 8 }}
+                    >
+                      <option value="">未知</option>
+                      <option value="true">有</option>
+                      <option value="false">無</option>
+                    </select>
+                  </label>
+                )}
+
                 <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
                   <input
                     type="checkbox"
@@ -933,5 +1019,4 @@ export default function AdminLotsPage({ apiBase }) {
     </div>
   );
 }
-
 

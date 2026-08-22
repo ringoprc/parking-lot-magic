@@ -1,18 +1,9 @@
 // frontend/src/components/LotsList.jsx
 import { minutesAgo } from "../utils/time";
-function toVacancyNum(v) {
-  if (v === "" || v == null) return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
-
-function getVacancyTextColor(v) {
-  const n = toVacancyNum(v);
-  if (n == null) return "#b6b6b6";   // unknown -> gray (pin border)
-  if (n === 0) return "#C5221F";     // 0 -> red (pin border)
-  if (n <= 5) return "#C58F00";      // low -> yellow (pin border)
-  return "#0F7B2E";                  // ok -> green (pin border)
-}
+import {
+  getAvailabilityDisplayValue,
+  getAvailabilityTextColor,
+} from "../utils/availability";
 
 export default function LotsList({ lots, active, onSelect, showDistance, formatDist, focus }) {
   return (
@@ -31,7 +22,7 @@ export default function LotsList({ lots, active, onSelect, showDistance, formatD
                   <span>{l.name}</span>
                 </div>
                 <span className="lot-btn-sub-vacancy-count" 
-                  style={{ color: getVacancyTextColor(l.vacancy) }}
+                  style={{ color: getAvailabilityTextColor(l) }}
                 >
                   <span
                     style={{
@@ -42,7 +33,7 @@ export default function LotsList({ lots, active, onSelect, showDistance, formatD
                   >
                   [空位：
                   <b>
-                    {l.vacancy ?? "未知"}
+                    {getAvailabilityDisplayValue(l)}
                   </b>
                   ]
                   </span>
@@ -73,6 +64,5 @@ export default function LotsList({ lots, active, onSelect, showDistance, formatD
     </>
   );
 }
-
 
 

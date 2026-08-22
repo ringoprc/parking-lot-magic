@@ -12,24 +12,14 @@ import { MdDirectionsWalk, MdContentCopy } from "react-icons/md";
 
 import lotImage from "../assets/lots_demo_img.jpg";
 import sponsorImage from "../assets/sponser_demo_img.jpeg";
+import {
+  getAvailabilityDisplayValue,
+  getAvailabilityTextColor,
+} from "../utils/availability";
 
 import "./LotBottomSheet.css";
 
 const NAV_AD_SECONDS = 3;
-
-function toVacancyNum(v) {
-  if (v === "" || v == null) return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
-
-function getVacancyTextColor(v) {
-  const n = toVacancyNum(v);
-  if (n == null) return "#b6b6b6";   // unknown -> gray (pin border)
-  if (n === 0) return "#C5221F";     // 0 -> red (pin border)
-  if (n <= 5) return "#C58F00";      // low -> yellow (pin border)
-  return "#0F7B2E";                  // ok -> green (pin border)
-}
 
 function getGoogleNavUrl(active) {
   if (!active) return "";
@@ -399,10 +389,10 @@ export default function LotBottomSheet({
                   {/* 空位：10 */}
                   <div className={"vl-sheet-vac "
                     + (active.name.length > 9 ? "is-long-name" : "")}
-                    style={{ color: getVacancyTextColor(active.vacancy) }}
+                    style={{ color: getAvailabilityTextColor(active) }}
                   >
                     空位：
-                    <span className="vl-sheet-vacNum">{active.vacancy ?? "未知"}</span>
+                    <span className="vl-sheet-vacNum">{getAvailabilityDisplayValue(active)}</span>
                   </div>
                 </div>
                 {/* 臺北市中山區林森北路538號 */}

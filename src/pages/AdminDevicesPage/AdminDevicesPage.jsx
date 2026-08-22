@@ -241,7 +241,7 @@ export default function AdminDevicesPage({ apiBase }) {
   const inFlightRef = useRef(false);
 
   // sort
-  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortBy, setSortBy] = useState("sessionStartedAt");
   const [sortDir, setSortDir] = useState("desc");
 
   // Device visibility based on the latest image upload time.
@@ -1146,8 +1146,8 @@ export default function AdminDevicesPage({ apiBase }) {
             });
           }}
         >
-          <option value="createdAt_desc">開始時間：近到遠</option>
-          <option value="createdAt_asc">開始時間：遠到近</option>
+          <option value="sessionStartedAt_desc">開始時間：近到遠</option>
+          <option value="sessionStartedAt_asc">開始時間：遠到近</option>
           <option value="lastUploadAt_desc">圖像時間：近到遠</option>
           <option value="lastUploadAt_asc">圖像時間：遠到近</option>
           <option value="uploadCountSinceBoot_desc">開機後上傳次數：多到少</option>
@@ -1481,8 +1481,13 @@ export default function AdminDevicesPage({ apiBase }) {
                 lastChargingAt,
               });
 
+              const sessionStartedAt = r?.phone?.sessionStartedAt ?? null;
               const createdAt = r?.phone?.createdAt ?? null;
-              const createdAgo = createdAt ? minSecAgo(new Date(createdAt)) : null;
+              const effectiveSessionStartedAt = sessionStartedAt ?? createdAt;
+              const isSessionStartedAtFallback = !sessionStartedAt && !!createdAt;
+              const sessionStartedAgo = effectiveSessionStartedAt
+                ? minSecAgo(new Date(effectiveSessionStartedAt))
+                : null;
               const uploadCountSinceBoot = r?.phone?.uploadCountSinceBoot ?? null;
 
               const exposureMin = finiteNumberOrDefault(
@@ -1713,10 +1718,12 @@ export default function AdminDevicesPage({ apiBase }) {
                     </div>
 
                     <div className="admin-dev-lotmeta">
-                      <div>
-                        <span style={{ fontSize: "8px", color: r?.lot?.name ? "#333" : "#999", marginRight: "2px" }}>
-                          [{r?.lot?.lotId ? r.lot.lotId : "-"}]{" "}
-                        </span>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center"
+                        }}
+                      >
                         {r?.lot ? (
                           <span
                             className={`admin-dev-availability-mode-badge ${isBooleanMode ? "is-boolean" : "is-count"}`}
@@ -1724,6 +1731,9 @@ export default function AdminDevicesPage({ apiBase }) {
                             {isBooleanMode ? "有／無" : "數量"}
                           </span>
                         ) : null}
+                        <span style={{ fontSize: "8px", color: r?.lot?.name ? "#333" : "#999", marginRight: "2px" }}>
+                          [{r?.lot?.lotId ? r.lot.lotId : "-"}]{" "}
+                        </span>
                         <span style={{ fontSize: "8px", color: r?.lot?.name ? "#333" : "#999" }}>
                           裝置 ID：{deviceId}
                         </span>
@@ -1744,10 +1754,11 @@ export default function AdminDevicesPage({ apiBase }) {
                       </span>
                       <span className="admin-dev-card-confirm-time"
                       style={{ fontSize: "8px", marginTop: "0.5px", color: confirmedAtColor }}>
-                        開始時間：{createdAt ? formatTimeYYYYMMDD_HHMMSS(new Date(createdAt)) : "—"}
-                        {createdAgo ? (
+                        開始時間：{effectiveSessionStartedAt ? formatTimeYYYYMMDD_HHMMSS(new Date(effectiveSessionStartedAt)) : "—"}
+                        {isSessionStartedAtFallback ? " (fallback)" : ""}
+                        {sessionStartedAgo ? (
                           <span>
-                            （{String(createdAgo.min).padStart(2, "0")} 分 {String(createdAgo.sec).padStart(2, "0")} 秒前）
+                            （{String(sessionStartedAgo.min).padStart(2, "0")} 分 {String(sessionStartedAgo.sec).padStart(2, "0")} 秒前）
                           </span>
                         ) : null}
                       </span>

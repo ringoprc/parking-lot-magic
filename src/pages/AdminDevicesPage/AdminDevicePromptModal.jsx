@@ -12,8 +12,17 @@ const DEFAULT_VLM_PROMPT = `請判讀這張停車場 LED 剩餘車位看板照�
 4. 如果 LED 反光、模糊、遮蔽或無法確定，請回傳 unknown，不要猜測。
 5. 請只回傳 JSON，不要加入其他說明文字。
 
-判讀成功時，輸出格式：{"status": "ok", "vacancy": "ooo"}，比如 {"vacancy": "000"}、{"vacancy": "128"}, 或 {"vacancy": "003"}
-判讀失敗時，輸出格式：{"status": "unknown", "vacancy" "null"}
+判讀成功時，輸出格式：{"status": "ok", "vacancy": "ooo"}，比如 {"status": "ok", "vacancy": "000"}、{"status": "ok", "vacancy": "128"}, 或 {"status": "ok", "vacancy": "003"}
+判讀失敗時，輸出格式：{"status": "unknown", "vacancy": null}
+`;
+
+const DEFAULT_BOOLEAN_VLM_PROMPT = `請判讀這張停車場入口、告示牌或現場照片，只判斷目前是否至少有一個可停車空位。
+
+請根據畫面中明確的文字、燈號、告示牌或現場配置判斷；若三角錐等物件的意義不明確，請回傳 unknown，不要猜測。請只回傳 JSON。
+
+判讀有空位時：{"status":"ok","hasAvailableSpace":true}
+判讀無空位時：{"status":"ok","hasAvailableSpace":false}
+判讀失敗時：{"status":"unknown","hasAvailableSpace":null}
 `;
 
 export default function AdminDevicePromptModal({
@@ -30,6 +39,13 @@ export default function AdminDevicePromptModal({
   const currentSavedPrompt = useMemo(() => {
     return String(device?.vlmPromptOverride ?? "");
   }, [device?.vlmPromptOverride]);
+
+  const defaultPrompt = useMemo(() => {
+    const fallback = device?.lot?.availabilityMode === "boolean"
+      ? DEFAULT_BOOLEAN_VLM_PROMPT
+      : DEFAULT_VLM_PROMPT;
+    return String(device?.defaultVlmPrompt || fallback);
+  }, [device?.defaultVlmPrompt, device?.lot?.availabilityMode]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -96,7 +112,10 @@ export default function AdminDevicePromptModal({
 
             <div style={{ width: "50%" }}>
               <div className="admin-dev-prompt-label">目前停車場</div>
-              <div className="admin-dev-prompt-deviceid">{device?.lot?.name || "尚未連結"}</div>
+              <div className="admin-dev-prompt-deviceid">
+                {device?.lot?.name || "尚未連結"}
+                {device?.lot ? `（${device.lot.availabilityMode === "boolean" ? "有／無模式" : "數量模式"}）` : ""}
+              </div>
             </div>
           </div>
 
@@ -116,7 +135,7 @@ export default function AdminDevicePromptModal({
               <button
                 type="button"
                 className="admin-dev-btn admin-dev-default-prompt-btn"
-                onClick={() => setPromptText(DEFAULT_VLM_PROMPT)}
+                onClick={() => setPromptText(defaultPrompt)}
               >
                 代入預設提示詞
               </button>
@@ -133,7 +152,7 @@ export default function AdminDevicePromptModal({
                 resize: "none",
                 padding: "5px 9px"
               }}
-              placeholder={DEFAULT_VLM_PROMPT}
+              placeholder={defaultPrompt}
             />
           </div>
 
@@ -168,4 +187,3 @@ export default function AdminDevicePromptModal({
     </Modal>
   );
 }
-

@@ -17,6 +17,7 @@ import {
   minSecAgo 
 } from "../../utils/time";
 import { getEffectiveChargingStatus } from "../../utils/deviceBattery";
+import { getAvailabilityDisplayValue } from "../../utils/availability";
 
 import { MdOutlineArrowBackIos } from "react-icons/md";
 import { FaChevronLeft, FaChevronRight, FaLocationDot } from "react-icons/fa6";
@@ -48,6 +49,7 @@ const SHUTTER_OPTIONS = [
 ];
 const VACANCY_MODE_MANUAL = "manual_confirm";
 const VACANCY_MODE_AUTO = "auto_apply_ai";
+const AVAILABILITY_MODE_BOOLEAN = "boolean";
 const DEVICE_ACTIVITY_ALL = "all";
 const DEVICE_ACTIVITY_RECENT = "recent";
 const DEVICE_ACTIVITY_INACTIVE = "inactive";
@@ -77,6 +79,44 @@ const DEVICE_ACTIVITY_OPTIONS = [
 function toNum(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
+}
+
+function isBooleanAvailabilityLot(lot) {
+  return lot?.availabilityMode === AVAILABILITY_MODE_BOOLEAN;
+}
+
+function getSuggestedAvailability(row) {
+  const lot = row?.lot;
+  const aiResult = row?.phone?.aiLastResult;
+
+  if (isBooleanAvailabilityLot(lot)) {
+    if (
+      aiResult?.status === "ok" &&
+      aiResult?.availabilityMode === AVAILABILITY_MODE_BOOLEAN &&
+      typeof aiResult?.hasAvailableSpace === "boolean"
+    ) {
+      return aiResult.hasAvailableSpace;
+    }
+
+    if (
+      lot?.aiSuggestedAvailabilityMode === AVAILABILITY_MODE_BOOLEAN &&
+      typeof lot?.aiSuggestedHasAvailableSpace === "boolean"
+    ) {
+      return lot.aiSuggestedHasAvailableSpace;
+    }
+
+    return typeof lot?.hasAvailableSpace === "boolean"
+      ? lot.hasAvailableSpace
+      : "";
+  }
+
+  const suggested =
+    aiResult?.status === "ok" &&
+    (aiResult?.availabilityMode == null || aiResult.availabilityMode === "count")
+      ? aiResult?.vacancy
+      : null;
+
+  return suggested ?? lot?.aiSuggestedNextVacancy ?? lot?.vacancy ?? "";
 }
 
 function finiteNumberOrDefault(v, fallback) {
@@ -232,10 +272,10 @@ export default function AdminDevicesPage({ apiBase }) {
 
   const [loading, setLoading] = useState(false);
 
-  // deviceId -> edited vacancy
+  // deviceId -> edited count or boolean availability value
   const [editMap, setEditMap] = useState({});
-  // deviceId -> true means user manually edited this vacancy input
-  const vacancyTouchedRef = useRef({});
+  // deviceId -> true means the user manually changed this availability control
+  const availabilityTouchedRef = useRef({});
   const [confirmAllLoading, setConfirmAllLoading] = useState(false);
 
   const [zoomMap, setZoomMap] = useState({});          // deviceId -> number (1.0..6.0)
@@ -439,19 +479,11 @@ export default function AdminDevicesPage({ apiBase }) {
         const copy = { ...prev };
         for (const r of nextRows) {
           const deviceId = r.deviceId;
-          const suggested =
-            r?.phone?.aiLastResult?.status === "ok"
-              ? r?.phone?.aiLastResult?.vacancy
-              : null;
-
-          const lotSuggested = r?.lot?.aiSuggestedNextVacancy;
-          const current = r?.lot?.vacancy;
-
-          const nextDefault = suggested ?? lotSuggested ?? current ?? "";
+          const nextDefault = getSuggestedAvailability(r);
 
           // If admin has not manually typed in this input,
           // keep syncing the input with latest backend/AI result.
-          if (!vacancyTouchedRef.current[deviceId]) {
+          if (!availabilityTouchedRef.current[deviceId]) {
             copy[deviceId] = nextDefault;
           }
         }
@@ -580,15 +612,26 @@ export default function AdminDevicesPage({ apiBase }) {
   // Confirm Vacancy
   //-----------------------------
 
-  async function confirmVacancy(deviceId) {
+  async function confirmAvailability(deviceId) {
     if (!adminKey) return;
 
-    const vRaw = editMap[deviceId];
-    const v = toNum(vRaw);
+    const row = rows.find((item) => item.deviceId === deviceId);
+    const editedValue = editMap[deviceId];
+    let payload;
 
-    if (v == null || v < 0) {
-      toast.error("vacancy 必須是 >= 0 的數字");
-      return;
+    if (isBooleanAvailabilityLot(row?.lot)) {
+      if (typeof editedValue !== "boolean") {
+        toast.error("請選擇有空位或無空位");
+        return;
+      }
+      payload = { deviceId, hasAvailableSpace: editedValue };
+    } else {
+      const vacancy = toNum(editedValue);
+      if (vacancy == null || vacancy < 0) {
+        toast.error("vacancy 必須是 >= 0 的數字");
+        return;
+      }
+      payload = { deviceId, vacancy };
     }
 
     const res = await fetch(`${apiBase}/api/admin/devices/confirm-vacancy`, {
@@ -597,7 +640,7 @@ export default function AdminDevicesPage({ apiBase }) {
         "Content-Type": "application/json",
         "x-admin-key": adminKey,
       },
-      body: JSON.stringify({ deviceId, vacancy: v }),
+      body: JSON.stringify(payload),
     });
 
     const data = await res.json();
@@ -607,7 +650,7 @@ export default function AdminDevicesPage({ apiBase }) {
     }
 
     toast.success("已更新");
-    delete vacancyTouchedRef.current[deviceId];
+    delete availabilityTouchedRef.current[deviceId];
     await load();
   }
 
@@ -625,10 +668,19 @@ export default function AdminDevicesPage({ apiBase }) {
       for (const r of rows) {
         const deviceId = r.deviceId;
 
-        // only if linked lot + valid number
+        // Only confirm linked lots with a valid value for their configured mode.
         if (!r?.lot?._id) { skipCount++; continue; }
-        const v = toNum(editMap[deviceId]);
-        if (v == null || v < 0) { skipCount++; continue; }
+        const editedValue = editMap[deviceId];
+        let payload;
+
+        if (isBooleanAvailabilityLot(r.lot)) {
+          if (typeof editedValue !== "boolean") { skipCount++; continue; }
+          payload = { deviceId, hasAvailableSpace: editedValue };
+        } else {
+          const vacancy = toNum(editedValue);
+          if (vacancy == null || vacancy < 0) { skipCount++; continue; }
+          payload = { deviceId, vacancy };
+        }
 
         const res = await fetch(`${apiBase}/api/admin/devices/confirm-vacancy`, {
           method: "POST",
@@ -636,7 +688,7 @@ export default function AdminDevicesPage({ apiBase }) {
             "Content-Type": "application/json",
             "x-admin-key": adminKey,
           },
-          body: JSON.stringify({ deviceId, vacancy: v }),
+          body: JSON.stringify(payload),
         });
 
         const data = await res.json();
@@ -1193,8 +1245,8 @@ export default function AdminDevicesPage({ apiBase }) {
           }}
           title={
             vacancyApplyMode === VACANCY_MODE_AUTO
-              ? "目前 AI 辨識完成後會直接更新真實空位數"
-              : "目前 AI 辨識結果需要人工確認後才會更新真實空位數"
+              ? "目前 AI 辨識完成後會直接更新空位結果"
+              : "目前 AI 辨識結果需要人工確認後才會更新空位結果"
           }
         >
           <span className="admin-dev-toggle-track">
@@ -1359,11 +1411,17 @@ export default function AdminDevicesPage({ apiBase }) {
               const aiProcessingEnabled = aiProcessingEnabledMap[deviceId] !== false;
               const aiProcessingSaving = !!aiProcessingSavingMap[deviceId];
 
-              const vacancy = r?.lot?.vacancy ?? "";
-              const aiVacancy =
-                r?.phone?.aiLastResult?.status === "ok"
-                  ? r?.phone?.aiLastResult?.vacancy
-                  : null;
+              const isBooleanMode = isBooleanAvailabilityLot(r?.lot);
+              const currentAvailability = r?.lot
+                ? getAvailabilityDisplayValue(r.lot, "-")
+                : "-";
+              const currentAvailabilityColor = isBooleanMode
+                ? r?.lot?.hasAvailableSpace === true
+                  ? "#0F7B2E"
+                  : r?.lot?.hasAvailableSpace === false
+                    ? "#C5221F"
+                    : "#999"
+                : "#333";
               const edited = editMap[deviceId] ?? "";
               
               // shotAgo color rules: > 60s red, > 30s orange
@@ -1659,6 +1717,13 @@ export default function AdminDevicesPage({ apiBase }) {
                         <span style={{ fontSize: "8px", color: r?.lot?.name ? "#333" : "#999", marginRight: "2px" }}>
                           [{r?.lot?.lotId ? r.lot.lotId : "-"}]{" "}
                         </span>
+                        {r?.lot ? (
+                          <span
+                            className={`admin-dev-availability-mode-badge ${isBooleanMode ? "is-boolean" : "is-count"}`}
+                          >
+                            {isBooleanMode ? "有／無" : "數量"}
+                          </span>
+                        ) : null}
                         <span style={{ fontSize: "8px", color: r?.lot?.name ? "#333" : "#999" }}>
                           裝置 ID：{deviceId}
                         </span>
@@ -1766,25 +1831,52 @@ export default function AdminDevicesPage({ apiBase }) {
 
                     <div className="admin-dev-vrow">
                       <div className="admin-dev-vlabel">
-                        <span style={{ marginRight: "8px" }}>
-                          {vacancy !== "" && vacancy != null ? String(vacancy) : "-"}
+                        <span style={{ marginRight: "8px", color: currentAvailabilityColor }}>
+                          {String(currentAvailability)}
                         </span>
                         <span style={{ paddingBottom: "5px" }}>
                           <GoArrowRight size={18} />
                         </span>
                       </div>
-                      <input
-                        className="admin-dev-vinput"
-                        value={edited ?? ""}
-                        placeholder="-"
-                        onChange={(e) => {
-                          vacancyTouchedRef.current[deviceId] = true;
-                          setEditMap((prev) => ({ ...prev, [deviceId]: e.target.value }));
-                        }}
-                      />
+                      {isBooleanMode ? (
+                        <div className="admin-dev-boolean-input" role="group" aria-label="選擇空位狀態">
+                          <button
+                            type="button"
+                            className={`admin-dev-boolean-option is-available ${edited === true ? "is-selected" : ""}`}
+                            aria-pressed={edited === true}
+                            onClick={() => {
+                              availabilityTouchedRef.current[deviceId] = true;
+                              setEditMap((prev) => ({ ...prev, [deviceId]: true }));
+                            }}
+                          >
+                            有
+                          </button>
+                          <button
+                            type="button"
+                            className={`admin-dev-boolean-option is-full ${edited === false ? "is-selected" : ""}`}
+                            aria-pressed={edited === false}
+                            onClick={() => {
+                              availabilityTouchedRef.current[deviceId] = true;
+                              setEditMap((prev) => ({ ...prev, [deviceId]: false }));
+                            }}
+                          >
+                            無
+                          </button>
+                        </div>
+                      ) : (
+                        <input
+                          className="admin-dev-vinput"
+                          value={edited ?? ""}
+                          placeholder="-"
+                          onChange={(e) => {
+                            availabilityTouchedRef.current[deviceId] = true;
+                            setEditMap((prev) => ({ ...prev, [deviceId]: e.target.value }));
+                          }}
+                        />
+                      )}
                       <button
                         className="admin-dev-confirm"
-                        onClick={() => confirmVacancy(deviceId)}
+                        onClick={() => confirmAvailability(deviceId)}
                         title="Confirm"
                       >
                         <FaCheck size={19} />

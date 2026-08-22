@@ -1035,6 +1035,26 @@
   font-size: 12.5px;
 }
 
+.admin-dev-availability-mode-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 4px;
+  padding: 0 4px;
+  border: 1px solid #9aa0a6;
+  border-radius: 999px;
+  color: #5f6368;
+  font-size: 7px;
+  font-weight: 800;
+  line-height: 13px;
+  vertical-align: middle;
+}
+
+.admin-dev-availability-mode-badge.is-boolean {
+  border-color: #0f7b2e;
+  color: #0f7b2e;
+  background: #f1fbf4;
+}
+
 .admin-dev-card-confirm-time {
   font-size: 8px;
   margin-top: 1.5px;
@@ -1437,6 +1457,37 @@
   border-radius: 10px;
   font-size: 20px;
   font-weight: 500;
+}
+
+.admin-dev-boolean-input {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 3px;
+}
+
+.admin-dev-boolean-option {
+  min-width: 34px;
+  height: 30px;
+  padding: 0 7px;
+  border: 1px solid #d5d8dc;
+  border-radius: 9px;
+  background: #fff;
+  color: #777;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-dev-boolean-option.is-available.is-selected {
+  border-color: #0f7b2e;
+  background: #34a853;
+  color: #fff;
+}
+
+.admin-dev-boolean-option.is-full.is-selected {
+  border-color: #c5221f;
+  background: #ea4335;
+  color: #fff;
 }
 
 .admin-dev-confirm {

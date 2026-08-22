@@ -162,6 +162,112 @@ function VacancyPin({ lot, pulse }) {
   );
 }
 
+const MAX_RENDERED_MARKERS_MOBILE = 150;
+const MAX_RENDERED_MARKERS_DESKTOP = 250;
+const MARKER_POOL_BATCH_SIZE = 60;
+const MARKER_CANDIDATE_PADDING_RATIO = 0.15;
+const MARKER_RETENTION_PADDING_RATIO = 0.75;
+
+function isLngInside(lng, west, east) {
+  return west <= east ? lng >= west && lng <= east : lng >= west || lng <= east;
+}
+
+function getPaddedBounds(viewport, paddingRatio) {
+  const latPadding =
+    Math.abs(viewport.north - viewport.south) * paddingRatio;
+  const lngPadding =
+    Math.abs(viewport.east - viewport.west) * paddingRatio;
+
+  return {
+    north: viewport.north + latPadding,
+    south: viewport.south - latPadding,
+    east: viewport.east + lngPadding,
+    west: viewport.west - lngPadding,
+  };
+}
+
+function isLotInsideBounds(lot, bounds) {
+  return (
+    Number.isFinite(lot.lat) &&
+    Number.isFinite(lot.lng) &&
+    lot.lat >= bounds.south &&
+    lot.lat <= bounds.north &&
+    isLngInside(lot.lng, bounds.west, bounds.east)
+  );
+}
+
+function buildMarkerPool(lots, active, viewport, previousPool, markerLimit) {
+  const sourceLots = [...(lots || [])];
+
+  if (
+    active?.lotId &&
+    Number.isFinite(active.lat) &&
+    Number.isFinite(active.lng) &&
+    !sourceLots.some((lot) => lot.lotId === active.lotId)
+  ) {
+    sourceLots.push(active);
+  }
+
+  const lotsById = new globalThis.Map(
+    sourceLots.map((lot) => [lot.lotId, lot])
+  );
+  const retentionBounds = getPaddedBounds(
+    viewport,
+    MARKER_RETENTION_PADDING_RATIO
+  );
+  const candidateBounds = getPaddedBounds(
+    viewport,
+    MARKER_CANDIDATE_PADDING_RATIO
+  );
+
+  // Lots near the current visual center always get first priority. This keeps
+  // retained off-screen markers from consuming every slot after a long pan.
+  const candidates = sourceLots
+    .filter(
+      (lot) => isLotInsideBounds(lot, candidateBounds)
+    )
+    .sort((a, b) => {
+      const aLat = a.lat - viewport.centerLat;
+      const aLng = a.lng - viewport.centerLng;
+      const bLat = b.lat - viewport.centerLat;
+      const bLng = b.lng - viewport.centerLng;
+      return aLat * aLat + aLng * aLng - (bLat * bLat + bLng * bLng);
+    });
+
+  const nextPool = candidates.slice(0, markerLimit);
+  const selectedIds = new Set(nextPool.map((lot) => lot.lotId));
+
+  // Retention is now secondary: it fills only spare capacity when the current
+  // area contains fewer lots than the cap. Object references are refreshed so
+  // polling can still update vacancy presentation.
+  const retainedLots = previousPool
+    .map((lot) => lotsById.get(lot.lotId))
+    .filter(
+      (lot) =>
+        lot &&
+        !selectedIds.has(lot.lotId) &&
+        isLotInsideBounds(lot, retentionBounds)
+    );
+
+  for (const lot of retainedLots) {
+    if (nextPool.length >= markerLimit) break;
+    nextPool.push(lot);
+    selectedIds.add(lot.lotId);
+  }
+
+  if (
+    active?.lotId &&
+    Number.isFinite(active.lat) &&
+    Number.isFinite(active.lng) &&
+    !selectedIds.has(active.lotId)
+  ) {
+    if (nextPool.length >= markerLimit) nextPool.pop();
+    nextPool.push(lotsById.get(active.lotId) || active);
+  }
+
+  return nextPool;
+}
+
 const ParkingMarker = memo(function ParkingMarker({
   lot,
   pulse,
@@ -218,6 +324,91 @@ function VisibleParkingMarkers({
   onViewportChange,
 }) {
   const map = useMap();
+  const markerLimit = isMobile
+    ? MAX_RENDERED_MARKERS_MOBILE
+    : MAX_RENDERED_MARKERS_DESKTOP;
+  const [renderedLots, setRenderedLots] = useState([]);
+  const renderedLotsRef = useRef([]);
+  const targetLotsRef = useRef([]);
+  const poolFrameRef = useRef(null);
+  const runPoolStepRef = useRef(null);
+  const lastViewportRef = useRef(null);
+  const lotsRef = useRef(lots);
+  const activeRef = useRef(active);
+  const markerLimitRef = useRef(markerLimit);
+
+  useEffect(() => {
+    lotsRef.current = lots;
+    activeRef.current = active;
+    markerLimitRef.current = markerLimit;
+  }, [active, lots, markerLimit]);
+
+  const schedulePoolStep = useCallback(() => {
+    if (poolFrameRef.current != null) return;
+
+    poolFrameRef.current = window.requestAnimationFrame(() => {
+      poolFrameRef.current = null;
+      runPoolStepRef.current?.();
+    });
+  }, []);
+
+  const setTargetLots = useCallback(
+    (nextTarget) => {
+      targetLotsRef.current = nextTarget;
+      schedulePoolStep();
+    },
+    [schedulePoolStep]
+  );
+
+  const runPoolStep = useCallback(() => {
+    const current = renderedLotsRef.current;
+    const target = targetLotsRef.current;
+    const targetById = new globalThis.Map(
+      target.map((lot) => [lot.lotId, lot])
+    );
+    const targetIds = new Set(targetById.keys());
+
+    const removals = current
+      .filter((lot) => !targetIds.has(lot.lotId))
+      .slice(0, MARKER_POOL_BATCH_SIZE);
+    const removalIds = new Set(removals.map((lot) => lot.lotId));
+
+    let next = current
+      .filter((lot) => !removalIds.has(lot.lotId))
+      .map((lot) => targetById.get(lot.lotId) || lot);
+    const nextIds = new Set(next.map((lot) => lot.lotId));
+    const additions = target
+      .filter((lot) => !nextIds.has(lot.lotId))
+      .slice(0, MARKER_POOL_BATCH_SIZE);
+
+    next = [...next, ...additions];
+
+    const membershipChanged =
+      removals.length > 0 || additions.length > 0;
+    const dataChanged =
+      next.length === current.length &&
+      next.some((lot, index) => lot !== current[index]);
+
+    if (membershipChanged || dataChanged) {
+      renderedLotsRef.current = next;
+      setRenderedLots(next);
+    }
+
+    const nextIdsAfterStep = new Set(next.map((lot) => lot.lotId));
+    const reachedTarget =
+      next.length === target.length &&
+      target.every((lot) => nextIdsAfterStep.has(lot.lotId));
+
+    if (!reachedTarget) schedulePoolStep();
+  }, [schedulePoolStep]);
+
+  useEffect(() => {
+    runPoolStepRef.current = runPoolStep;
+
+    return () => {
+      runPoolStepRef.current = null;
+    };
+  }, [runPoolStep]);
 
   useEffect(() => {
     if (!map) return;
@@ -241,37 +432,74 @@ function VisibleParkingMarkers({
         zoom,
       };
 
+      const previousViewport = lastViewportRef.current;
+      lastViewportRef.current = nextViewport;
+
+      // A zoom must never alter marker membership. Existing markers already
+      // cover the zoom target, and keeping them mounted prevents the bulk
+      // AdvancedMarker repaint that caused the original blink.
+      const zoomChanged =
+        previousViewport &&
+        Math.abs(previousViewport.zoom - nextViewport.zoom) > 0.001;
+
+      if (zoomChanged) {
+        targetLotsRef.current = renderedLotsRef.current;
+      } else {
+        setTargetLots(
+          buildMarkerPool(
+            lotsRef.current,
+            activeRef.current,
+            nextViewport,
+            renderedLotsRef.current,
+            markerLimitRef.current
+          )
+        );
+      }
+
       onViewportChange?.(nextViewport);
     };
 
     // Render only after Google Maps has real bounds, then update after each pan/zoom.
     const frameId = window.requestAnimationFrame(updateViewport);
     const idleListener = map.addListener("idle", updateViewport);
+    const zoomListener = map.addListener("zoom_changed", () => {
+      // Freeze any in-progress pan reconciliation as soon as zooming starts.
+      targetLotsRef.current = renderedLotsRef.current;
+    });
 
     return () => {
       window.cancelAnimationFrame(frameId);
       idleListener?.remove?.();
+      zoomListener?.remove?.();
     };
-  }, [map, onViewportChange]);
+  }, [map, onViewportChange, setTargetLots]);
 
-  const markerLots = useMemo(() => {
-    const nextLots = [...(lots || [])];
+  useEffect(() => {
+    const viewport = lastViewportRef.current;
+    if (!viewport) return;
 
-    if (
-      active?.lotId &&
-      Number.isFinite(active.lat) &&
-      Number.isFinite(active.lng) &&
-      !nextLots.some((lot) => lot.lotId === active.lotId)
-    ) {
-      nextLots.push(active);
-    }
+    setTargetLots(
+      buildMarkerPool(
+        lots,
+        active,
+        viewport,
+        renderedLotsRef.current,
+        markerLimit
+      )
+    );
+  }, [active, lots, markerLimit, setTargetLots]);
 
-    return nextLots;
-  }, [active, lots]);
+  useEffect(() => {
+    return () => {
+      if (poolFrameRef.current != null) {
+        window.cancelAnimationFrame(poolFrameRef.current);
+      }
+    };
+  }, []);
 
   return useMemo(
     () =>
-      markerLots.map((lot) => (
+      renderedLots.map((lot) => (
         <ParkingMarker
           key={lot.lotId}
           lot={lot}
@@ -286,7 +514,7 @@ function VisibleParkingMarkers({
       flyToRef,
       isMobile,
       pulseLotId,
-      markerLots,
+      renderedLots,
       setActive,
       triggerLotPulse,
     ]

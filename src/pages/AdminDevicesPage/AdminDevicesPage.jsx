@@ -8,6 +8,7 @@ import AdminDeviceLinkModal from "./AdminDeviceLinkModal";
 import AdminDevicePromptModal from "./AdminDevicePromptModal";
 import AdminDeviceBatteryModal from "./AdminDeviceBatteryModal";
 import AdminDeviceLocationModal from "./AdminDeviceLocationModal";
+import AdminDeviceFocusModal from "./AdminDeviceFocusModal";
 
 import { 
   formatTime, 
@@ -35,6 +36,16 @@ const DEFAULT_CAPTURE_INTERVAL_SEC = 30;
 const DEFAULT_EXPOSURE_COMPENSATION_INDEX = 0;
 const DEFAULT_EXPOSURE_COMPENSATION_MIN = -6;
 const DEFAULT_EXPOSURE_COMPENSATION_MAX = 6;
+const SHUTTER_OPTIONS = [
+  { value: 1_000_000, label: "1/1000" },
+  { value: 2_000_000, label: "1/500" },
+  { value: 4_000_000, label: "1/250" },
+  { value: 8_000_000, label: "1/125" },
+  { value: 16_666_667, label: "1/60" },
+  { value: 33_333_333, label: "1/30" },
+  { value: 66_666_667, label: "1/15" },
+  { value: 125_000_000, label: "1/8" },
+];
 const VACANCY_MODE_MANUAL = "manual_confirm";
 const VACANCY_MODE_AUTO = "auto_apply_ai";
 const DEVICE_ACTIVITY_ALL = "all";
@@ -122,6 +133,35 @@ function formatExposureCompensationIndex(value) {
   return String(n);
 }
 
+function shutterOptionsForDevice(device) {
+  if (device?.manualSensorSupported !== true) return [];
+  const min = Number(device?.exposureTimeMinNs);
+  const max = Number(device?.exposureTimeMaxNs);
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return [];
+
+  const current = Number(device?.manualExposureTimeNs);
+  const values = SHUTTER_OPTIONS.filter(
+    (option) => option.value >= min && option.value <= max
+  );
+
+  if (
+    Number.isFinite(current) &&
+    current > 0 &&
+    current >= min &&
+    current <= max &&
+    !values.some((option) => option.value === current)
+  ) {
+    values.push({
+      value: current,
+      label: current < 1_000_000_000
+        ? `1/${Math.max(1, Math.round(1_000_000_000 / current))}`
+        : `${(current / 1_000_000_000).toFixed(1).replace(/\.0$/, "")}s`,
+    });
+  }
+
+  return values.sort((a, b) => a.value - b.value);
+}
+
 function BatteryIcon({ pct, size = 16 }) {
   const p = batteryLevel(pct);
   if (p == null) return null;
@@ -203,6 +243,7 @@ export default function AdminDevicesPage({ apiBase }) {
 
   const [exposureCompensationMap, setExposureCompensationMap] = useState({}); // deviceId -> integer
   const [exposureSavingMap, setExposureSavingMap] = useState({}); // deviceId -> boolean
+  const [shutterSavingMap, setShutterSavingMap] = useState({});
 
   const [captureIntervalMap, setCaptureIntervalMap] = useState({}); // deviceId -> 5 | 15 | 30
   const [aiProcessingEnabledMap, setAiProcessingEnabledMap] = useState({}); // deviceId -> boolean
@@ -218,6 +259,8 @@ export default function AdminDevicesPage({ apiBase }) {
   const [batteryModalDeviceId, setBatteryModalDeviceId] = useState(null);
   // location modal
   const [locationModalDeviceId, setLocationModalDeviceId] = useState(null);
+  const [focusModalDeviceId, setFocusModalDeviceId] = useState(null);
+  const [focusSaving, setFocusSaving] = useState(false);
 
   //-----------------------------
   // Set Admin Key
@@ -822,6 +865,104 @@ export default function AdminDevicesPage({ apiBase }) {
     }
   }
 
+  async function saveShutterSpeed(deviceId, rawValue) {
+    if (!adminKey || !deviceId) return;
+
+    const previousRow = rows.find((row) => row.deviceId === deviceId);
+    const manualExposureTimeNs = rawValue === "auto" ? null : Number(rawValue);
+    if (
+      manualExposureTimeNs != null &&
+      (!Number.isInteger(manualExposureTimeNs) || manualExposureTimeNs <= 0)
+    ) {
+      toast.error("快門速度設定無效");
+      return;
+    }
+
+    setRows((currentRows) =>
+      currentRows.map((row) =>
+        row.deviceId === deviceId
+          ? { ...row, manualExposureTimeNs }
+          : row
+      )
+    );
+    setShutterSavingMap((prev) => ({ ...prev, [deviceId]: true }));
+
+    try {
+      const res = await fetch(
+        `${apiBase}/api/admin/devices/${encodeURIComponent(deviceId)}/config`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-key": adminKey,
+          },
+          body: JSON.stringify({ manualExposureTimeNs }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "快門速度更新失敗");
+
+      setRows((currentRows) =>
+        currentRows.map((row) =>
+          row.deviceId === deviceId
+            ? { ...row, manualExposureTimeNs: data?.manualExposureTimeNs ?? null }
+            : row
+        )
+      );
+      toast.success(manualExposureTimeNs == null ? "快門已設為 Auto" : "快門速度已更新");
+    } catch (error) {
+      setRows((currentRows) =>
+        currentRows.map((row) =>
+          row.deviceId === deviceId
+            ? {
+                ...row,
+                manualExposureTimeNs: previousRow?.manualExposureTimeNs ?? null,
+              }
+            : row
+        )
+      );
+      toast.error(error?.message || "快門速度更新失敗");
+    } finally {
+      setShutterSavingMap((prev) => ({ ...prev, [deviceId]: false }));
+    }
+  }
+
+  async function saveFocusPoint(focusPoint) {
+    const deviceId = focusModalDeviceId;
+    if (!adminKey || !deviceId || focusSaving) return;
+
+    setFocusSaving(true);
+    try {
+      const res = await fetch(
+        `${apiBase}/api/admin/devices/${encodeURIComponent(deviceId)}/config`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-key": adminKey,
+          },
+          body: JSON.stringify({ focusPoint }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "對焦點更新失敗");
+
+      setRows((currentRows) =>
+        currentRows.map((row) =>
+          row.deviceId === deviceId
+            ? { ...row, focusPoint: data?.focusPoint ?? focusPoint }
+            : row
+        )
+      );
+      toast.success(focusPoint.enabled ? "對焦點已更新" : "對焦點已停用");
+      setFocusModalDeviceId(null);
+    } catch (error) {
+      toast.error(error?.message || "對焦點更新失敗");
+    } finally {
+      setFocusSaving(false);
+    }
+  }
+
 
   //-----------------------------
   // Pagination
@@ -883,6 +1024,9 @@ export default function AdminDevicesPage({ apiBase }) {
 
   const batteryModalRow = batteryModalDeviceId
     ? rows.find((r) => r.deviceId === batteryModalDeviceId) ?? null
+    : null;
+  const focusModalRow = focusModalDeviceId
+    ? rows.find((r) => r.deviceId === focusModalDeviceId) ?? null
     : null;
 
   //-----------------------------
@@ -1292,6 +1436,10 @@ export default function AdminDevicesPage({ apiBase }) {
                 r?.exposureCompensationMax,
                 DEFAULT_EXPOSURE_COMPENSATION_MAX
               );
+              const shutterOptions = shutterOptionsForDevice(r);
+              const shutterSupported = shutterOptions.length > 0;
+              const shutterSaving = !!shutterSavingMap[deviceId];
+              const selectedShutter = Number(r?.manualExposureTimeNs);
 
               const exposureCompensationIndex = clampExposureCompensationIndex(
                 exposureCompensationMap[deviceId] ?? DEFAULT_EXPOSURE_COMPENSATION_INDEX,
@@ -1385,6 +1533,33 @@ export default function AdminDevicesPage({ apiBase }) {
                       );
                     })}
                   </div>
+
+                  <label
+                    className={`admin-dev-shutter-control ${shutterSupported ? "" : "is-unsupported"}`}
+                    title={shutterSupported ? "快門速度 / Shutter speed" : "此裝置不支援手動快門"}
+                  >
+                    <div>
+                      <span>SS</span>
+                      {shutterSupported && (
+                        <select
+                          value={shutterSupported && Number.isFinite(selectedShutter) && selectedShutter > 0
+                            ? String(selectedShutter)
+                            : "auto"}
+                          disabled={!shutterSupported || shutterSaving}
+                          onChange={(event) => saveShutterSpeed(deviceId, event.target.value)}
+                          aria-label={`${deviceId} 快門速度`}
+                        >
+                          <option value="auto">Auto</option>
+                          {shutterOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                    {!shutterSupported ? <small>unsupported</small> : null}
+                  </label>
 
                   <div
                     className="admin-dev-battery-badge"
@@ -1562,6 +1737,16 @@ export default function AdminDevicesPage({ apiBase }) {
                     ) : (
                       <div className="admin-dev-noimg">no image</div>
                     )}
+                    <button
+                      type="button"
+                      className={`admin-dev-focus-open ${r?.focusPoint?.enabled ? "has-focus" : ""}`}
+                      onClick={() => setFocusModalDeviceId(deviceId)}
+                      disabled={!r.imageUrl}
+                      title="開啟完整圖片並設定對焦點"
+                    >
+                      <span className="admin-dev-focus-open-icon" aria-hidden="true">◎</span>
+                      對焦
+                    </button>
                   </div>
 
                   <div className="admin-dev-bottom" style={{ position: "relative" }}>
@@ -1631,6 +1816,18 @@ export default function AdminDevicesPage({ apiBase }) {
         }
       />
 
+      {focusModalRow ? (
+        <AdminDeviceFocusModal
+          key={focusModalRow.deviceId}
+          device={focusModalRow}
+          saving={focusSaving}
+          onClose={() => {
+            if (!focusSaving) setFocusModalDeviceId(null);
+          }}
+          onSave={saveFocusPoint}
+        />
+      ) : null}
+
       <AdminDeviceLinkModal
         isOpen={linkModalOpen}
         device={linkModalDevice}
@@ -1651,4 +1848,3 @@ export default function AdminDevicesPage({ apiBase }) {
     </div>
   );
 }
-

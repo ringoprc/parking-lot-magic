@@ -806,8 +806,8 @@
 .admin-dev-capture-intervals {
   position: absolute;
   right: 14px;
-  top: 100px;
-  height: 130px;
+  top: 128px;
+  height: 104px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -815,13 +815,13 @@
 }
 
 .admin-dev-capture-dot {
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   border-radius: 999px;
   border: 1px solid #cfd3da;
   background: #fff;
   color: #777;
-  font-size: 11px;
+  font-size: 9.5px;
   font-weight: 700;
   cursor: pointer;
   display: flex;
@@ -1090,6 +1090,277 @@
 .admin-dev-noimg {
   color:#999;
   font-size: 13px;
+}
+
+.admin-dev-shutter-control {
+  position: absolute;
+  top: 97px;
+  right: 0px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 7px;
+  border: 1px solid #cfd8e3;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #344054;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.admin-dev-shutter-control select {
+  max-width: 82px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #175cd3;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-dev-shutter-control.is-unsupported {
+  color: #8a8a8a;
+}
+
+.admin-dev-shutter-control.is-unsupported select {
+  color: #8a8a8a;
+  cursor: not-allowed;
+}
+
+.admin-dev-shutter-control small {
+  font-size: 8px;
+  font-weight: 600;
+}
+
+.admin-dev-focus-open {
+  position: absolute;
+  left: 4px;
+  bottom: -26px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px;
+  border: 1px solid #a3a6b4;
+  border-radius: 999px;
+  background: rgb(20 28 42 / 0%);
+  color: #52545e;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  backdrop-filter: blur(3px);
+  transition: background 0.2s ease, border 0.2s ease, color 0.2s ease;
+}
+
+.admin-dev-focus-open:hover:not(:disabled),
+.admin-dev-focus-open.has-focus {
+  background: #52545e;
+  border: 1px solid #52545e;
+  color: white;
+}
+
+.admin-dev-focus-open:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.admin-dev-focus-open-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.admin-dev-focus-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(8, 15, 28, 0.78);
+}
+
+.admin-dev-focus-modal {
+  width: min(1100px, 96vw);
+  max-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+}
+
+.admin-dev-focus-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px 11px;
+  border-bottom: 1px solid #e4e7ec;
+}
+
+.admin-dev-focus-header h2 {
+  margin: 0;
+  color: #101828;
+  font-size: 18px;
+}
+
+.admin-dev-focus-device {
+  margin-top: 3px;
+  color: #667085;
+  font-size: 11px;
+}
+
+.admin-dev-focus-close {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 999px;
+  background: #f2f4f7;
+  color: #344054;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.admin-dev-focus-message {
+  padding: 8px 18px;
+  background: #eff8ff;
+  color: #175cd3;
+  font-size: 12px;
+}
+
+.admin-dev-focus-message.is-warning {
+  background: #fff4e5;
+  color: #9a5b00;
+}
+
+.admin-dev-focus-stage {
+  min-height: 240px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  padding: 14px;
+  background: #101828;
+}
+
+.admin-dev-focus-image-shell {
+  position: relative;
+  display: inline-flex;
+  max-width: 100%;
+  max-height: calc(94vh - 210px);
+}
+
+.admin-dev-focus-image {
+  display: block;
+  max-width: 100%;
+  max-height: calc(94vh - 210px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.admin-dev-focus-image.is-editable {
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.admin-dev-focus-marker {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  transform: translate(-50%, -50%);
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: rgba(22, 119, 232, 0.32);
+  box-shadow: 0 0 0 2px #1677e8, 0 2px 8px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.admin-dev-focus-marker::before,
+.admin-dev-focus-marker::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  background: #fff;
+  transform: translate(-50%, -50%);
+}
+
+.admin-dev-focus-marker::before {
+  width: 12px;
+  height: 2px;
+}
+
+.admin-dev-focus-marker::after {
+  width: 2px;
+  height: 12px;
+}
+
+.admin-dev-focus-no-image {
+  color: #d0d5dd;
+}
+
+.admin-dev-focus-diagnostics {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 18px;
+  border-top: 1px solid #e4e7ec;
+  color: #475467;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+}
+
+.admin-dev-focus-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 11px 18px 14px;
+}
+
+.admin-dev-focus-disable {
+  border-color: #f5b7b1;
+  background: #fff;
+  color: #b42318;
+}
+
+.admin-dev-focus-disable:hover:not(:disabled) {
+  background: #fff1f0;
+}
+
+@media (max-width: 600px) {
+  .admin-dev-focus-backdrop {
+    padding: 0;
+  }
+
+  .admin-dev-focus-modal {
+    width: 100vw;
+    max-height: 100dvh;
+    min-height: 100dvh;
+    border-radius: 0;
+  }
+
+  .admin-dev-focus-image-shell,
+  .admin-dev-focus-image {
+    max-height: calc(100dvh - 250px);
+  }
+
+  .admin-dev-focus-diagnostics {
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .admin-dev-focus-actions {
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+  }
 }
 
 .admin-dev-bottom {
@@ -1497,4 +1768,3 @@
     font-size: 9px;
   }
 }
-

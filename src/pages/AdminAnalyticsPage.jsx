@@ -25,6 +25,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
   const [days, setDays] = useState(30);
   const [minuteRange, setMinuteRange] = useState(60);
   const [minuteMetric, setMinuteMetric] = useState("uniqueVisitors");
+  const [dailyMetric, setDailyMetric] = useState("uniqueVisitors");
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -69,9 +70,9 @@ export default function AdminAnalyticsPage({ apiBase }) {
   }, [days, minuteRange]);
 
   const today = report?.daily?.[report.daily.length - 1] || {};
-  const maxVisitors = useMemo(
-    () => Math.max(1, ...(report?.daily || []).map((row) => row.uniqueVisitors || 0)),
-    [report]
+  const maxDailyValue = useMemo(
+    () => Math.max(1, ...(report?.daily || []).map((row) => row[dailyMetric] || 0)),
+    [report, dailyMetric]
   );
   const maxMinuteValue = useMemo(
     () => Math.max(1, ...(report?.minuteSeries || []).map((row) => row[minuteMetric] || 0)),
@@ -113,19 +114,6 @@ export default function AdminAnalyticsPage({ apiBase }) {
       </header>
 
       <main className="analytics-content">
-        <div className="analytics-range" aria-label="統計期間">
-          {[7, 30, 90].map((value) => (
-            <button
-              type="button"
-              key={value}
-              className={days === value ? "active" : ""}
-              onClick={() => setDays(value)}
-            >
-              {value} 天
-            </button>
-          ))}
-        </div>
-
         {error && <div className="analytics-error">{error}</div>}
 
         <section className="analytics-summary">
@@ -221,24 +209,59 @@ export default function AdminAnalyticsPage({ apiBase }) {
         <section className="analytics-panel">
           <div className="analytics-panel-title">
             <div>
-              <h2>每日不重複訪客</h2>
+              <h2>每日進站人數</h2>
               <p>{report ? `${report.startDate} — ${report.endDate}` : "輸入密碼後載入資料"}</p>
             </div>
-            <div className="analytics-legend"><span /> 訪客人數</div>
+            <div className="analytics-daily-controls">
+              <div className="analytics-toggle" aria-label="每日指標">
+                <button
+                  type="button"
+                  className={dailyMetric === "uniqueVisitors" ? "active" : ""}
+                  onClick={() => setDailyMetric("uniqueVisitors")}
+                >
+                  不重複訪客
+                </button>
+                <button
+                  type="button"
+                  className={dailyMetric === "sessions" ? "active" : ""}
+                  onClick={() => setDailyMetric("sessions")}
+                >
+                  Session 數
+                </button>
+              </div>
+              <div className="analytics-toggle analytics-time-toggle" aria-label="每日統計範圍">
+                {[7, 30, 90].map((value) => (
+                  <button
+                    type="button"
+                    key={value}
+                    className={days === value ? "active" : ""}
+                    onClick={() => setDays(value)}
+                  >
+                    {value} 天
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="analytics-chart-scroll">
             <div className="analytics-chart" style={{ minWidth: `${Math.max(620, days * 20)}px` }}>
               {(report?.daily || []).map((row, index) => {
-                const height = row.uniqueVisitors
-                  ? Math.max(4, (row.uniqueVisitors / maxVisitors) * 100)
-                  : 0;
+                const value = row[dailyMetric] || 0;
+                const height = value ? Math.max(4, (value / maxDailyValue) * 100) : 0;
                 const showLabel = days <= 7 || index === 0 || index === report.daily.length - 1 || index % 5 === 0;
                 return (
-                  <div className="analytics-bar-column" key={row.date} title={`${row.date}: ${row.uniqueVisitors} 位訪客`}>
-                    <div className="analytics-bar-value">{row.uniqueVisitors || ""}</div>
+                  <div
+                    className="analytics-bar-column"
+                    key={row.date}
+                    title={`${row.date}：${value} ${dailyMetric === "sessions" ? "個 session" : "位不重複訪客"}`}
+                  >
+                    <div className="analytics-bar-value">{value || ""}</div>
                     <div className="analytics-bar-track">
-                      <div className="analytics-bar" style={{ height: `${height}%` }} />
+                      <div
+                        className={`analytics-bar ${dailyMetric === "sessions" ? "session" : ""}`}
+                        style={{ height: `${height}%` }}
+                      />
                     </div>
                     <div className="analytics-bar-date">{showLabel ? shortDate(row.date) : ""}</div>
                   </div>
@@ -246,6 +269,9 @@ export default function AdminAnalyticsPage({ apiBase }) {
               })}
               {!report && <div className="analytics-empty">尚未載入統計資料</div>}
             </div>
+          </div>
+          <div className="analytics-minute-note">
+            不重複訪客會在同一天內合併相同瀏覽器；Session 數會將同一位訪客的不同分頁或新工作階段分開計算。
           </div>
         </section>
 

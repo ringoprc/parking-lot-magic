@@ -10,6 +10,7 @@ import LotsSidebar from "./components/LotsSidebar";
 import MobileLotsBar from "./components/MobileLotsBar";
 import MobileLotsOverlay from "./components/MobileLotsOverlay";
 import ParkingMap from "./components/ParkingMap";
+import VisitTracker from "./components/VisitTracker";
 
 import Spinner from "react-bootstrap/Spinner";
 import { FaCheck } from "react-icons/fa6";
@@ -19,6 +20,7 @@ import AdminDevicesPage from "./pages/AdminDevicesPage/AdminDevicesPage";
 import AdminLinkagePage from "./pages/AdminLinkagePage";
 import AdminLotAdsPage from "./pages/AdminLotAdsPage";
 import AdminWorkerStatusPage from "./pages/AdminWorkerStatusPage";
+import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
 
 import { useMyLocationAction } from "./hooks/useMyLocationAction";
 import { useMediaQuery } from "./hooks/useMediaQuery";
@@ -59,6 +61,12 @@ function AdminMenuPage() {
       description: "管理用於搭載 AI 模型並辨識影像的機器",
       href: "?admin=workers",
       badge: "Workers",
+    },
+    {
+      title: "網站訪客統計",
+      description: "查看每日不重複訪客、造訪次數與頁面瀏覽趨勢。",
+      href: "?admin=analytics",
+      badge: "Analytics",
     },
     {
       title: "OCR 測試工具",
@@ -506,6 +514,7 @@ export default function App() {
   const showLinkage = adminRoute === "link" || searchParams.get("link") === "1";
   const showAdsManage = adminRoute === "ads" || searchParams.get("ads") === "1";
   const showWorkers = adminRoute === "workers" || searchParams.get("workers") === "1";
+  const showAnalytics = adminRoute === "analytics";
 
   let page = null;
   if (showOcr) page = <DigitOcrTest />;
@@ -523,6 +532,7 @@ export default function App() {
   else if (showLinkage) page = <AdminLinkagePage apiBase={apiBase} />;
   else if (showAdsManage) page = <AdminLotAdsPage apiBase={apiBase} />;
   else if (showWorkers) page = <AdminWorkerStatusPage apiBase={apiBase} />;
+  else if (showAnalytics) page = <AdminAnalyticsPage apiBase={apiBase} />;
   else if (showAdminMenu) page = <AdminMenuPage />;
   else page = (
     <APIProvider
@@ -530,6 +540,7 @@ export default function App() {
       libraries={["places", "marker"]}
     >
       <div className="app-root">
+        <VisitTracker apiBase={apiBase} />
 
         <div className="title-bar">
           <div className="title-bar-inner">
@@ -745,4 +756,3 @@ export default function App() {
     </>
   );
 }
-

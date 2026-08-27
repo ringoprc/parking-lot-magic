@@ -26,6 +26,8 @@ export default function AdminAnalyticsPage({ apiBase }) {
   const [minuteRange, setMinuteRange] = useState(60);
   const [minuteMetric, setMinuteMetric] = useState("uniqueVisitors");
   const [dailyMetric, setDailyMetric] = useState("uniqueVisitors");
+  const [hoveredMinute, setHoveredMinute] = useState(null);
+  const [hoveredDay, setHoveredDay] = useState(null);
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -143,14 +145,20 @@ export default function AdminAnalyticsPage({ apiBase }) {
                 <button
                   type="button"
                   className={minuteMetric === "uniqueVisitors" ? "active" : ""}
-                  onClick={() => setMinuteMetric("uniqueVisitors")}
+                  onClick={() => {
+                    setMinuteMetric("uniqueVisitors");
+                    setHoveredMinute(null);
+                  }}
                 >
                   不重複訪客
                 </button>
                 <button
                   type="button"
                   className={minuteMetric === "sessions" ? "active" : ""}
-                  onClick={() => setMinuteMetric("sessions")}
+                  onClick={() => {
+                    setMinuteMetric("sessions");
+                    setHoveredMinute(null);
+                  }}
                 >
                   Session 數
                 </button>
@@ -165,7 +173,10 @@ export default function AdminAnalyticsPage({ apiBase }) {
                     type="button"
                     key={value}
                     className={minuteRange === value ? "active" : ""}
-                    onClick={() => setMinuteRange(value)}
+                    onClick={() => {
+                      setMinuteRange(value);
+                      setHoveredMinute(null);
+                    }}
                   >
                     {label}
                   </button>
@@ -174,25 +185,65 @@ export default function AdminAnalyticsPage({ apiBase }) {
             </div>
           </div>
 
+          <div className={`analytics-hover-readout ${hoveredMinute ? "active" : ""}`}>
+            {hoveredMinute ? (
+              <>
+                <strong>{hoveredMinute.minute}</strong>
+                <span>不重複訪客 {hoveredMinute.uniqueVisitors}</span>
+                <span>Session {hoveredMinute.sessions}</span>
+                <span>頁面瀏覽 {hoveredMinute.pageViews}</span>
+              </>
+            ) : (
+              <span>將游標移到柱狀圖上查看該分鐘的詳細數字</span>
+            )}
+          </div>
+
           <div className="analytics-chart-scroll">
             <div
               className="analytics-chart analytics-minute-chart"
-              style={{ minWidth: `${Math.max(680, minuteRange * 2)}px` }}
+              style={{ minWidth: `${Math.max(680, minuteRange * 8)}px` }}
             >
               {(report?.minuteSeries || []).map((row, index) => {
                 const value = row[minuteMetric] || 0;
                 const height = value ? Math.max(4, (value / maxMinuteValue) * 100) : 0;
                 const labelEvery = minuteRange === 60 ? 10 : minuteRange === 360 ? 60 : 180;
                 const showLabel = index === 0 || index === report.minuteSeries.length - 1 || index % labelEvery === 0;
+                const valueLabelRadius = minuteRange === 60 ? 1 : minuteRange === 360 ? 5 : 10;
+                const clusterStart = Math.max(0, index - valueLabelRadius);
+                const clusterEnd = Math.min(report.minuteSeries.length, index + valueLabelRadius + 1);
+                const nearbyValues = report.minuteSeries
+                  .slice(clusterStart, clusterEnd)
+                  .map((item) => item[minuteMetric] || 0);
+                const clusterMax = Math.max(...nearbyValues);
+                const firstMaxIndex = clusterStart + nearbyValues.indexOf(clusterMax);
+                const showValue = value > 0 && value === clusterMax && index === firstMaxIndex;
                 return (
                   <div
                     className="analytics-bar-column analytics-minute-column"
                     key={row.minute}
-                    title={`${row.minute}：${value} ${minuteMetric === "sessions" ? "個 session" : "位不重複訪客"}`}
+                    title={value > 0
+                      ? `${row.minute}：${value} ${minuteMetric === "sessions" ? "個 session" : "位不重複訪客"}`
+                      : undefined}
+                    onMouseEnter={() => {
+                      if (value > 0) setHoveredMinute(row);
+                    }}
+                    onMouseLeave={() => setHoveredMinute(null)}
+                    onClick={() => {
+                      if (value > 0) setHoveredMinute(row);
+                    }}
                   >
-                    <div className="analytics-bar-value">{value || ""}</div>
+                    <div className="analytics-bar-value">{showValue ? value : ""}</div>
                     <div className="analytics-bar-track">
-                      <div className={`analytics-bar ${minuteMetric === "sessions" ? "session" : ""}`} style={{ height: `${height}%` }} />
+                      <div
+                        className={`analytics-bar ${minuteMetric === "sessions" ? "session" : ""} ${
+                          hoveredMinute
+                            ? hoveredMinute.minute === row.minute
+                              ? "is-highlighted"
+                              : "is-dimmed"
+                            : ""
+                        }`}
+                        style={{ height: `${height}%` }}
+                      />
                     </div>
                     <div className="analytics-bar-date">{showLabel ? row.minute.slice(11) : ""}</div>
                   </div>
@@ -217,14 +268,20 @@ export default function AdminAnalyticsPage({ apiBase }) {
                 <button
                   type="button"
                   className={dailyMetric === "uniqueVisitors" ? "active" : ""}
-                  onClick={() => setDailyMetric("uniqueVisitors")}
+                  onClick={() => {
+                    setDailyMetric("uniqueVisitors");
+                    setHoveredDay(null);
+                  }}
                 >
                   不重複訪客
                 </button>
                 <button
                   type="button"
                   className={dailyMetric === "sessions" ? "active" : ""}
-                  onClick={() => setDailyMetric("sessions")}
+                  onClick={() => {
+                    setDailyMetric("sessions");
+                    setHoveredDay(null);
+                  }}
                 >
                   Session 數
                 </button>
@@ -235,13 +292,29 @@ export default function AdminAnalyticsPage({ apiBase }) {
                     type="button"
                     key={value}
                     className={days === value ? "active" : ""}
-                    onClick={() => setDays(value)}
+                    onClick={() => {
+                      setDays(value);
+                      setHoveredDay(null);
+                    }}
                   >
                     {value} 天
                   </button>
                 ))}
               </div>
             </div>
+          </div>
+
+          <div className={`analytics-hover-readout ${hoveredDay ? "active" : ""}`}>
+            {hoveredDay ? (
+              <>
+                <strong>{hoveredDay.date}</strong>
+                <span>不重複訪客 {hoveredDay.uniqueVisitors}</span>
+                <span>Session {hoveredDay.sessions}</span>
+                <span>頁面瀏覽 {hoveredDay.pageViews}</span>
+              </>
+            ) : (
+              <span>將游標移到柱狀圖上查看該日的詳細數字</span>
+            )}
           </div>
 
           <div className="analytics-chart-scroll">
@@ -254,12 +327,27 @@ export default function AdminAnalyticsPage({ apiBase }) {
                   <div
                     className="analytics-bar-column"
                     key={row.date}
-                    title={`${row.date}：${value} ${dailyMetric === "sessions" ? "個 session" : "位不重複訪客"}`}
+                    title={value > 0
+                      ? `${row.date}：${value} ${dailyMetric === "sessions" ? "個 session" : "位不重複訪客"}`
+                      : undefined}
+                    onMouseEnter={() => {
+                      if (value > 0) setHoveredDay(row);
+                    }}
+                    onMouseLeave={() => setHoveredDay(null)}
+                    onClick={() => {
+                      if (value > 0) setHoveredDay(row);
+                    }}
                   >
                     <div className="analytics-bar-value">{value || ""}</div>
                     <div className="analytics-bar-track">
                       <div
-                        className={`analytics-bar ${dailyMetric === "sessions" ? "session" : ""}`}
+                        className={`analytics-bar ${dailyMetric === "sessions" ? "session" : ""} ${
+                          hoveredDay
+                            ? hoveredDay.date === row.date
+                              ? "is-highlighted"
+                              : "is-dimmed"
+                            : ""
+                        }`}
                         style={{ height: `${height}%` }}
                       />
                     </div>

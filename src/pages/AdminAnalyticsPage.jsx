@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { MdOutlineArrowBackIos } from "react-icons/md";
 import "./AdminAnalyticsPage.css";
@@ -28,6 +28,10 @@ export default function AdminAnalyticsPage({ apiBase }) {
   const [dailyMetric, setDailyMetric] = useState("uniqueVisitors");
   const [hoveredMinute, setHoveredMinute] = useState(null);
   const [hoveredDay, setHoveredDay] = useState(null);
+  const minuteChartScrollRef = useRef(null);
+  const dailyChartScrollRef = useRef(null);
+  const requestIdRef = useRef(0);
+  const loadAbortRef = useRef(null);
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -43,26 +47,36 @@ export default function AdminAnalyticsPage({ apiBase }) {
       return;
     }
 
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    loadAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
+
     setLoading(true);
     setError("");
     try {
       const response = await fetch(
         `${apiBase}/api/admin/analytics/visits?days=${days}&minutes=${minuteRange}`,
         {
-        headers: { "x-admin-key": adminKey },
+          headers: { "x-admin-key": adminKey },
+          signal: controller.signal,
         }
       );
       const data = await response.json().catch(() => null);
       if (!response.ok) throw new Error(data?.error || "無法讀取訪客資料");
+      if (requestId !== requestIdRef.current) return;
 
       setReport(data);
       if (!silent) toast.success("訪客資料已更新");
     } catch (loadError) {
+      if (loadError?.name === "AbortError") return;
+      if (requestId !== requestIdRef.current) return;
       const message = loadError?.message || "無法讀取訪客資料";
       setError(message);
       if (!silent) toast.error(message);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   }
 
@@ -71,7 +85,33 @@ export default function AdminAnalyticsPage({ apiBase }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [days, minuteRange]);
 
+  useEffect(() => () => loadAbortRef.current?.abort(), []);
+
+  useEffect(() => {
+    if (!report?.minutes) return;
+
+    const frame = requestAnimationFrame(() => {
+      const element = minuteChartScrollRef.current;
+      if (element) element.scrollLeft = element.scrollWidth;
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [report?.minutes]);
+
+  useEffect(() => {
+    if (!report?.days) return;
+
+    const frame = requestAnimationFrame(() => {
+      const element = dailyChartScrollRef.current;
+      if (element) element.scrollLeft = element.scrollWidth;
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [report?.days]);
+
   const today = report?.daily?.[report.daily.length - 1] || {};
+  const loadedDays = report?.days || days;
+  const loadedMinuteRange = report?.minutes || minuteRange;
   const maxDailyValue = useMemo(
     () => Math.max(1, ...(report?.daily || []).map((row) => row[dailyMetric] || 0)),
     [report, dailyMetric]
@@ -122,7 +162,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
           <SummaryCard
             label="不重複訪客"
             value={report?.totals?.uniqueVisitors}
-            note={`最近 ${days} 天`}
+            note={`最近 ${loadedDays} 天`}
             accent="primary"
           />
           <SummaryCard label="今日訪客" value={today.uniqueVisitors} note="台北時間日曆日" accent="sunny" />
@@ -198,17 +238,17 @@ export default function AdminAnalyticsPage({ apiBase }) {
             )}
           </div>
 
-          <div className="analytics-chart-scroll">
+          <div className="analytics-chart-scroll" ref={minuteChartScrollRef}>
             <div
               className="analytics-chart analytics-minute-chart"
-              style={{ minWidth: `${Math.max(680, minuteRange * 8)}px` }}
+              style={{ minWidth: `${Math.max(680, loadedMinuteRange * 8)}px` }}
             >
               {(report?.minuteSeries || []).map((row, index) => {
                 const value = row[minuteMetric] || 0;
                 const height = value ? Math.max(4, (value / maxMinuteValue) * 100) : 0;
-                const labelEvery = minuteRange === 60 ? 10 : minuteRange === 360 ? 60 : 180;
+                const labelEvery = loadedMinuteRange === 60 ? 10 : loadedMinuteRange === 360 ? 60 : 180;
                 const showLabel = index === 0 || index === report.minuteSeries.length - 1 || index % labelEvery === 0;
-                const valueLabelRadius = minuteRange === 60 ? 1 : minuteRange === 360 ? 5 : 10;
+                const valueLabelRadius = loadedMinuteRange === 60 ? 1 : loadedMinuteRange === 360 ? 5 : 10;
                 const clusterStart = Math.max(0, index - valueLabelRadius);
                 const clusterEnd = Math.min(report.minuteSeries.length, index + valueLabelRadius + 1);
                 const nearbyValues = report.minuteSeries
@@ -317,12 +357,12 @@ export default function AdminAnalyticsPage({ apiBase }) {
             )}
           </div>
 
-          <div className="analytics-chart-scroll">
-            <div className="analytics-chart" style={{ minWidth: `${Math.max(620, days * 20)}px` }}>
+          <div className="analytics-chart-scroll" ref={dailyChartScrollRef}>
+            <div className="analytics-chart" style={{ minWidth: `${Math.max(620, loadedDays * 20)}px` }}>
               {(report?.daily || []).map((row, index) => {
                 const value = row[dailyMetric] || 0;
                 const height = value ? Math.max(4, (value / maxDailyValue) * 100) : 0;
-                const showLabel = days <= 7 || index === 0 || index === report.daily.length - 1 || index % 5 === 0;
+                const showLabel = loadedDays <= 7 || index === 0 || index === report.daily.length - 1 || index % 5 === 0;
                 return (
                   <div
                     className="analytics-bar-column"

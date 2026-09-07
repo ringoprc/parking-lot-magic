@@ -29,6 +29,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
   const [hoveredMinute, setHoveredMinute] = useState(null);
   const [hoveredDay, setHoveredDay] = useState(null);
   const [hoveredLotView, setHoveredLotView] = useState(null);
+  const [lotViewModalDay, setLotViewModalDay] = useState(null);
   const [selectedLotId, setSelectedLotId] = useState("");
   const [lotSearch, setLotSearch] = useState("");
   const [lotSearchOpen, setLotSearchOpen] = useState(false);
@@ -168,6 +169,22 @@ export default function AdminAnalyticsPage({ apiBase }) {
 
     return () => cancelAnimationFrame(frame);
   }, [lotViewReport?.days, selectedLotId]);
+
+  useEffect(() => {
+    if (!lotViewModalDay) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setLotViewModalDay(null);
+    };
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [lotViewModalDay]);
 
   const today = report?.daily?.[report.daily.length - 1] || {};
   const loadedDays = report?.days || days;
@@ -517,6 +534,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
                       if (selectedLotId) {
                         setSelectedLotId("");
                         setHoveredLotView(null);
+                        setLotViewModalDay(null);
                       }
                     }}
                     onKeyDown={(event) => {
@@ -532,6 +550,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
                       setSelectedLotId(match.lotId);
                       setLotSearchOpen(false);
                       setHoveredLotView(null);
+                      setLotViewModalDay(null);
                     }}
                   />
                   {(lotSearch || selectedLotId) && (
@@ -543,6 +562,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
                         setLotSearch("");
                         setSelectedLotId("");
                         setHoveredLotView(null);
+                        setLotViewModalDay(null);
                       }}
                     >
                       ×
@@ -560,6 +580,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
                         setSelectedLotId("");
                         setLotSearchOpen(false);
                         setHoveredLotView(null);
+                        setLotViewModalDay(null);
                       }}
                     >
                       <span>所有停車場</span>
@@ -583,6 +604,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
                           setSelectedLotId(lot.lotId);
                           setLotSearchOpen(false);
                           setHoveredLotView(null);
+                          setLotViewModalDay(null);
                         }}
                       >
                         <span>
@@ -609,6 +631,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
                       setDays(value);
                       setHoveredDay(null);
                       setHoveredLotView(null);
+                      setLotViewModalDay(null);
                     }}
                   >
                     {value} 天
@@ -653,7 +676,20 @@ export default function AdminAnalyticsPage({ apiBase }) {
                     title={row.views ? `${row.date}：開啟 ${row.views} 次` : undefined}
                     onMouseEnter={() => row.views && setHoveredLotView(row)}
                     onMouseLeave={() => setHoveredLotView(null)}
-                    onClick={() => row.views && setHoveredLotView(row)}
+                    onClick={() => {
+                      if (!row.views) return;
+                      setHoveredLotView(row);
+                      setLotViewModalDay(row);
+                    }}
+                    onKeyDown={(event) => {
+                      if (!row.views || (event.key !== "Enter" && event.key !== " ")) return;
+                      event.preventDefault();
+                      setHoveredLotView(row);
+                      setLotViewModalDay(row);
+                    }}
+                    role={row.views ? "button" : undefined}
+                    tabIndex={row.views ? 0 : undefined}
+                    aria-label={row.views ? `查看 ${row.date} 的 ${row.views} 次卡片開啟明細` : undefined}
                   >
                     <div className="analytics-bar-value">{row.views || ""}</div>
                     <div className="analytics-bar-track">
@@ -686,6 +722,67 @@ export default function AdminAnalyticsPage({ apiBase }) {
           同一瀏覽器清除儲存空間後會被視為新訪客；封鎖瀏覽器儲存或請求的使用者不會列入，因此數字是實用估計值，而非身分識別後的精確人數。
         </div>
       </main>
+
+      {lotViewModalDay && (
+        <div
+          className="analytics-modal-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setLotViewModalDay(null);
+          }}
+        >
+          <section
+            className="analytics-lot-view-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="analytics-lot-view-modal-title"
+          >
+            <header>
+              <div>
+                <div className="analytics-modal-kicker">每日點擊分布</div>
+                <h2 id="analytics-lot-view-modal-title">{lotViewModalDay.date}</h2>
+                <p>
+                  卡片共開啟 {formatter.format(lotViewModalDay.views)} 次，分布於 {formatter.format(lotViewModalDay.breakdown?.length || 0)} 個停車場
+                </p>
+              </div>
+              <button
+                type="button"
+                className="analytics-modal-close"
+                aria-label="關閉明細"
+                autoFocus
+                onClick={() => setLotViewModalDay(null)}
+              >
+                ×
+              </button>
+            </header>
+
+            <div className="analytics-modal-list">
+              {(lotViewModalDay.breakdown || []).map((lot, index) => {
+                const percentage = lotViewModalDay.views
+                  ? (lot.views / lotViewModalDay.views) * 100
+                  : 0;
+                return (
+                  <div className="analytics-modal-row" key={lot.lotId}>
+                    <div className="analytics-modal-rank">{index + 1}</div>
+                    <div className="analytics-modal-lot">
+                      <div className="analytics-modal-lot-title">
+                        <span>{lot.name}</span>
+                        <strong>{formatter.format(lot.views)} 次</strong>
+                      </div>
+                      <div className="analytics-modal-lot-meta">
+                        <span>{lot.lotId}</span>
+                        <span>{percentage.toFixed(percentage >= 10 ? 0 : 1)}%</span>
+                      </div>
+                      <div className="analytics-modal-share-track">
+                        <div style={{ width: `${percentage}%` }} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

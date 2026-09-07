@@ -28,13 +28,23 @@ export default function AdminAnalyticsPage({ apiBase }) {
   const [dailyMetric, setDailyMetric] = useState("uniqueVisitors");
   const [hoveredMinute, setHoveredMinute] = useState(null);
   const [hoveredDay, setHoveredDay] = useState(null);
+  const [hoveredLotView, setHoveredLotView] = useState(null);
+  const [selectedLotId, setSelectedLotId] = useState("");
+  const [lotSearch, setLotSearch] = useState("");
+  const [lotSearchOpen, setLotSearchOpen] = useState(false);
   const minuteChartScrollRef = useRef(null);
   const dailyChartScrollRef = useRef(null);
+  const lotViewChartScrollRef = useRef(null);
   const requestIdRef = useRef(0);
   const loadAbortRef = useRef(null);
+  const lotViewRequestIdRef = useRef(0);
+  const lotViewAbortRef = useRef(null);
   const [report, setReport] = useState(null);
+  const [lotViewReport, setLotViewReport] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [lotViewsLoading, setLotViewsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [lotViewError, setLotViewError] = useState("");
 
   function persistAdminKey(value) {
     setAdminKey(value);
@@ -80,12 +90,51 @@ export default function AdminAnalyticsPage({ apiBase }) {
     }
   }
 
+  async function loadLotViews() {
+    if (!adminKey) return;
+
+    const requestId = lotViewRequestIdRef.current + 1;
+    lotViewRequestIdRef.current = requestId;
+    lotViewAbortRef.current?.abort();
+    const controller = new AbortController();
+    lotViewAbortRef.current = controller;
+
+    setLotViewsLoading(true);
+    setLotViewError("");
+    try {
+      const query = new URLSearchParams({ days: String(days) });
+      if (selectedLotId) query.set("lotId", selectedLotId);
+      const response = await fetch(`${apiBase}/api/admin/analytics/lot-views?${query}`, {
+        headers: { "x-admin-key": adminKey },
+        signal: controller.signal,
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error || "無法讀取停車場瀏覽資料");
+      if (requestId !== lotViewRequestIdRef.current) return;
+      setLotViewReport(data);
+    } catch (loadError) {
+      if (loadError?.name === "AbortError") return;
+      if (requestId !== lotViewRequestIdRef.current) return;
+      setLotViewError(loadError?.message || "無法讀取停車場瀏覽資料");
+    } finally {
+      if (requestId === lotViewRequestIdRef.current) setLotViewsLoading(false);
+    }
+  }
+
   useEffect(() => {
     load({ silent: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [days, minuteRange]);
 
-  useEffect(() => () => loadAbortRef.current?.abort(), []);
+  useEffect(() => {
+    loadLotViews();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [days, selectedLotId]);
+
+  useEffect(() => () => {
+    loadAbortRef.current?.abort();
+    lotViewAbortRef.current?.abort();
+  }, []);
 
   useEffect(() => {
     if (!report?.minutes) return;
@@ -109,6 +158,17 @@ export default function AdminAnalyticsPage({ apiBase }) {
     return () => cancelAnimationFrame(frame);
   }, [report?.days]);
 
+  useEffect(() => {
+    if (!lotViewReport?.days) return;
+
+    const frame = requestAnimationFrame(() => {
+      const element = lotViewChartScrollRef.current;
+      if (element) element.scrollLeft = element.scrollWidth;
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [lotViewReport?.days, selectedLotId]);
+
   const today = report?.daily?.[report.daily.length - 1] || {};
   const loadedDays = report?.days || days;
   const loadedMinuteRange = report?.minutes || minuteRange;
@@ -120,6 +180,18 @@ export default function AdminAnalyticsPage({ apiBase }) {
     () => Math.max(1, ...(report?.minuteSeries || []).map((row) => row[minuteMetric] || 0)),
     [report, minuteMetric]
   );
+  const maxLotViewValue = useMemo(
+    () => Math.max(1, ...(lotViewReport?.daily || []).map((row) => row.views || 0)),
+    [lotViewReport]
+  );
+  const filteredLotOptions = useMemo(() => {
+    const query = lotSearch.trim().toLocaleLowerCase("zh-TW");
+    const lots = lotViewReport?.lots || [];
+    if (!query) return lots.slice(0, 10);
+    return lots
+      .filter((lot) => `${lot.name} ${lot.lotId}`.toLocaleLowerCase("zh-TW").includes(query))
+      .slice(0, 10);
+  }, [lotSearch, lotViewReport?.lots]);
   const averageViews = report?.totals?.sessions
     ? (report.totals.pageViews / report.totals.sessions).toFixed(1)
     : "0.0";
@@ -145,11 +217,22 @@ export default function AdminAnalyticsPage({ apiBase }) {
               type="password"
               value={adminKey}
               onChange={(event) => persistAdminKey(event.target.value)}
-              onKeyDown={(event) => event.key === "Enter" && load()}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter") return;
+                load();
+                loadLotViews();
+              }}
               placeholder="admin key"
             />
           </label>
-          <button type="button" onClick={() => load()} disabled={loading}>
+          <button
+            type="button"
+            onClick={() => {
+              load();
+              loadLotViews();
+            }}
+            disabled={loading || lotViewsLoading}
+          >
             {loading ? "載入中…" : "更新資料"}
           </button>
         </div>
@@ -400,6 +483,202 @@ export default function AdminAnalyticsPage({ apiBase }) {
           </div>
           <div className="analytics-minute-note">
             不重複訪客會在同一天內合併相同瀏覽器；Session 數會將同一位訪客的不同分頁或新工作階段分開計算。
+          </div>
+        </section>
+
+        <section className="analytics-panel analytics-lot-view-panel">
+          <div className="analytics-panel-title analytics-lot-view-title">
+            <div>
+              <h2>停車場卡片開啟次數</h2>
+              <p>
+                {lotViewReport
+                  ? `${lotViewReport.startDate} — ${lotViewReport.endDate}・${
+                      lotViewReport.selectedLot?.name || "所有停車場"
+                    }`
+                  : "輸入密碼後載入資料"}
+              </p>
+            </div>
+
+            <div className="analytics-lot-view-controls">
+              <div className="analytics-lot-search">
+                <label htmlFor="analytics-lot-search-input">搜尋停車場</label>
+                <div className="analytics-lot-search-input-wrap">
+                  <input
+                    id="analytics-lot-search-input"
+                    type="search"
+                    value={lotSearch}
+                    placeholder="輸入名稱或停車場 ID"
+                    autoComplete="off"
+                    onFocus={() => setLotSearchOpen(true)}
+                    onBlur={() => setLotSearchOpen(false)}
+                    onChange={(event) => {
+                      setLotSearch(event.target.value);
+                      setLotSearchOpen(true);
+                      if (selectedLotId) {
+                        setSelectedLotId("");
+                        setHoveredLotView(null);
+                      }
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Escape") {
+                        setLotSearchOpen(false);
+                        return;
+                      }
+                      if (event.key !== "Enter") return;
+                      event.preventDefault();
+                      const match = filteredLotOptions[0];
+                      if (!match) return;
+                      setLotSearch(match.name);
+                      setSelectedLotId(match.lotId);
+                      setLotSearchOpen(false);
+                      setHoveredLotView(null);
+                    }}
+                  />
+                  {(lotSearch || selectedLotId) && (
+                    <button
+                      type="button"
+                      aria-label="顯示所有停車場"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => {
+                        setLotSearch("");
+                        setSelectedLotId("");
+                        setHoveredLotView(null);
+                      }}
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+                {lotSearchOpen && (
+                  <div className="analytics-lot-search-results" role="listbox">
+                    <button
+                      type="button"
+                      className={!selectedLotId ? "active" : ""}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => {
+                        setLotSearch("");
+                        setSelectedLotId("");
+                        setLotSearchOpen(false);
+                        setHoveredLotView(null);
+                      }}
+                    >
+                      <span>所有停車場</span>
+                      <strong>{formatter.format(
+                        (lotViewReport?.lots || []).reduce(
+                          (sum, lot) => sum + (lot.totalViews || 0),
+                          0
+                        )
+                      )}</strong>
+                    </button>
+                    {filteredLotOptions.map((lot) => (
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={selectedLotId === lot.lotId}
+                        className={selectedLotId === lot.lotId ? "active" : ""}
+                        key={lot.lotId}
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => {
+                          setLotSearch(lot.name);
+                          setSelectedLotId(lot.lotId);
+                          setLotSearchOpen(false);
+                          setHoveredLotView(null);
+                        }}
+                      >
+                        <span>
+                          {lot.name}
+                          <small>{lot.lotId}</small>
+                        </span>
+                        <strong>{formatter.format(lot.totalViews || 0)}</strong>
+                      </button>
+                    ))}
+                    {filteredLotOptions.length === 0 && (
+                      <div className="analytics-lot-search-empty">找不到符合的停車場</div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="analytics-toggle analytics-time-toggle" aria-label="卡片開啟統計範圍">
+                {[7, 30, 90].map((value) => (
+                  <button
+                    type="button"
+                    key={value}
+                    className={days === value ? "active" : ""}
+                    onClick={() => {
+                      setDays(value);
+                      setHoveredDay(null);
+                      setHoveredLotView(null);
+                    }}
+                  >
+                    {value} 天
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {lotViewError && <div className="analytics-inline-error">{lotViewError}</div>}
+
+          <div className={`analytics-hover-readout ${hoveredLotView ? "active" : ""}`}>
+            {hoveredLotView ? (
+              <>
+                <strong>{hoveredLotView.date}</strong>
+                <span>卡片開啟 {formatter.format(hoveredLotView.views)} 次</span>
+              </>
+            ) : (
+              <>
+                <strong>{lotViewsLoading ? "載入中…" : `合計 ${formatter.format(lotViewReport?.totalViews || 0)} 次`}</strong>
+                <span>將游標移到柱狀圖上查看該日的詳細數字</span>
+              </>
+            )}
+          </div>
+
+          <div className="analytics-chart-scroll" ref={lotViewChartScrollRef}>
+            <div
+              className="analytics-chart analytics-lot-view-chart"
+              style={{ minWidth: `${Math.max(620, (lotViewReport?.days || days) * 20)}px` }}
+            >
+              {(lotViewReport?.daily || []).map((row, index) => {
+                const height = row.views ? Math.max(4, (row.views / maxLotViewValue) * 100) : 0;
+                const reportDays = lotViewReport?.days || days;
+                const showLabel = reportDays <= 7
+                  || index === 0
+                  || index === lotViewReport.daily.length - 1
+                  || index % 5 === 0;
+                return (
+                  <div
+                    className="analytics-bar-column"
+                    key={row.date}
+                    title={row.views ? `${row.date}：開啟 ${row.views} 次` : undefined}
+                    onMouseEnter={() => row.views && setHoveredLotView(row)}
+                    onMouseLeave={() => setHoveredLotView(null)}
+                    onClick={() => row.views && setHoveredLotView(row)}
+                  >
+                    <div className="analytics-bar-value">{row.views || ""}</div>
+                    <div className="analytics-bar-track">
+                      <div
+                        className={`analytics-bar lot-view ${
+                          hoveredLotView
+                            ? hoveredLotView.date === row.date
+                              ? "is-highlighted"
+                              : "is-dimmed"
+                            : ""
+                        }`}
+                        style={{ height: `${height}%` }}
+                      />
+                    </div>
+                    <div className="analytics-bar-date">{showLabel ? shortDate(row.date) : ""}</div>
+                  </div>
+                );
+              })}
+              {!lotViewReport && !lotViewsLoading && (
+                <div className="analytics-empty">尚未載入停車場卡片資料</div>
+              )}
+            </div>
+          </div>
+          <div className="analytics-minute-note">
+            桌機開啟地圖資訊卡、手機開啟 bottom sheet，或從停車場清單開啟同一內容時各計一次；資料輪詢不會重複計數。
           </div>
         </section>
 

@@ -11,6 +11,7 @@ import MobileLotsBar from "./components/MobileLotsBar";
 import MobileLotsOverlay from "./components/MobileLotsOverlay";
 import ParkingMap from "./components/ParkingMap";
 import VisitTracker from "./components/VisitTracker";
+import LotViewTracker from "./components/LotViewTracker";
 
 import Spinner from "react-bootstrap/Spinner";
 import { FaCheck } from "react-icons/fa6";
@@ -541,6 +542,7 @@ export default function App() {
     >
       <div className="app-root">
         <VisitTracker apiBase={apiBase} />
+        <LotViewTracker active={active} apiBase={apiBase} />
 
         <div className="title-bar">
           <div className="title-bar-inner">

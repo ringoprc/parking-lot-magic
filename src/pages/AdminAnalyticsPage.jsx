@@ -4,10 +4,97 @@ import { MdOutlineArrowBackIos } from "react-icons/md";
 import "./AdminAnalyticsPage.css";
 
 const formatter = new Intl.NumberFormat("zh-TW");
+const taipeiDateTimeFormatter = new Intl.DateTimeFormat("zh-TW", {
+  timeZone: "Asia/Taipei",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: false,
+});
+
+const JOURNEY_EVENT_META = {
+  page_enter: { label: "進入網站", icon: "↗", tone: "enter" },
+  page_hidden: { label: "切到背景", icon: "–", tone: "muted" },
+  page_visible: { label: "回到頁面", icon: "+", tone: "visible" },
+  page_exit: { label: "離開網站", icon: "↙", tone: "exit" },
+  lot_open: { label: "開啟停車場", icon: "P", tone: "lot" },
+  lot_close: { label: "關閉停車場", icon: "×", tone: "close" },
+};
 
 function shortDate(value) {
   const date = new Date(`${value}T00:00:00Z`);
   return `${date.getUTCMonth() + 1}/${date.getUTCDate()}`;
+}
+
+function shouldShowChartValue(rows, index, valueKey, radius) {
+  const value = rows[index]?.[valueKey] || 0;
+  if (value <= 0) return false;
+  if (radius <= 0) return true;
+
+  const start = Math.max(0, index - radius);
+  const end = Math.min(rows.length - 1, index + radius);
+  for (let nearbyIndex = start; nearbyIndex <= end; nearbyIndex += 1) {
+    const nearbyValue = rows[nearbyIndex]?.[valueKey] || 0;
+    if (nearbyValue > value || (nearbyValue === value && nearbyIndex < index)) return false;
+  }
+  return true;
+}
+
+function formatJourneyTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return taipeiDateTimeFormatter.format(date).replace(",", "");
+}
+
+function formatDuration(value) {
+  const totalSeconds = Math.max(0, Math.round((Number(value) || 0) / 1000));
+  if (totalSeconds < 60) return `${totalSeconds} 秒`;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes < 60) return seconds ? `${minutes} 分 ${seconds} 秒` : `${minutes} 分`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return remainingMinutes ? `${hours} 小時 ${remainingMinutes} 分` : `${hours} 小時`;
+}
+
+function summarizeJourney(journey) {
+  const pageDurations = new Map();
+  let lotOpens = 0;
+  let lastPageExitAt = null;
+
+  for (const event of journey.events || []) {
+    if (event.eventType === "lot_open") lotOpens += 1;
+    if (event.eventType === "page_exit") lastPageExitAt = event.occurredAt;
+    if (event.eventType.startsWith("page_") && event.durationMs != null) {
+      pageDurations.set(
+        event.pageViewId,
+        Math.max(pageDurations.get(event.pageViewId) || 0, event.durationMs || 0)
+      );
+    }
+  }
+
+  const activeDurationMs = Array.from(pageDurations.values()).reduce(
+    (sum, duration) => sum + duration,
+    0
+  );
+  const lastEventMs = new Date(journey.lastEventAt).getTime();
+  const isLive = !lastPageExitAt && Number.isFinite(lastEventMs) && Date.now() - lastEventMs < 90_000;
+
+  return { activeDurationMs, lotOpens, isLive };
+}
+
+function journeyEventDescription(event) {
+  if (event.eventType === "lot_open") return event.lotName || event.lotId || "停車場";
+  if (event.eventType === "lot_close") {
+    const name = event.lotName || event.lotId || "停車場";
+    return `${name}・停留 ${formatDuration(event.durationMs)}`;
+  }
+  if (event.eventType === "page_exit") return `可見停留 ${formatDuration(event.durationMs)}`;
+  if (event.eventType === "page_hidden") return `已累積 ${formatDuration(event.durationMs)}`;
+  if (event.eventType === "page_visible") return `繼續瀏覽・已累積 ${formatDuration(event.durationMs)}`;
+  return event.path || "/";
 }
 
 function SummaryCard({ label, value, note, accent = "" }) {
@@ -40,12 +127,18 @@ export default function AdminAnalyticsPage({ apiBase }) {
   const loadAbortRef = useRef(null);
   const lotViewRequestIdRef = useRef(0);
   const lotViewAbortRef = useRef(null);
+  const journeyRequestIdRef = useRef(0);
+  const journeyAbortRef = useRef(null);
   const [report, setReport] = useState(null);
   const [lotViewReport, setLotViewReport] = useState(null);
+  const [journeyReport, setJourneyReport] = useState(null);
   const [loading, setLoading] = useState(false);
   const [lotViewsLoading, setLotViewsLoading] = useState(false);
+  const [journeysLoading, setJourneysLoading] = useState(false);
   const [error, setError] = useState("");
   const [lotViewError, setLotViewError] = useState("");
+  const [journeyError, setJourneyError] = useState("");
+  const [visibleJourneyCount, setVisibleJourneyCount] = useState(10);
 
   function persistAdminKey(value) {
     setAdminKey(value);
@@ -122,6 +215,39 @@ export default function AdminAnalyticsPage({ apiBase }) {
     }
   }
 
+  async function loadJourneys() {
+    if (!adminKey) return;
+
+    const requestId = journeyRequestIdRef.current + 1;
+    journeyRequestIdRef.current = requestId;
+    journeyAbortRef.current?.abort();
+    const controller = new AbortController();
+    journeyAbortRef.current = controller;
+
+    setJourneysLoading(true);
+    setJourneyError("");
+    try {
+      const response = await fetch(
+        `${apiBase}/api/admin/analytics/journeys?days=${days}&limit=50`,
+        {
+          headers: { "x-admin-key": adminKey },
+          signal: controller.signal,
+        }
+      );
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error || "無法讀取訪客旅程");
+      if (requestId !== journeyRequestIdRef.current) return;
+      setJourneyReport(data);
+      setVisibleJourneyCount(10);
+    } catch (loadError) {
+      if (loadError?.name === "AbortError") return;
+      if (requestId !== journeyRequestIdRef.current) return;
+      setJourneyError(loadError?.message || "無法讀取訪客旅程");
+    } finally {
+      if (requestId === journeyRequestIdRef.current) setJourneysLoading(false);
+    }
+  }
+
   useEffect(() => {
     load({ silent: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -132,9 +258,15 @@ export default function AdminAnalyticsPage({ apiBase }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [days, selectedLotId]);
 
+  useEffect(() => {
+    loadJourneys();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [days]);
+
   useEffect(() => () => {
     loadAbortRef.current?.abort();
     lotViewAbortRef.current?.abort();
+    journeyAbortRef.current?.abort();
   }, []);
 
   useEffect(() => {
@@ -212,6 +344,24 @@ export default function AdminAnalyticsPage({ apiBase }) {
   const averageViews = report?.totals?.sessions
     ? (report.totals.pageViews / report.totals.sessions).toFixed(1)
     : "0.0";
+  const journeys = useMemo(() => journeyReport?.journeys || [], [journeyReport]);
+  const journeySummaries = useMemo(
+    () => journeys.map((journey) => summarizeJourney(journey)),
+    [journeys]
+  );
+  const journeyStats = useMemo(() => {
+    const sessionsWithLots = journeySummaries.filter((summary) => summary.lotOpens > 0).length;
+    const totalLotOpens = journeySummaries.reduce((sum, summary) => sum + summary.lotOpens, 0);
+    const totalDuration = journeySummaries.reduce(
+      (sum, summary) => sum + summary.activeDurationMs,
+      0
+    );
+    return {
+      sessionsWithLots,
+      totalLotOpens,
+      averageDurationMs: journeySummaries.length ? totalDuration / journeySummaries.length : 0,
+    };
+  }, [journeySummaries]);
 
   return (
     <div className="analytics-page">
@@ -238,6 +388,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
                 if (event.key !== "Enter") return;
                 load();
                 loadLotViews();
+                loadJourneys();
               }}
               placeholder="admin key"
             />
@@ -247,8 +398,9 @@ export default function AdminAnalyticsPage({ apiBase }) {
             onClick={() => {
               load();
               loadLotViews();
+              loadJourneys();
             }}
-            disabled={loading || lotViewsLoading}
+            disabled={loading || lotViewsLoading || journeysLoading}
           >
             {loading ? "載入中…" : "更新資料"}
           </button>
@@ -463,6 +615,14 @@ export default function AdminAnalyticsPage({ apiBase }) {
                 const value = row[dailyMetric] || 0;
                 const height = value ? Math.max(4, (value / maxDailyValue) * 100) : 0;
                 const showLabel = loadedDays <= 7 || index === 0 || index === report.daily.length - 1 || index % 5 === 0;
+                const showValue = hoveredDay
+                  ? hoveredDay.date === row.date
+                  : shouldShowChartValue(
+                      report.daily,
+                      index,
+                      dailyMetric,
+                      loadedDays <= 7 ? 0 : 1
+                    );
                 return (
                   <div
                     className="analytics-bar-column"
@@ -478,7 +638,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
                       if (value > 0) setHoveredDay(row);
                     }}
                   >
-                    <div className="analytics-bar-value">{value || ""}</div>
+                    <div className="analytics-bar-value">{showValue ? value : ""}</div>
                     <div className="analytics-bar-track">
                       <div
                         className={`analytics-bar ${dailyMetric === "sessions" ? "session" : ""} ${
@@ -669,6 +829,14 @@ export default function AdminAnalyticsPage({ apiBase }) {
                   || index === 0
                   || index === lotViewReport.daily.length - 1
                   || index % 5 === 0;
+                const showValue = hoveredLotView
+                  ? hoveredLotView.date === row.date
+                  : shouldShowChartValue(
+                      lotViewReport.daily,
+                      index,
+                      "views",
+                      reportDays <= 7 ? 0 : 1
+                    );
                 return (
                   <div
                     className="analytics-bar-column"
@@ -691,7 +859,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
                     tabIndex={row.views ? 0 : undefined}
                     aria-label={row.views ? `查看 ${row.date} 的 ${row.views} 次卡片開啟明細` : undefined}
                   >
-                    <div className="analytics-bar-value">{row.views || ""}</div>
+                    <div className="analytics-bar-value">{showValue ? row.views : ""}</div>
                     <div className="analytics-bar-track">
                       <div
                         className={`analytics-bar lot-view ${
@@ -715,6 +883,149 @@ export default function AdminAnalyticsPage({ apiBase }) {
           </div>
           <div className="analytics-minute-note">
             桌機開啟地圖資訊卡、手機開啟 bottom sheet，或從停車場清單開啟同一內容時各計一次；資料輪詢不會重複計數。
+          </div>
+        </section>
+
+        <section className="analytics-panel analytics-journey-panel">
+          <div className="analytics-panel-title analytics-journey-title">
+            <div>
+              <div className="analytics-section-kicker">USER JOURNEYS</div>
+              <h2>最近訪客旅程</h2>
+              <p>
+                {journeyReport
+                  ? `最近 ${journeyReport.days} 天・顯示最新 ${formatter.format(journeys.length)} 個匿名 Session`
+                  : "輸入密碼後載入旅程資料"}
+              </p>
+            </div>
+            <div className="analytics-journey-privacy">
+              <span className="analytics-privacy-dot" />
+              僅顯示雜湊識別碼
+            </div>
+          </div>
+
+          {journeyError && <div className="analytics-inline-error">{journeyError}</div>}
+
+          <div className="analytics-journey-summary">
+            <div>
+              <span>載入旅程</span>
+              <strong>{formatter.format(journeys.length)}</strong>
+              <small>最新 Session 樣本</small>
+            </div>
+            <div>
+              <span>查看過停車場</span>
+              <strong>{formatter.format(journeyStats.sessionsWithLots)}</strong>
+              <small>至少開啟一次卡片</small>
+            </div>
+            <div>
+              <span>平均可見停留</span>
+              <strong>{formatDuration(journeyStats.averageDurationMs)}</strong>
+              <small>不計背景分頁時間</small>
+            </div>
+            <div>
+              <span>卡片開啟</span>
+              <strong>{formatter.format(journeyStats.totalLotOpens)}</strong>
+              <small>此批旅程合計</small>
+            </div>
+          </div>
+
+          <div className="analytics-journey-list">
+            {journeys.slice(0, visibleJourneyCount).map((journey, index) => {
+              const summary = journeySummaries[index];
+              const displayEvents = (journey.events || []).filter(
+                (event) => event.eventType !== "page_heartbeat"
+              );
+              const heartbeatCount = (journey.events || []).length - displayEvents.length;
+
+              return (
+                <details className="analytics-journey-row" key={journey.sessionId}>
+                  <summary>
+                    <div className="analytics-journey-identity">
+                      <span className={`analytics-session-status ${summary.isLive ? "live" : ""}`} />
+                      <div>
+                        <strong>訪客 {journey.visitorId.slice(0, 8)}</strong>
+                        <small>Session {journey.sessionId.slice(0, 8)}</small>
+                      </div>
+                    </div>
+                    <div className="analytics-journey-start">
+                      <span>進站時間</span>
+                      <strong>{formatJourneyTime(journey.startedAt)}</strong>
+                    </div>
+                    <div className="analytics-journey-metric">
+                      <span>可見停留</span>
+                      <strong>{formatDuration(summary.activeDurationMs)}</strong>
+                    </div>
+                    <div className="analytics-journey-metric">
+                      <span>停車場</span>
+                      <strong>{formatter.format(summary.lotOpens)} 次</strong>
+                    </div>
+                    <div className="analytics-journey-state">
+                      <span className={summary.isLive ? "live" : "ended"}>
+                        {summary.isLive ? "瀏覽中" : "已結束"}
+                      </span>
+                      <i aria-hidden="true">⌄</i>
+                    </div>
+                  </summary>
+
+                  <div className="analytics-journey-detail">
+                    <div className="analytics-journey-detail-head">
+                      <span>事件時間軸</span>
+                      <span>
+                        最後活動 {formatJourneyTime(journey.lastEventAt)}
+                        {heartbeatCount > 0 ? `・已合併 ${heartbeatCount} 次心跳` : ""}
+                      </span>
+                    </div>
+                    <div className="analytics-timeline">
+                      {displayEvents.map((event, eventIndex) => {
+                        const meta = JOURNEY_EVENT_META[event.eventType] || {
+                          label: event.eventType,
+                          icon: "•",
+                          tone: "muted",
+                        };
+                        return (
+                          <div
+                            className="analytics-timeline-event"
+                            key={`${event.occurredAt}-${event.eventType}-${eventIndex}`}
+                          >
+                            <div className={`analytics-timeline-icon ${meta.tone}`}>{meta.icon}</div>
+                            <div className="analytics-timeline-copy">
+                              <strong>{meta.label}</strong>
+                              <span>{journeyEventDescription(event)}</span>
+                            </div>
+                            <time>{formatJourneyTime(event.occurredAt)}</time>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </details>
+              );
+            })}
+
+            {journeysLoading && journeys.length === 0 && (
+              <div className="analytics-journey-empty">
+                <span className="analytics-journey-spinner" />
+                正在載入訪客旅程…
+              </div>
+            )}
+            {!journeysLoading && journeyReport && journeys.length === 0 && (
+              <div className="analytics-journey-empty">
+                <strong>尚未收到旅程事件</strong>
+                <span>新版本上線後，訪客的進站與卡片互動會顯示在這裡。</span>
+              </div>
+            )}
+          </div>
+
+          {visibleJourneyCount < journeys.length && (
+            <button
+              type="button"
+              className="analytics-journey-more"
+              onClick={() => setVisibleJourneyCount((count) => count + 10)}
+            >
+              顯示更多旅程
+            </button>
+          )}
+          <div className="analytics-minute-note">
+            停留時間由分頁可見狀態與 30 秒心跳估算；直接關閉瀏覽器時，最後一段時間可能有少量誤差。
           </div>
         </section>
 

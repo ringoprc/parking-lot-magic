@@ -106,11 +106,38 @@ export default function AiResultHistory({ apiBase = "", lotId, onDisplayChange }
 
   return (
     <section className="lot-ai-history" aria-label="最近十次 AI 辨識結果">
-      <div className="lot-ai-history-head">
-        <span>AI 最近十次辨識（舊 → 新）</span>
+      <div className="lot-ai-history-head"
+        style={{
+          alignItems: "flex-end"
+        }}
+      >
+        <span
+          style={{
+            color: "#999",
+            marginLeft: "3px",
+            marginBottom: "1px",
+            fontSize: "8px"
+          }}
+        >5分鐘前</span>
+        <span
+          style={{
+            fontSize: "10px"
+          }}
+        >AI 最近 10 次辨識結果</span>
+        <span
+          style={{
+            color: "#999",
+            marginLeft: "8px",
+            marginRight: "3px",
+            marginBottom: "1px",
+            fontSize: "8px"
+          }}
+        >現在</span>
+        {/*
         <small>
           {history.lotId === lotId ? formatLatestRecognition(history.rows) : ""}
         </small>
+        */}
       </div>
 
       {loading ? (

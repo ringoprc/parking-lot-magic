@@ -469,7 +469,7 @@ export default function App() {
     const visibleCount = visibleLots.length;
 
     if (!searchCenter || !focus?.name) {
-      return `地圖範圍內：${visibleCount} 個停車場`;
+      return `目前地圖顯示範圍內：${visibleCount} 個停車場`;
     }
 
     const km = RADIUS_M / 1000;

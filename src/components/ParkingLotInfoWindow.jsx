@@ -465,7 +465,7 @@ export default function ParkingLotInfoWindow({
                   gap: "2px",
                 }}
               >
-                <div style={{ marginTop: 4, fontSize: 9.5, fontWeight: 500, color: "#666"  }}>
+                <div style={{ margin: "4px 0px 4px 2px", fontSize: 9.5, fontWeight: 500, color: "#666"  }}>
                   最近更新：{formatTimeYYYYMMDD_HHMMSS(active.lastUpdated)}
                 </div>
 

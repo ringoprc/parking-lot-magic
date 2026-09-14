@@ -414,14 +414,6 @@ export default function LotBottomSheet({
                 </div>
               </div>
 
-              <AiResultHistory
-                apiBase={apiBase}
-                lotId={active.lotId}
-                onDisplayChange={(display) =>
-                  onLotDisplayChange?.(active.lotId, display)
-                }
-              />
-
               {(() => {
                 const m = minutesAgo(active.lastUpdated);
                 if (m == null) return null;
@@ -454,6 +446,14 @@ export default function LotBottomSheet({
                   })()}
                 </div>
               </div>
+
+              <AiResultHistory
+                apiBase={apiBase}
+                lotId={active.lotId}
+                onDisplayChange={(display) =>
+                  onLotDisplayChange?.(active.lotId, display)
+                }
+              />
 
               <button
                 className="vl-sheet-navBtn"

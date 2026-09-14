@@ -465,17 +465,17 @@ export default function ParkingLotInfoWindow({
                   gap: "5px",
                 }}
               >
-                <div style={{ marginTop: 6, fontSize: 10.5 }}>
+                <div style={{ marginTop: 6, fontSize: 10 }}>
                   最近更新：{formatTimeYYYYMMDD_HHMMSS(active.lastUpdated)}
                 </div>
 
-                <div style={{ marginTop: 6, fontSize: 10.5 }}>
+                <div style={{ marginTop: 6, fontSize: 10 }}>
                   {(() => {
                     const ms = minSecAgo(active.lastUpdated);
                     if (!ms) return null;
 
                     return (
-                      <div style={{ marginTop: 0, fontSize: 10.5 }}>
+                      <div style={{ marginTop: 0, fontSize: 10 }}>
                         （{ms.min} 分 {String(ms.sec).padStart(2, "0")} 秒前）
                       </div>
                     );

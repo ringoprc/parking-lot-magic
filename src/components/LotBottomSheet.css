@@ -298,23 +298,18 @@
 }
 
 .vl-sheet-navBtn {
-  width: 100%;
+  width: calc(100% - 18px);
   padding: 6px 12px;
   border-radius: 12px;
   margin: 10px 10px 0px 0px;
   font-size: 13px;
-  border: 1px solid #2680f0;
+  border: 1px solid #4c92ea;
   font-weight: 800;
-  background: #2680f0;
+  background: linear-gradient(150deg, #4b91e9, #2680f0);
   color: white;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
-}
-
-.vl-sheet-navBtn:hover {
-  background: #2680f0;
-  color: white;
-  border: 1px solid #2680f0 !important;
+  margin: 15px 9px 0px;
 }
 
 .vl-sheet-meta {

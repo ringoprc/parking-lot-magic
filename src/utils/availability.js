@@ -8,6 +8,23 @@ function toVacancyNum(v) {
   return Number.isFinite(n) ? n : null;
 }
 
+export function mergeLotDisplayAvailability(lot, display) {
+  if (!lot || !display) return lot;
+
+  const next = {
+    availabilityMode: display.availabilityMode ?? lot.availabilityMode,
+    vacancy: display.vacancy ?? null,
+    hasAvailableSpace: display.hasAvailableSpace ?? null,
+    lastUpdated: display.at ?? null,
+    status: display.status ?? "unknown",
+    availabilitySource: display.source ?? "ai_history",
+    availabilityReason: display.reason ?? "derived",
+  };
+
+  if (Object.entries(next).every(([key, value]) => lot[key] === value)) return lot;
+  return { ...lot, ...next };
+}
+
 export function getAvailabilityDisplayValue(lot, unknownLabel = "未知") {
   if (isBooleanAvailability(lot)) {
     if (lot?.hasAvailableSpace === true) return "有";

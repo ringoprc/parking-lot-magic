@@ -16,6 +16,7 @@ import {
   getAvailabilityDisplayValue,
   getAvailabilityTextColor,
 } from "../utils/availability";
+import AiResultHistory from "./AiResultHistory";
 
 import "./LotBottomSheet.css";
 
@@ -156,7 +157,9 @@ export default function LotBottomSheet({
   active, 
   onClose, 
   lastSheetFetchAt,
-  lastFrontendFetchAt 
+  lastFrontendFetchAt,
+  apiBase,
+  onLotDisplayChange,
 }) {
   const [open, setOpen] = useState(false);
   const [navAdOpen, setNavAdOpen] = useState(false);
@@ -410,6 +413,14 @@ export default function LotBottomSheet({
                   </div>
                 </div>
               </div>
+
+              <AiResultHistory
+                apiBase={apiBase}
+                lotId={active.lotId}
+                onDisplayChange={(display) =>
+                  onLotDisplayChange?.(active.lotId, display)
+                }
+              />
 
               {(() => {
                 const m = minutesAgo(active.lastUpdated);

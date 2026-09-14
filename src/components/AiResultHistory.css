@@ -1,0 +1,76 @@
+.lot-ai-history {
+  margin-top: 9px;
+  padding: 9px 10px 10px;
+  border: 1px solid #dfe7e2;
+  border-radius: 10px;
+  background: #f7faf8;
+  color: #34413a;
+}
+
+.lot-ai-history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+
+.lot-ai-history-head > span {
+  color: #53625a;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .03em;
+}
+
+.lot-ai-history-head > small {
+  color: #93a098;
+  font-size: 8px;
+  font-weight: 650;
+}
+
+.lot-ai-history-track {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.lot-ai-result {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  height: 25px;
+  overflow: visible;
+  border: 1px solid var(--history-result-border);
+  border-radius: 6px;
+  background: var(--history-result-bg);
+  color: var(--history-result-glyph);
+  font: 800 9px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.lot-ai-result:not(:last-child)::after {
+  content: "›";
+  position: absolute;
+  left: calc(100% + 1px);
+  z-index: 1;
+  color: #a4afa9;
+  font-size: 10px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.lot-ai-history-message {
+  display: grid;
+  min-height: 25px;
+  place-items: center;
+  color: #8a958f;
+  font-size: 9px;
+}
+
+.lot-ai-history-message.is-error { color: #ad4e46; }
+
+@media (max-width: 420px) {
+  .lot-ai-history { padding-inline: 8px; }
+  .lot-ai-history-track { gap: 4px; }
+  .lot-ai-result { height: 24px; font-size: 8px; }
+}

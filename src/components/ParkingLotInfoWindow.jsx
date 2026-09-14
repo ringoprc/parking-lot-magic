@@ -17,6 +17,7 @@ import {
   getAvailabilityDisplayValue,
   getAvailabilityTextColor,
 } from "../utils/availability";
+import AiResultHistory from "./AiResultHistory";
 
 import "./ParkingLotInfoWindow.css";
 
@@ -183,6 +184,8 @@ async function copyToClipboard(text) {
 export default function ParkingLotInfoWindow({
   active,
   setActive,
+  apiBase,
+  onLotDisplayChange,
 }) {
   if (!active) return null;
 
@@ -479,6 +482,14 @@ export default function ParkingLotInfoWindow({
                   })()}
                 </div>
               </div>
+
+              <AiResultHistory
+                apiBase={apiBase}
+                lotId={active.lotId}
+                onDisplayChange={(display) =>
+                  onLotDisplayChange?.(active.lotId, display)
+                }
+              />
             </div>
           </div>
         </div>

@@ -523,6 +523,8 @@ function VisibleParkingMarkers({
 
 
 export default function ParkingMap({
+  apiBase,
+  onLotDisplayChange,
   lots,
   active,
   setActive,
@@ -607,6 +609,8 @@ export default function ParkingMap({
           <ParkingLotInfoWindow
             active={active}
             setActive={setActive}
+            apiBase={apiBase}
+            onLotDisplayChange={onLotDisplayChange}
           />
         )}
 
@@ -635,6 +639,8 @@ export default function ParkingMap({
         <LotBottomSheet
           active={active}
           onClose={() => setActive(null)}
+          apiBase={apiBase}
+          onLotDisplayChange={onLotDisplayChange}
           lastSheetFetchAt={lastSheetFetchAt}
           lastFrontendFetchAt={lastFrontendFetchAt}
         />

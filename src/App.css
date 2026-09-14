@@ -410,8 +410,8 @@ div .gm-style-iw {
 .map-wrap .gm-style-iw-c {
   -webkit-transform: translate3d(-50%, -120%, 0);
   transform: translate3d(-50%, -120%, 0);
-  max-height: 358px !important;
-  min-height: 358px !important;
+  max-height: 420px !important;
+  min-height: 420px !important;
   width: 350px;
   padding: 1px 20px 20px 20px !important;
 }

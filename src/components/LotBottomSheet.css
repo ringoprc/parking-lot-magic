@@ -25,6 +25,7 @@
   overflow: hidden;
   /*max-height: min(70dvh, 520px);*/
   height: auto;
+  max-height: min(82dvh, 640px);
 
   transform: translateY(calc(100% + env(safe-area-inset-bottom)));
   transition: transform 160ms ease;
@@ -313,7 +314,7 @@
 .vl-sheet-navBtn:hover {
   background: #2680f0;
   color: white;
-  border: 1px solid #2680f0; !important;
+  border: 1px solid #2680f0 !important;
 }
 
 .vl-sheet-meta {
@@ -534,4 +535,3 @@
   background: #2680f0;
   color: #fff;
 }
-

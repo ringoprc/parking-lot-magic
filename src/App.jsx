@@ -272,7 +272,13 @@ export default function App() {
   //-----------------------------
 
   const RADIUS_M = 2000;
-  const { lots, meta, lastFrontendFetchAt, reload } = useLots({
+  const {
+    lots,
+    meta,
+    lastFrontendFetchAt,
+    reload,
+    applyDisplayAvailability,
+  } = useLots({
     apiBase,
     district: null,
     center: queryCenter,
@@ -726,6 +732,8 @@ export default function App() {
           {/* Map */}
           <div className="map-wrap">
             <ParkingMap
+              apiBase={apiBase}
+              onLotDisplayChange={applyDisplayAvailability}
               lots={validLots}
               onViewportChange={setMapViewport}
               active={active}

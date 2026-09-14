@@ -1,6 +1,9 @@
 // frontend/src/hooks/useLots.jsx
 import { useCallback, useEffect, useState } from "react";
-import { mergeLotDisplayAvailability } from "../utils/availability";
+import {
+  hasNumberedAvailability,
+  mergeLotDisplayAvailability,
+} from "../utils/availability";
 
 export function useLots({
   apiBase = "",
@@ -13,6 +16,7 @@ export function useLots({
 
   const [lots, setLots] = useState([]);
   const [meta, setMeta] = useState(null);
+  const [globalNumberedCount, setGlobalNumberedCount] = useState(0);
   const [lastFrontendFetchAt, setLastFrontendFetchAt] = useState(null);
   const centerLat = center?.lat;
   const centerLng = center?.lng;
@@ -29,8 +33,14 @@ export function useLots({
 
     console.log('data:', data);
 
-    setLots(data.results || []);
+    const nextLots = data.results || [];
+    setLots(nextLots);
     setMeta(data.meta || null);
+    if (data.meta?.totalActive === nextLots.length) {
+      setGlobalNumberedCount(
+        nextLots.filter(hasNumberedAvailability).length
+      );
+    }
     setLastFrontendFetchAt(new Date().toISOString());
   }, [apiBase, district, centerLat, centerLng, radiusM]);
 
@@ -73,7 +83,17 @@ export function useLots({
       const response = await fetch(`${apiBase}/api/lots/availability`);
       if (!response.ok) return;
       const data = await response.json();
-      applyDisplayRows(data?.rows);
+      const rows = Array.isArray(data?.rows) ? data.rows : [];
+      applyDisplayRows(rows);
+
+      const summaryCount = Number(data?.meta?.numberedCount);
+      setGlobalNumberedCount(
+        Number.isInteger(summaryCount) && summaryCount >= 0
+          ? summaryCount
+          : rows.filter((row) =>
+              hasNumberedAvailability(row?.display)
+            ).length
+      );
     } catch {
       // The next lightweight poll retries; keep the last rendered snapshot.
     }
@@ -87,6 +107,7 @@ export function useLots({
   return {
     lots,
     meta,
+    globalNumberedCount,
     lastFrontendFetchAt,
     reload: loadLots,
     applyDisplayAvailability,

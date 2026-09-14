@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLots } from "./hooks/useLots";
 import { haversineMeters } from "./utils/geo";
+import { hasNumberedAvailability } from "./utils/availability";
 
 import { Toaster } from "react-hot-toast";
 import { APIProvider } from "@vis.gl/react-google-maps";
@@ -161,6 +162,7 @@ export default function App() {
   const [queryCenter, setQueryCenter] = useState(null); // initial
 
   const [mapViewport, setMapViewport] = useState(null);
+  const [showNumberedPinsOnly, setShowNumberedPinsOnly] = useState(true);
 
   const [myPos, setMyPos] = useState(null); // {lat,lng}
   const [myAcc, setMyAcc] = useState(null); // meters
@@ -273,6 +275,7 @@ export default function App() {
   const {
     lots,
     meta,
+    globalNumberedCount,
     lastFrontendFetchAt,
     reload,
     applyDisplayAvailability,
@@ -392,6 +395,19 @@ export default function App() {
     });
   }, [validLots, mapViewport]);
 
+  const mapLots = useMemo(
+    () =>
+      showNumberedPinsOnly
+        ? validLots.filter(hasNumberedAvailability)
+        : validLots,
+    [showNumberedPinsOnly, validLots]
+  );
+
+  const mapActive =
+    showNumberedPinsOnly && !hasNumberedAvailability(active)
+      ? null
+      : active;
+
   const displayedLots = useMemo(() => {
     const mapCenter =
       mapViewport?.centerLat != null && mapViewport?.centerLng != null
@@ -452,13 +468,10 @@ export default function App() {
   const listTitle = useMemo(() => {
     const visibleCount = visibleLots.length;
 
-    const countText =
-      displayedLots.length < visibleCount
-        ? `${displayedLots.length}/${visibleCount}`
-        : String(visibleCount);
+    const countText = `清單 ${displayedLots.length} 筆・標記 ${visibleCount} 個`;
 
     if (!searchCenter || !focus?.name) {
-      return `目前地圖範圍內停車場 (${countText})`;
+      return `地圖範圍：${countText}`;
     }
 
     const km = RADIUS_M / 1000;
@@ -466,7 +479,7 @@ export default function App() {
       ? String(km)
       : km.toFixed(1);
 
-    return `距離 [ ${focus.name} ] ${kmText}km 內・目前地圖範圍 (${countText})`;
+    return `距離 [ ${focus.name} ] ${kmText}km：${countText}`;
   }, [
     visibleLots.length,
     displayedLots.length,
@@ -559,7 +572,11 @@ export default function App() {
                 onClick={onLogoTap}
               />
 
-              <div>
+              <div
+                style={{
+                  minWidth: "200px"
+                }}
+              >
                 <div className="title">
                   <span style={{ marginLeft: "6px" }}>停車</span>
                   <span className="title-hightlight-span">急</span>
@@ -733,10 +750,16 @@ export default function App() {
             <ParkingMap
               apiBase={apiBase}
               onLotDisplayChange={applyDisplayAvailability}
-              lots={validLots}
+              lots={mapLots}
               onViewportChange={setMapViewport}
-              active={active}
+              active={mapActive}
               setActive={setActive}
+              numberedLotCount={globalNumberedCount}
+              totalLotCount={meta?.totalActive ?? validLots.length}
+              showNumberedOnly={showNumberedPinsOnly}
+              onToggleNumberedOnly={() =>
+                setShowNumberedPinsOnly((current) => !current)
+              }
               lastSheetFetchAt={meta?.lastSheetFetchAt}
               lastFrontendFetchAt={lastFrontendFetchAt}
               flyToRef={flyToRef}

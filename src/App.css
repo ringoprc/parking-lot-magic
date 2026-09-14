@@ -400,6 +400,142 @@ div .gm-style-iw {
   height: 100%;
 }
 
+.map-number-filter {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 7px 9px 7px 12px;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.06));
+  color: #35463d;
+  box-shadow:
+    0 8px 24px rgba(28, 48, 38, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.68),
+    inset 0 -1px 0 rgba(31, 63, 47, 0.08);
+  -webkit-backdrop-filter: blur(2.5px) saturate(2.5);
+  backdrop-filter: blur(2.5px) saturate(2.5);
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 180ms ease,
+    transform 160ms ease;
+}
+
+.map-number-filter::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0.58) 0%,
+    rgba(255, 255, 255, 0.2) 34%,
+    rgba(255, 255, 255, 0) 58%
+  );
+  pointer-events: none;
+}
+
+.map-number-filter > * {
+  position: relative;
+  z-index: 1;
+}
+
+.map-number-filter:hover {
+  border-color: rgba(255, 255, 255, 0.82);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.34));
+  transform: translateY(-1px);
+}
+
+.map-number-filter:focus-visible {
+  outline: 3px solid rgba(40, 95, 73, 0.25);
+  outline-offset: 2px;
+}
+
+.map-number-filter.is-active {
+  border-color: rgba(237, 255, 246, 0.18);
+  background:
+    linear-gradient(135deg, rgba(226, 250, 237, 0.38), rgba(166, 222, 191, 0.04));
+  color: #194a36;
+  box-shadow:
+    0px 0px 2px 1px rgb(48 151 79 / 40%), 
+    0 9px 28px rgba(37, 137, 92, 0.3), 
+    inset 0 1px 0 rgba(255, 255, 255, 0.62), 
+    inset 0 -1px 0 rgba(30, 112, 76, 0.1);
+}
+
+.map-number-filter-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #87928c;
+  box-shadow: 0 0 0 3px rgba(135, 146, 140, 0.14);
+  transition: background 160ms ease, box-shadow 180ms ease;
+  margin-top: 1px;
+  margin-right: -1px;
+}
+
+.map-number-filter.is-active .map-number-filter-dot {
+  background: linear-gradient(135deg, rgb(76 175 81), rgb(75 195 110 / 80%));
+  box-shadow: 0 0 0 0px rgba(37, 137, 92, 0.18), 0 0 12px rgba(37, 137, 92, 0.7);
+}
+
+.map-number-filter-label {
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: 0.1px;
+  white-space: nowrap;
+}
+
+.map-number-filter-count {
+  display: grid;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 7px;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(49, 69, 59, 0.09);
+  color: currentColor;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.map-number-filter.is-active .map-number-filter-count {
+  background: rgba(37, 137, 92, 0.14);
+}
+
+@media (max-width: 900px) {
+  .map-number-filter {
+    top: 10px;
+    left: 10px;
+    min-height: 38px;
+    padding: 6px 8px 6px 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-number-filter,
+  .map-number-filter-dot {
+    transition: none;
+  }
+}
+
 .map-wrap .gm-style-mtc-bbw {
   gap: 6px !important;
 }

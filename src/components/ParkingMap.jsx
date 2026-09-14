@@ -528,6 +528,10 @@ export default function ParkingMap({
   lots,
   active,
   setActive,
+  numberedLotCount,
+  totalLotCount,
+  showNumberedOnly,
+  onToggleNumberedOnly,
   lastSheetFetchAt,
   lastFrontendFetchAt,
   flyToRef,
@@ -615,6 +619,26 @@ export default function ParkingMap({
         )}
 
       </Map>
+
+      <button
+        type="button"
+        className={`map-number-filter${showNumberedOnly ? " is-active" : ""}`}
+        onClick={onToggleNumberedOnly}
+        aria-pressed={showNumberedOnly}
+        aria-label={
+          showNumberedOnly
+            ? `顯示所有停車場，目前有 ${numberedLotCount} 個有辨識結果的標記`
+            : `只顯示有辨識結果的停車場，目前共有 ${totalLotCount} 個停車場`
+        }
+      >
+        <span className="map-number-filter-dot" aria-hidden="true" />
+        <span className="map-number-filter-label">
+          {showNumberedOnly ? "有辨識結果" : "所有停車場"}
+        </span>
+        <strong className="map-number-filter-count">
+          {showNumberedOnly ? numberedLotCount : totalLotCount}
+        </strong>
+      </button>
 
       {/* Locate control (bottom-right) */}
       <button

@@ -8,6 +8,10 @@ function toVacancyNum(v) {
   return Number.isFinite(n) ? n : null;
 }
 
+export function hasNumberedAvailability(lot) {
+  return !isBooleanAvailability(lot) && toVacancyNum(lot?.vacancy) != null;
+}
+
 export function mergeLotDisplayAvailability(lot, display) {
   if (!lot || !display) return lot;
 

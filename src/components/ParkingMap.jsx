@@ -563,7 +563,7 @@ export default function ParkingMap({
     <div className="map-wrap">
       <Map
         style={{ width: "100%", height: "100%" }}
-        defaultCenter={{ lat: 25.0522, lng: 121.5203 }}
+        defaultCenter={{ lat: 25.0562, lng: 121.5303 }}
         defaultZoom={14}
         gestureHandling={"greedy"}
         disableDefaultUI={false}

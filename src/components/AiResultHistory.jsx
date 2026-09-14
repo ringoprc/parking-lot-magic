@@ -115,7 +115,7 @@ export default function AiResultHistory({ apiBase = "", lotId, onDisplayChange }
           style={{
             color: "#999",
             marginLeft: "3px",
-            marginBottom: "1px",
+            marginBottom: "0.5px",
             fontSize: "8px"
           }}
         >5分鐘前</span>
@@ -129,7 +129,7 @@ export default function AiResultHistory({ apiBase = "", lotId, onDisplayChange }
             color: "#999",
             marginLeft: "8px",
             marginRight: "3px",
-            marginBottom: "1px",
+            marginBottom: "0.5px",
             fontSize: "8px"
           }}
         >現在</span>

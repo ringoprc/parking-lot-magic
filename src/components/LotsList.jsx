@@ -28,14 +28,14 @@ export default function LotsList({ lots, active, onSelect, showDistance, formatD
                     style={{
                       marginBottom: "1px",
                       marginRight: "3px",
-                      fontWeight: "700"
+                      fontWeight: "700",
+                      fontSize: "11.5px"
                     }}
                   >
-                  [空位：
+                  空位：
                   <b>
                     {getAvailabilityDisplayValue(l)}
                   </b>
-                  ]
                   </span>
                   {showDistance && l._dist != null && (
                     <>

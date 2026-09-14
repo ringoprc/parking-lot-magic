@@ -271,15 +271,16 @@ div .gm-style-iw {
   justify-content: space-between;
   gap: 0px;
   margin-bottom: 8px;
-  flex-direction: column;
   border-bottom: 1px solid #eee;
   padding-bottom: 8px;
+  align-items: center;
 }
 
 .lot-btn-name {
   max-width: 100%;
   font-weight: 700;
-  margin-bottom: 6px;
+  margin-top: 2px;
+  margin-bottom: 4px;
   font-size: 14.5px;
 }
 
@@ -411,8 +412,8 @@ div .gm-style-iw {
 .map-wrap .gm-style-iw-c {
   -webkit-transform: translate3d(-55%, -115%, 0);
   transform: translate3d(-55%, -115%, 0);
-  max-height: 420px !important;
-  min-height: 420px !important;
+  max-height: 408px !important;
+  min-height: 408px !important;
   width: 350px;
   padding: 1px 20px 20px 20px !important;
 }

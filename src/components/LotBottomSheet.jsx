@@ -346,7 +346,7 @@ export default function LotBottomSheet({
                 <img
                   className="vl-sheet-sponsor-img"
                   src={bottomSheetSponsorUrl}
-                  style={{ opacity: hasBottomSheetSponsor ? "1" : "0.2" }}
+                  style={{ opacity: hasBottomSheetSponsor ? "1" : "0.14" }}
                   alt=""
                   loading="lazy"
                   role="button"
@@ -354,7 +354,7 @@ export default function LotBottomSheet({
                 />
 
                 {!hasBottomSheetSponsor && (
-                  <span className="vl-sheet-sponsor-example-label">範例</span>
+                  <span className="vl-sheet-sponsor-example-label">店家廣告範例</span>
                 )}
               </div>
 

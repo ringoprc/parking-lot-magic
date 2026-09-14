@@ -334,7 +334,7 @@ export default function ParkingLotInfoWindow({
                 <img
                   className="iw-sheet-sponsor-img"
                   src={bottomSheetSponsorUrl}
-                  style={{ opacity: hasBottomSheetSponsor ? "1" : "0.2" }}
+                  style={{ opacity: hasBottomSheetSponsor ? "1" : "0.14" }}
                   alt=""
                   loading="lazy"
                   role="button"
@@ -342,7 +342,7 @@ export default function ParkingLotInfoWindow({
                 />
 
                 {!hasBottomSheetSponsor && (
-                  <span className="iw-sheet-sponsor-example-label">範例</span>
+                  <span className="iw-sheet-sponsor-example-label">店家廣告範例</span>
                 )}
               </div>
 
@@ -462,20 +462,20 @@ export default function ParkingLotInfoWindow({
               <div
                 style={{
                   display: "flex",
-                  gap: "5px",
+                  gap: "2px",
                 }}
               >
-                <div style={{ marginTop: 6, fontSize: 10 }}>
+                <div style={{ marginTop: 4, fontSize: 9.5, fontWeight: 500, color: "#666"  }}>
                   最近更新：{formatTimeYYYYMMDD_HHMMSS(active.lastUpdated)}
                 </div>
 
-                <div style={{ marginTop: 6, fontSize: 10 }}>
+                <div style={{ marginTop: 4, fontSize: 10 }}>
                   {(() => {
                     const ms = minSecAgo(active.lastUpdated);
                     if (!ms) return null;
 
                     return (
-                      <div style={{ marginTop: 0, fontSize: 10 }}>
+                      <div style={{ marginTop: 0, marginLeft: 0, fontSize: 9.5, fontWeight: 500, color: "#666" }}>
                         （{ms.min} 分 {String(ms.sec).padStart(2, "0")} 秒前）
                       </div>
                     );

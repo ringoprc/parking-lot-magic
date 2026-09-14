@@ -30,6 +30,7 @@ import logo from "./assets/logo4.png";
 import DigitOcrTest from "./pages/DigitOcrTest";
 
 import "./App.css";
+import "./ModernUiPreview.css";
 
 function AdminMenuPage() {
   const adminItems = [
@@ -519,6 +520,7 @@ export default function App() {
   const showAdsManage = adminRoute === "ads" || searchParams.get("ads") === "1";
   const showWorkers = adminRoute === "workers" || searchParams.get("workers") === "1";
   const showAnalytics = adminRoute === "analytics";
+  const useModernUi = searchParams.get("uiPreview") !== "plain";
 
   let page = null;
   if (showOcr) page = <DigitOcrTest />;
@@ -543,7 +545,7 @@ export default function App() {
       apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
       libraries={["places", "marker"]}
     >
-      <div className="app-root">
+      <div className={useModernUi ? "app-root ui-preview-modern" : "app-root"}>
         <VisitTracker apiBase={apiBase} />
         <LotViewTracker active={active} apiBase={apiBase} />
 

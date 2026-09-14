@@ -45,9 +45,6 @@ export default function MobileLotsOverlay({
           </div>
         </div>
       </div>
-      {sheetFetchedText && (
-        <div className="title-bar-devmeta">{sheetFetchedText}</div>
-      )}
     </div>
   );
 }

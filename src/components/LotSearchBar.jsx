@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
 
-import { FiX } from "react-icons/fi";
+import { FiSearch, FiX } from "react-icons/fi";
 
 function getSuggestionTitle(s) {
   const p = s?.placePrediction;
@@ -614,6 +614,10 @@ export default function LotSearchBar({
           }}
         />
 
+        {q.trim() === "" && (
+          <FiSearch className="lot-search-icon" size={20} aria-hidden="true" />
+        )}
+
         {/* Clear (X) */}
         {q.trim() !== "" && (
           <button
@@ -781,5 +785,4 @@ export default function LotSearchBar({
     </div>
   );
 }
-
 

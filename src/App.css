@@ -100,6 +100,7 @@ div .gm-style-iw {
 @media (max-width: 900px) {
   .title {
     font-size: 20px;
+    min-width: 230px;
   }
 }
 
@@ -217,7 +218,7 @@ div .gm-style-iw {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #b4b4b4;
   scrollbar-width: thin;
 }
 
@@ -408,8 +409,8 @@ div .gm-style-iw {
 }
 
 .map-wrap .gm-style-iw-c {
-  -webkit-transform: translate3d(-50%, -120%, 0);
-  transform: translate3d(-50%, -120%, 0);
+  -webkit-transform: translate3d(-55%, -115%, 0);
+  transform: translate3d(-55%, -115%, 0);
   max-height: 420px !important;
   min-height: 420px !important;
   width: 350px;
@@ -418,8 +419,8 @@ div .gm-style-iw {
 
 /* The small bottom triangle */
 .map-wrap .gm-style-iw-tc {
-  -webkit-transform: translate3d(-50%, -400%, 0);
-  transform: translate3d(-50%, -310%, 0);
+  -webkit-transform: translate3d(-110%, -230%, 0);
+  transform: translate3d(-110%, -230%, 0);
   top: -35px;
 }
 
@@ -707,6 +708,15 @@ div .gm-style-iw {
   color: #111;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.lot-search-icon {
+  position: absolute;
+  top: 50%;
+  right: 17px;
+  transform: translateY(-50%);
+  color: #68716c;
+  pointer-events: none;
 }
 
 /* optional: make focus slightly stronger */

@@ -1,5 +1,5 @@
 // frontend/src/components/MobileLotsBar.jsx
-import { FiMenu, FiX } from "react-icons/fi";
+import { FiSearch, FiX } from "react-icons/fi";
 
 export default function MobileLotsBar({ title, count, open, onToggle }) {
   return (
@@ -16,7 +16,7 @@ export default function MobileLotsBar({ title, count, open, onToggle }) {
         className="mobile-lots-toggle"
         aria-label={open ? "關閉停車場清單" : "展開停車場清單"}
       >
-        {open ? <FiX size={22} /> : <FiMenu size={22} />}
+        {open ? <FiX size={22} /> : <FiSearch size={22} />}
       </button>
     </div>
   );

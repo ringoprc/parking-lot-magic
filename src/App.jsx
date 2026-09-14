@@ -97,10 +97,7 @@ function AdminMenuPage() {
         <div className="admin-menu-hero">
           <div>
             <div className="admin-menu-kicker">後台管理中心</div>
-            <h1>目前已建立的管理功能</h1>
-            <p>
-              之後新增後台頁面時，只要把入口加到這裡，就不用再記得每一組網址參數。
-            </p>
+            <h1>已建立的管理功能</h1>
           </div>
         </div>
 

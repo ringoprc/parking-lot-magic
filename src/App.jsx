@@ -58,8 +58,8 @@ function AdminMenuPage() {
       badge: "Ads",
     },
     {
-      title: "AI 辨識用設備管理",
-      description: "管理用於搭載 AI 模型並辨識影像的機器",
+      title: "AI Fleet 監控",
+      description: "合併查看所有 AI worker、處理流程、裝置辨識品質與失敗紀錄。",
       href: "?admin=workers",
       badge: "Workers",
     },

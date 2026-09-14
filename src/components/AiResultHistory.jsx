@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getAvailabilityPinPresentation } from "../utils/availability";
+import { minutesAgo } from "../utils/time";
 import "./AiResultHistory.css";
 
 function displayResult(result) {
@@ -29,18 +30,13 @@ function formatResultTime(value) {
   }).format(date);
 }
 
-function formatDisplaySummary(display) {
-  if (!display) return "";
+function formatLatestRecognition(rows) {
+  const latestAt = rows?.[0]?.at;
+  if (!latestAt) return "";
 
-  let value = "?";
-  if (display.status === "ok") {
-    value = display.availabilityMode === "boolean"
-      ? (display.hasAvailableSpace ? "有" : "無")
-      : String(display.vacancy ?? "?");
-  }
-
-  const time = display.at ? formatResultTime(display.at) : "";
-  return `Pin ${value}${time ? ` · ${time}` : ""}`;
+  const elapsedMinutes = minutesAgo(latestAt);
+  const elapsed = elapsedMinutes == null ? "" : `（${Math.max(0, elapsedMinutes)} 分前）`;
+  return `最近一次辨識 ${formatResultTime(latestAt)}${elapsed}`;
 }
 
 export default function AiResultHistory({ apiBase = "", lotId, onDisplayChange }) {
@@ -112,7 +108,9 @@ export default function AiResultHistory({ apiBase = "", lotId, onDisplayChange }
     <section className="lot-ai-history" aria-label="最近十次 AI 辨識結果">
       <div className="lot-ai-history-head">
         <span>AI 最近十次辨識（舊 → 新）</span>
-        <small>{history.lotId === lotId ? formatDisplaySummary(history.display) : ""}</small>
+        <small>
+          {history.lotId === lotId ? formatLatestRecognition(history.rows) : ""}
+        </small>
       </div>
 
       {loading ? (

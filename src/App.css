@@ -54,7 +54,7 @@ div .gm-style-iw {
 
 @media (max-width: 900px) {
   .title-bar {
-    height: 56px;
+    height: 72px;
     padding: 0 4px;
   }
 }
@@ -185,7 +185,7 @@ div .gm-style-iw {
     min-height: 0;
     min-width: 0;
     position: absolute;
-    height: calc(100% - 113px);
+    height: calc(100% - 128px);
     border-top: none;
     bottom: 0px;
   }

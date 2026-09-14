@@ -468,10 +468,8 @@ export default function App() {
   const listTitle = useMemo(() => {
     const visibleCount = visibleLots.length;
 
-    const countText = `清單 ${displayedLots.length} 筆・標記 ${visibleCount} 個`;
-
     if (!searchCenter || !focus?.name) {
-      return `地圖範圍：${countText}`;
+      return `地圖範圍內：${visibleCount} 個停車場`;
     }
 
     const km = RADIUS_M / 1000;
@@ -479,10 +477,9 @@ export default function App() {
       ? String(km)
       : km.toFixed(1);
 
-    return `距離 [ ${focus.name} ] ${kmText}km：${countText}`;
+    return `距離 [ ${focus.name} ] ${kmText}km・地圖範圍內：${visibleCount} 個停車場`;
   }, [
     visibleLots.length,
-    displayedLots.length,
     searchCenter,
     focus?.name,
     RADIUS_M,

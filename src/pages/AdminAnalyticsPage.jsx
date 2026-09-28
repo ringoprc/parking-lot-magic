@@ -107,6 +107,14 @@ function SummaryCard({ label, value, note, accent = "" }) {
   );
 }
 
+function ChartLoadingSpinner({ tone, label }) {
+  return (
+    <div className={`analytics-chart-loading ${tone}`} role="status" aria-label={label}>
+      <span className="analytics-chart-spinner" aria-hidden="true" />
+    </div>
+  );
+}
+
 export default function AdminAnalyticsPage({ apiBase }) {
   const [adminKey, setAdminKey] = useState(() => localStorage.getItem("adminKey") || "");
   const [days, setDays] = useState(30);
@@ -139,10 +147,25 @@ export default function AdminAnalyticsPage({ apiBase }) {
   const [lotViewError, setLotViewError] = useState("");
   const [journeyError, setJourneyError] = useState("");
   const [visibleJourneyCount, setVisibleJourneyCount] = useState(10);
+  const [showValidJourneysOnly, setShowValidJourneysOnly] = useState(false);
 
   function persistAdminKey(value) {
     setAdminKey(value);
     localStorage.setItem("adminKey", value);
+  }
+
+  function changeDays(value) {
+    if (value === days) return;
+
+    if (adminKey) {
+      setLoading(true);
+      setLotViewsLoading(true);
+      setJourneysLoading(true);
+    }
+    setHoveredDay(null);
+    setHoveredLotView(null);
+    setLotViewModalDay(null);
+    setDays(value);
   }
 
   async function load({ silent = false } = {}) {
@@ -349,6 +372,12 @@ export default function AdminAnalyticsPage({ apiBase }) {
     () => journeys.map((journey) => summarizeJourney(journey)),
     [journeys]
   );
+  const filteredJourneyRows = useMemo(
+    () => journeys
+      .map((journey, index) => ({ journey, summary: journeySummaries[index] }))
+      .filter(({ summary }) => !showValidJourneysOnly || summary.lotOpens > 0),
+    [journeys, journeySummaries, showValidJourneysOnly]
+  );
   const journeyStats = useMemo(() => {
     const sessionsWithLots = journeySummaries.filter((summary) => summary.lotOpens > 0).length;
     const totalLotOpens = journeySummaries.reduce((sum, summary) => sum + summary.lotOpens, 0);
@@ -494,6 +523,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
             <div
               className="analytics-chart analytics-minute-chart"
               style={{ minWidth: `${Math.max(680, loadedMinuteRange * 8)}px` }}
+              onMouseLeave={() => setHoveredMinute(null)}
             >
               {(report?.minuteSeries || []).map((row, index) => {
                 const value = row[minuteMetric] || 0;
@@ -511,15 +541,14 @@ export default function AdminAnalyticsPage({ apiBase }) {
                 const showValue = value > 0 && value === clusterMax && index === firstMaxIndex;
                 return (
                   <div
-                    className="analytics-bar-column analytics-minute-column"
+                    className={`analytics-bar-column analytics-minute-column ${
+                      hoveredMinute?.minute === row.minute ? "is-hovered" : ""
+                    }`}
                     key={row.minute}
                     title={value > 0
                       ? `${row.minute}：${value} ${minuteMetric === "sessions" ? "個 session" : "位不重複訪客"}`
                       : undefined}
-                    onMouseEnter={() => {
-                      if (value > 0) setHoveredMinute(row);
-                    }}
-                    onMouseLeave={() => setHoveredMinute(null)}
+                    onMouseEnter={() => setHoveredMinute(row)}
                     onClick={() => {
                       if (value > 0) setHoveredMinute(row);
                     }}
@@ -541,7 +570,14 @@ export default function AdminAnalyticsPage({ apiBase }) {
                   </div>
                 );
               })}
-              {!report && <div className="analytics-empty">尚未載入每分鐘資料</div>}
+              {loading ? (
+                <ChartLoadingSpinner
+                  tone={minuteMetric === "sessions" ? "yellow" : "green"}
+                  label="正在載入每分鐘資料"
+                />
+              ) : !report ? (
+                <div className="analytics-empty">尚未載入每分鐘資料</div>
+              ) : null}
             </div>
           </div>
           <div className="analytics-minute-note">
@@ -584,10 +620,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
                     type="button"
                     key={value}
                     className={days === value ? "active" : ""}
-                    onClick={() => {
-                      setDays(value);
-                      setHoveredDay(null);
-                    }}
+                    onClick={() => changeDays(value)}
                   >
                     {value} 天
                   </button>
@@ -609,8 +642,13 @@ export default function AdminAnalyticsPage({ apiBase }) {
             )}
           </div>
 
-          <div className="analytics-chart-scroll" ref={dailyChartScrollRef}>
-            <div className="analytics-chart" style={{ minWidth: `${Math.max(620, loadedDays * 20)}px` }}>
+          <div className="analytics-chart-frame">
+            <div className="analytics-chart-scroll" ref={dailyChartScrollRef}>
+              <div
+                className="analytics-chart"
+                style={{ minWidth: `${Math.max(620, loadedDays * 20)}px` }}
+                onMouseLeave={() => setHoveredDay(null)}
+              >
               {(report?.daily || []).map((row, index) => {
                 const value = row[dailyMetric] || 0;
                 const height = value ? Math.max(4, (value / maxDailyValue) * 100) : 0;
@@ -625,15 +663,14 @@ export default function AdminAnalyticsPage({ apiBase }) {
                     );
                 return (
                   <div
-                    className="analytics-bar-column"
+                    className={`analytics-bar-column ${
+                      hoveredDay?.date === row.date ? "is-hovered" : ""
+                    }`}
                     key={row.date}
                     title={value > 0
                       ? `${row.date}：${value} ${dailyMetric === "sessions" ? "個 session" : "位不重複訪客"}`
                       : undefined}
-                    onMouseEnter={() => {
-                      if (value > 0) setHoveredDay(row);
-                    }}
-                    onMouseLeave={() => setHoveredDay(null)}
+                    onMouseEnter={() => setHoveredDay(row)}
                     onClick={() => {
                       if (value > 0) setHoveredDay(row);
                     }}
@@ -655,8 +692,17 @@ export default function AdminAnalyticsPage({ apiBase }) {
                   </div>
                 );
               })}
-              {!report && <div className="analytics-empty">尚未載入統計資料</div>}
+                {!loading && !report && (
+                  <div className="analytics-empty">尚未載入統計資料</div>
+                )}
+              </div>
             </div>
+            {loading && (
+              <ChartLoadingSpinner
+                tone={dailyMetric === "sessions" ? "green" : "yellow"}
+                label="正在載入每日統計資料"
+              />
+            )}
           </div>
           <div className="analytics-minute-note">
             不重複訪客會在同一天內合併相同瀏覽器；Session 數會將同一位訪客的不同分頁或新工作階段分開計算。
@@ -787,12 +833,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
                     type="button"
                     key={value}
                     className={days === value ? "active" : ""}
-                    onClick={() => {
-                      setDays(value);
-                      setHoveredDay(null);
-                      setHoveredLotView(null);
-                      setLotViewModalDay(null);
-                    }}
+                    onClick={() => changeDays(value)}
                   >
                     {value} 天
                   </button>
@@ -817,11 +858,13 @@ export default function AdminAnalyticsPage({ apiBase }) {
             )}
           </div>
 
-          <div className="analytics-chart-scroll" ref={lotViewChartScrollRef}>
-            <div
-              className="analytics-chart analytics-lot-view-chart"
-              style={{ minWidth: `${Math.max(620, (lotViewReport?.days || days) * 20)}px` }}
-            >
+          <div className="analytics-chart-frame">
+            <div className="analytics-chart-scroll" ref={lotViewChartScrollRef}>
+              <div
+                className="analytics-chart analytics-lot-view-chart"
+                style={{ minWidth: `${Math.max(620, (lotViewReport?.days || days) * 20)}px` }}
+                onMouseLeave={() => setHoveredLotView(null)}
+              >
               {(lotViewReport?.daily || []).map((row, index) => {
                 const height = row.views ? Math.max(4, (row.views / maxLotViewValue) * 100) : 0;
                 const reportDays = lotViewReport?.days || days;
@@ -839,11 +882,12 @@ export default function AdminAnalyticsPage({ apiBase }) {
                     );
                 return (
                   <div
-                    className="analytics-bar-column"
+                    className={`analytics-bar-column ${
+                      hoveredLotView?.date === row.date ? "is-hovered" : ""
+                    }`}
                     key={row.date}
                     title={row.views ? `${row.date}：開啟 ${row.views} 次` : undefined}
-                    onMouseEnter={() => row.views && setHoveredLotView(row)}
-                    onMouseLeave={() => setHoveredLotView(null)}
+                    onMouseEnter={() => setHoveredLotView(row)}
                     onClick={() => {
                       if (!row.views) return;
                       setHoveredLotView(row);
@@ -876,10 +920,14 @@ export default function AdminAnalyticsPage({ apiBase }) {
                   </div>
                 );
               })}
-              {!lotViewReport && !lotViewsLoading && (
-                <div className="analytics-empty">尚未載入停車場卡片資料</div>
-              )}
+                {!lotViewsLoading && !lotViewReport && (
+                  <div className="analytics-empty">尚未載入停車場卡片資料</div>
+                )}
+              </div>
             </div>
+            {lotViewsLoading && (
+              <ChartLoadingSpinner tone="blue" label="正在載入停車場卡片資料" />
+            )}
           </div>
           <div className="analytics-minute-note">
             桌機開啟地圖資訊卡、手機開啟 bottom sheet，或從停車場清單開啟同一內容時各計一次；資料輪詢不會重複計數。
@@ -897,9 +945,23 @@ export default function AdminAnalyticsPage({ apiBase }) {
                   : "輸入密碼後載入旅程資料"}
               </p>
             </div>
-            <div className="analytics-journey-privacy">
-              <span className="analytics-privacy-dot" />
-              僅顯示雜湊識別碼
+            <div className="analytics-journey-title-actions">
+              <button
+                type="button"
+                className={`analytics-valid-journey-toggle${showValidJourneysOnly ? " active" : ""}`}
+                aria-pressed={showValidJourneysOnly}
+                onClick={() => {
+                  setShowValidJourneysOnly((current) => !current);
+                  setVisibleJourneyCount(10);
+                }}
+              >
+                <span aria-hidden="true" />
+                僅顯示有效旅程
+              </button>
+              <div className="analytics-journey-privacy">
+                <span className="analytics-privacy-dot" />
+                僅顯示雜湊識別碼
+              </div>
             </div>
           </div>
 
@@ -929,15 +991,17 @@ export default function AdminAnalyticsPage({ apiBase }) {
           </div>
 
           <div className="analytics-journey-list">
-            {journeys.slice(0, visibleJourneyCount).map((journey, index) => {
-              const summary = journeySummaries[index];
+            {filteredJourneyRows.slice(0, visibleJourneyCount).map(({ journey, summary }) => {
               const displayEvents = (journey.events || []).filter(
                 (event) => event.eventType !== "page_heartbeat"
               );
               const heartbeatCount = (journey.events || []).length - displayEvents.length;
 
               return (
-                <details className="analytics-journey-row" key={journey.sessionId}>
+                <details
+                  className={`analytics-journey-row${summary.lotOpens > 0 ? " has-lot-opens" : ""}`}
+                  key={journey.sessionId}
+                >
                   <summary>
                     <div className="analytics-journey-identity">
                       <span className={`analytics-session-status ${summary.isLive ? "live" : ""}`} />
@@ -1013,9 +1077,15 @@ export default function AdminAnalyticsPage({ apiBase }) {
                 <span>新版本上線後，訪客的進站與卡片互動會顯示在這裡。</span>
               </div>
             )}
+            {!journeysLoading && journeys.length > 0 && filteredJourneyRows.length === 0 && (
+              <div className="analytics-journey-empty">
+                <strong>沒有有效旅程</strong>
+                <span>目前載入的旅程都沒有開啟停車場卡片。</span>
+              </div>
+            )}
           </div>
 
-          {visibleJourneyCount < journeys.length && (
+          {visibleJourneyCount < filteredJourneyRows.length && (
             <button
               type="button"
               className="analytics-journey-more"

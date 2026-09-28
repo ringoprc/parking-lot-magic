@@ -560,7 +560,7 @@ export default function ParkingMap({
       : undefined;
 
   return (
-    <div className="map-wrap">
+    <>
       <Map
         style={{ width: "100%", height: "100%" }}
         defaultCenter={{ lat: 25.0562, lng: 121.5303 }}
@@ -669,6 +669,6 @@ export default function ParkingMap({
           lastFrontendFetchAt={lastFrontendFetchAt}
         />
       )}
-    </div>
+    </>
   );
 }

@@ -173,10 +173,18 @@ export default function App() {
   //-----------------------------
   const SIDEBAR_MIN = 280;
   const SIDEBAR_MAX = 920;
+  const SIDEBAR_DEFAULT = 360;
 
   const [sidebarW, setSidebarW] = useState(() => {
-    const v = Number(localStorage.getItem("sidebarW"));
-    return Number.isFinite(v) ? v : 360;
+    const storedSidebarW = localStorage.getItem("sidebarW");
+    if (storedSidebarW == null || storedSidebarW.trim() === "") {
+      return SIDEBAR_DEFAULT;
+    }
+
+    const parsedSidebarW = Number(storedSidebarW);
+    if (!Number.isFinite(parsedSidebarW)) return SIDEBAR_DEFAULT;
+
+    return Math.max(SIDEBAR_MIN, Math.min(SIDEBAR_MAX, parsedSidebarW));
   });
   const [sbDragging, setSbDragging] = useState(false);
 

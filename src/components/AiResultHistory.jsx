@@ -141,7 +141,9 @@ export default function AiResultHistory({ apiBase = "", lotId, onDisplayChange }
       </div>
 
       {loading ? (
-        <div className="lot-ai-history-message">讀取中…</div>
+        <div className="lot-ai-history-message" role="status" aria-label="辨識紀錄讀取中">
+          <span className="lot-ai-history-spinner" aria-hidden="true" />
+        </div>
       ) : history.error ? (
         <div className="lot-ai-history-message is-error">{history.error}</div>
       ) : !orderedRows.length ? (

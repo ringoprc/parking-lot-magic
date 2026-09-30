@@ -69,6 +69,24 @@
 
 .lot-ai-history-message.is-error { color: #ad4e46; }
 
+.lot-ai-history-spinner {
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 2px solid #dce6df;
+  border-top-color: #348653;
+  border-radius: 50%;
+  animation: lot-ai-history-spin 0.8s linear infinite;
+}
+
+@keyframes lot-ai-history-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lot-ai-history-spinner { animation: none; }
+}
+
 @media (max-width: 420px) {
   .lot-ai-history { padding-inline: 8px; }
   .lot-ai-history-track { gap: 4px; }

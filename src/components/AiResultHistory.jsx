@@ -57,9 +57,9 @@ export default function AiResultHistory({ apiBase = "", lotId, onDisplayChange }
 
     let mounted = true;
     let controller = null;
+    let refreshTimer = null;
 
     async function load() {
-      controller?.abort();
       controller = new AbortController();
 
       try {
@@ -85,16 +85,19 @@ export default function AiResultHistory({ apiBase = "", lotId, onDisplayChange }
           display: null,
           error: "暫時無法讀取辨識紀錄",
         });
+      } finally {
+        // Wait for the current request before polling again. Aborting every
+        // 15 seconds prevents a slow first response from ever being shown.
+        if (mounted) refreshTimer = setTimeout(load, 15_000);
       }
     }
 
     load();
-    const interval = setInterval(load, 15_000);
 
     return () => {
       mounted = false;
       controller?.abort();
-      clearInterval(interval);
+      clearTimeout(refreshTimer);
     };
   }, [apiBase, lotId]);
 

@@ -1,21 +1,13 @@
 // frontend/src/components/MobileLotsOverlay.jsx
 import LotsList from "./LotsList";
 
-import LotSearchBar from "./LotSearchBar";
+
 
 export default function MobileLotsOverlay({
-  apiBase,
   open,
-  setOpen,
   lots,
   active,
   onSelect,
-  onPick,
-  onClear,
-  sheetFetchedText,
-  locatingMe,
-  requestMyLocation,
-  myPos,
   showDistance,
   formatDist,
   focus
@@ -24,15 +16,6 @@ export default function MobileLotsOverlay({
     <div className={`mobile-lots-overlay ${open ? "open" : ""}`}>
       <div className="mobile-lots-overlay-scroll">
         <div className="mobile-lots-overlay-list">
-          <LotSearchBar
-            apiBase={apiBase}
-            onPick={onPick}
-            onClear={onClear}
-            setOpen={setOpen}
-            locatingMe={locatingMe}
-            requestMyLocation={requestMyLocation}
-            myPos={myPos}
-          />
           <div
             className="lot-btn-list-outer"
           >

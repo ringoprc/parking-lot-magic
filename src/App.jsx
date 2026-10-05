@@ -8,7 +8,7 @@ import { Toaster } from "react-hot-toast";
 import { APIProvider } from "@vis.gl/react-google-maps";
 
 import LotsSidebar from "./components/LotsSidebar";
-import MobileLotsBar from "./components/MobileLotsBar";
+import LotSearchBar from "./components/LotSearchBar";
 import MobileLotsOverlay from "./components/MobileLotsOverlay";
 import ParkingMap from "./components/ParkingMap";
 import VisitTracker from "./components/VisitTracker";
@@ -698,11 +698,19 @@ export default function App() {
 
         {/* Mobile-only expandable lots bar (row under title) */}
         <div className="mobile-search-region">
-          <MobileLotsBar
-            title={listTitle}
-            count={visibleLots.length}
-            open={mobileMenuOpen}
-            onToggle={() => setMobileMenuOpen((v) => !v)}
+          <LotSearchBar
+            apiBase={apiBase}
+            placeholder="搜尋停車場或目的地"
+            resultCount={visibleLots.length}
+            mobileExpanded={mobileMenuOpen}
+            onSearchFocus={() => setMobileMenuOpen(true)}
+            onCloseSearch={() => setMobileMenuOpen(false)}
+            setOpen={setMobileMenuOpen}
+            onPick={handlePickPlace}
+            onClear={handleClearPick}
+            locatingMe={locatingMe}
+            requestMyLocation={requestMyLocationForSearch}
+            myPos={myPos}
           />
           <MobileLotsOverlay
             apiBase={apiBase}

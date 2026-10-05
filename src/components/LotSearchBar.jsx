@@ -46,6 +46,9 @@ export default function LotSearchBar({
   apiBase = "",
   placeholder = "搜尋停車場/地點/地址…",
   resultCount,
+  mobileExpanded,
+  onSearchFocus,
+  onCloseSearch,
   onPick, // (place) => void
   onClear, // () => void
   setOpen,
@@ -535,7 +538,7 @@ export default function LotSearchBar({
   return (
     <div
       ref={rootRef}
-      className={`lot-search ${searchFocused ? "is-focused" : ""}`}
+      className={`lot-search ${searchFocused ? "is-focused" : ""} ${mobileExpanded ? "is-expanded" : ""}`}
     >
       <div className="lot-search-input-wrap">
         <input
@@ -550,6 +553,7 @@ export default function LotSearchBar({
             setSuggestionOpen(true);
           }}
           onFocus={() => {
+            onSearchFocus?.();
             if (items.length > 0 && q.trim()) setSuggestionOpen(true);
             if (!q.trim()) {
               setSuggestionOpen(true);   // empty → show "my location"
@@ -584,6 +588,12 @@ export default function LotSearchBar({
             }
           }}
           onKeyDown={(e) => {
+            if (e.key === "Escape" && mobileExpanded && !composingRef.current) {
+              setSuggestionOpen(false);
+              inputRef.current?.blur?.();
+              onCloseSearch?.();
+              return;
+            }
             if (!suggestionOpen) return;
             const ddLen = (items?.length || 0) + 1; // +1 for "my location"
 
@@ -623,7 +633,7 @@ export default function LotSearchBar({
           <FiSearch className="lot-search-icon" size={20} aria-hidden="true" />
         )}
 
-        {resultCount != null && !q.trim() && (
+        {resultCount != null && !q.trim() && !searchFocused && !mobileExpanded && (
           <span className="desktop-search-count" title="隨地圖移動或縮放更新" aria-label={`目前地圖範圍內 ${resultCount} 個停車場`}>
             <span className="search-count-scope">地圖範圍內</span>
             <span>{resultCount} 個車場</span>
@@ -631,11 +641,11 @@ export default function LotSearchBar({
         )}
 
         {/* Clear (X) */}
-        {q.trim() !== "" && (
+        {(q.trim() !== "" || mobileExpanded) && (
           <button
             type="button"
             className="lot-search-clear"
-            aria-label="清除搜尋"
+            aria-label={mobileExpanded ? "關閉搜尋" : "清除搜尋"}
             onMouseDown={(e) => {
               // 避免 mousedown 先讓 input blur，導致 focusout 邏輯介入
               e.preventDefault();
@@ -652,7 +662,10 @@ export default function LotSearchBar({
               skipNextFetchRef.current = false;
 
               // 讓使用者可以立刻再輸入
-              inputRef.current?.focus?.();
+              if (mobileExpanded) {
+                inputRef.current?.blur?.();
+                onCloseSearch?.();
+              } else inputRef.current?.focus?.();
               onClear?.();
             }}
           >

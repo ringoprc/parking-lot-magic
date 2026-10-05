@@ -39,7 +39,9 @@ export default function GoogleAccount({ apiBase }) {
   const triggerRef = useRef(null);
   const buttonRef = useRef(null);
   const submitting = useRef(false);
-  const base = apiBase.replace(/\/$/, "");
+  // Production auth goes through Vercel's same-origin proxy so mobile browsers
+  // can retain HttpOnly cookies even when third-party cookies are blocked.
+  const base = import.meta.env.DEV ? apiBase.replace(/\/$/, "") : "";
 
   useEffect(() => {
     if (!menuOpen) return;

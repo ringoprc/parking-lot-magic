@@ -163,8 +163,9 @@
   left: 50%;
   transform: translate(-50%, -50%);
   transition: transform 200ms ease;
-  font-weight: 900;
+  font-weight: 500;
   color: #4f4f4f;
+  font-size: 13.5px;
 }
 
 .vl-sheet-sponsor-distance-label-div {

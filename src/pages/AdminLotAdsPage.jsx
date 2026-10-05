@@ -520,6 +520,9 @@ export default function AdminLotAdsPage({ apiBase }) {
               </div>
             ) : (
               <div className="ala-list">
+                <div className="ala-result-count" role="status">
+                  共 {visibleLots.length.toLocaleString("zh-TW")} 筆結果
+                </div>
                 {visibleLots.map((l) => {
                   const isSelected = selectedLot && String(selectedLot._id) === String(l._id);
 
@@ -530,13 +533,13 @@ export default function AdminLotAdsPage({ apiBase }) {
                       onClick={() => onPickLot(l)}
                     >
                       <div className="ala-item-main">
-                        <div className="ala-item-title">{l.name || "(no name)"}</div>
-                        <div className="ala-item-sub">
+                        <div className="ala-item-title" title={l.name || "(no name)"}>{l.name || "(no name)"}</div>
+                        <div className="ala-item-sub" title={`${l.lotId ? `lotId: ${l.lotId}` : ""}${l.district ? ` · ${l.district}` : ""}`}>
                           {l.lotId ? `lotId: ${l.lotId}` : ""}
                           {l.district ? ` · ${l.district}` : ""}
                         </div>
                         {l.adSponsor?.storeName ? (
-                          <div className="ala-item-sub">
+                          <div className="ala-item-sub" title={`廣告店家：${l.adSponsor.storeName}`}>
                             廣告店家：{l.adSponsor.storeName}
                           </div>
                         ) : null}
@@ -558,7 +561,7 @@ export default function AdminLotAdsPage({ apiBase }) {
             {selectedLot ? (
               <div className="ala-selected-head">
                 <div className="ala-selected-lot-info">
-                  <div className="ala-lotname">{selectedLot.name || "(no name)"}</div>
+                  <div className="ala-lotname" title={selectedLot.name || "(no name)"}>{selectedLot.name || "(no name)"}</div>
                   <div className="ala-lotsub">
                     {selectedLot.lotId ? `lotId: ${selectedLot.lotId}` : ""}
                     {selectedLot.district ? ` · ${selectedLot.district}` : ""}
@@ -571,6 +574,7 @@ export default function AdminLotAdsPage({ apiBase }) {
                     <input
                       className="ala-input ala-sponsor-input"
                       value={adSponsorForm.storeName}
+                      title={adSponsorForm.storeName}
                       onChange={(e) =>
                         setAdSponsorForm((prev) => ({
                           ...prev,
@@ -586,6 +590,7 @@ export default function AdminLotAdsPage({ apiBase }) {
                     <input
                       className="ala-input ala-sponsor-input"
                       value={adSponsorForm.storeAddress}
+                      title={adSponsorForm.storeAddress}
                       onChange={(e) =>
                         setAdSponsorForm((prev) => ({
                           ...prev,
@@ -748,4 +753,3 @@ export default function AdminLotAdsPage({ apiBase }) {
     </div>
   );
 }
-

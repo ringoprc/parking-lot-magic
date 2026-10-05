@@ -104,7 +104,7 @@
   padding: 8px 12px;
   border-radius: 12px;
   border: 1px solid #ccc;
-  font-weight: 800;
+  font-weight: 500;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
 }
@@ -288,4 +288,3 @@
   background: #2680f0;
   color: #fff;
 }
-

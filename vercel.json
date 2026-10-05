@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/api/auth/:path*",
+      "destination": "https://parking-backend-254825260530.asia-east1.run.app/api/auth/:path*"
+    }
+  ]
+}

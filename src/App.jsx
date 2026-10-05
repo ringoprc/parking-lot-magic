@@ -166,6 +166,14 @@ export default function App() {
   const [queryCenter, setQueryCenter] = useState(null); // initial
 
   const [mapViewport, setMapViewport] = useState(null);
+  // Selecting a result moves the map, but must not reorder the list being read.
+  const preserveListViewportRef = useRef(false);
+  const handleViewportChange = useCallback((viewport) => {
+    if (!preserveListViewportRef.current) setMapViewport(viewport);
+  }, []);
+  const resumeListViewport = useCallback(() => {
+    preserveListViewportRef.current = false;
+  }, []);
   const [showNumberedPinsOnly, setShowNumberedPinsOnly] = useState(true);
 
   const [myPos, setMyPos] = useState(null); // {lat,lng}
@@ -357,6 +365,7 @@ export default function App() {
 
   function requestMyLocationForMapFly() {
     afterLocateRef.current = ({ lat, lng }) => {
+      resumeListViewport();
       flyToRef.current?.({ lat, lng, zoom: 16 });
       setFocus({ name: "我的位置", lat, lng, kind: "my_location" });
     };
@@ -414,11 +423,6 @@ export default function App() {
         : validLots,
     [showNumberedPinsOnly, validLots]
   );
-
-  const mapActive =
-    showNumberedPinsOnly && !hasNumberedAvailability(active)
-      ? null
-      : active;
 
   const displayedLots = useMemo(() => {
     const mapCenter =
@@ -498,6 +502,7 @@ export default function App() {
   ]);
 
   function handleClearPick() {
+    resumeListViewport();
     setSearchCenter(null);     // 解除 filtered lots
     setFocus(null);            // 地圖上那個搜尋 pin 也拿掉
     setQueryCenter(null);
@@ -505,12 +510,13 @@ export default function App() {
   }
 
   function handlePickPlace(p) {
+    resumeListViewport();
     if (p.kind === "lot") {
       setFocus(null);
       setSearchCenter(null);
       setQueryCenter(null);
       if (!hasNumberedAvailability(p)) setShowNumberedPinsOnly(false);
-      handleSelectLot(p);
+      handleSelectLot(p, false);
       return;
     }
     setActive(null);
@@ -531,9 +537,11 @@ export default function App() {
   }
 
   const isMobile = useMediaQuery("(max-width: 900px)");
-  const flyToOffset = isMobile ? -0.002 : 0.002;
+  // Leave space above the desktop info card when centering a list selection.
+  const flyToOffset = isMobile ? -0.004 : 0.0052;
 
-  function handleSelectLot(lot) {
+  function handleSelectLot(lot, preserveList = true) {
+    preserveListViewportRef.current = preserveList;
     setActive(lot);
     triggerLotPulse(lot.lotId);
     flyToRef.current?.({ lat: lot.lat + flyToOffset, lng: lot.lng, zoom: 16 });
@@ -770,13 +778,17 @@ export default function App() {
           </div>
 
           {/* Map */}
-          <div className="map-wrap">
+          <div className="map-wrap"
+            onPointerDownCapture={resumeListViewport}
+            onWheelCapture={resumeListViewport}
+            onKeyDownCapture={resumeListViewport}
+          >
             <ParkingMap
               apiBase={apiBase}
               onLotDisplayChange={applyDisplayAvailability}
               lots={mapLots}
-              onViewportChange={setMapViewport}
-              active={mapActive}
+              onViewportChange={handleViewportChange}
+              active={active}
               setActive={setActive}
               numberedLotCount={globalNumberedCount}
               totalLotCount={meta?.totalActive ?? validLots.length}

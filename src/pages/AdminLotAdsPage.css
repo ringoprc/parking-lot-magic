@@ -169,6 +169,14 @@
   gap: 8px;
 }
 
+.ala-result-count {
+  margin-bottom: 2px;
+  color: #666;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+}
+
 .ala-item {
   border: 1px solid #ccc;
   border-radius: 12px;

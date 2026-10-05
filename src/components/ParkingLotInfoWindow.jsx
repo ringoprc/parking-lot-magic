@@ -5,11 +5,7 @@ import { InfoWindow } from "@vis.gl/react-google-maps";
 import toast from "react-hot-toast";
 import { MdDirectionsWalk, MdContentCopy } from "react-icons/md";
 
-import {
-  formatTimeYYYYMMDD_HHMMSS,
-  minutesAgo,
-  minSecAgo,
-} from "../utils/time";
+
 
 import lotImage from "../assets/lots_demo_img.jpg";
 import sponsorImage from "../assets/sponser_demo_img.jpeg";
@@ -18,6 +14,7 @@ import {
   getAvailabilityTextColor,
 } from "../utils/availability";
 import AiResultHistory from "./AiResultHistory";
+import LotUpdateStatus from "./LotUpdateStatus";
 
 import "./ParkingLotInfoWindow.css";
 
@@ -379,7 +376,7 @@ export default function ParkingLotInfoWindow({
                   alignItems: "flex-start",
                 }}
               >
-                <div className="iw-actions"
+                <div className="iw-actions iw-title"
                   style={{
                     display: "flex",
                     fontSize: 15,
@@ -401,7 +398,7 @@ export default function ParkingLotInfoWindow({
                   <span style={{ marginTop: "3px" }}>{active.name}</span>
                 </div>
 
-                <div
+                <div className="iw-vacancy"
                   style={{
                     fontSize: "14px",
                     fontWeight: "700",
@@ -418,7 +415,7 @@ export default function ParkingLotInfoWindow({
                 </div>
               </div>
 
-              <div className="iw-actions"
+              <div className="iw-actions iw-address"
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -445,48 +442,7 @@ export default function ParkingLotInfoWindow({
                 padding: "6px 3px 0px 6px",
               }}
             >
-              {(() => {
-                const m = minutesAgo(active.lastUpdated);
-                if (m == null) return null;
-                if (m <= 3) return null;
-
-                return (
-                  <div
-                    style={{
-                      marginTop: "6px",
-                      fontSize: "11px",
-                      color: "#ea4336",
-                      fontWeight: "900",
-                    }}
-                  >
-                    資料可能延遲（{m} 分鐘）
-                  </div>
-                );
-              })()}
-
-              <div
-                style={{
-                  display: "flex",
-                  gap: "2px",
-                }}
-              >
-                <div style={{ margin: "4px 0px 4px 2px", fontSize: 9.5, fontWeight: 500, color: "#666"  }}>
-                  最近更新：{formatTimeYYYYMMDD_HHMMSS(active.lastUpdated)}
-                </div>
-
-                <div style={{ marginTop: 4, fontSize: 10 }}>
-                  {(() => {
-                    const ms = minSecAgo(active.lastUpdated);
-                    if (!ms) return null;
-
-                    return (
-                      <div style={{ marginTop: 0, marginLeft: 0, fontSize: 9.5, fontWeight: 500, color: "#666" }}>
-                        （{ms.min} 分 {String(ms.sec).padStart(2, "0")} 秒前）
-                      </div>
-                    );
-                  })()}
-                </div>
-              </div>
+              <LotUpdateStatus lastUpdated={active.lastUpdated} />
 
               <AiResultHistory
                 apiBase={apiBase}

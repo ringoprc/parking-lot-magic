@@ -1,11 +1,6 @@
 // frontend/src/components/LotBottomSheet.jsx
 import { useEffect, useState } from "react";
-import { 
-  formatTime, 
-  formatTimeYYYYMMDD_HHMMSS, 
-  minutesAgo, 
-  minSecAgo 
-} from "../utils/time";
+
 import toast from "react-hot-toast";
 
 import { MdDirectionsWalk, MdContentCopy } from "react-icons/md";
@@ -17,6 +12,7 @@ import {
   getAvailabilityTextColor,
 } from "../utils/availability";
 import AiResultHistory from "./AiResultHistory";
+import LotUpdateStatus from "./LotUpdateStatus";
 
 import "./LotBottomSheet.css";
 
@@ -419,38 +415,7 @@ export default function LotBottomSheet({
                 </div>
               </div>
 
-              {(() => {
-                const m = minutesAgo(active.lastUpdated);
-                if (m == null) return null;
-                if (m <= 3) return null;
-                return (
-                  <div className="vl-sheet-warn">
-                    資料可能延遲（{m} 分鐘）
-                  </div>
-                );
-              })()}
-
-              <div>
-                <div className="vl-sheet-meta">
-                  <div>空位數字最近更新：{formatTimeYYYYMMDD_HHMMSS(active.lastUpdated)}</div>
-                  {(() => {
-                    const ms = minSecAgo(active.lastUpdated);
-                    if (!ms) return null;
-                    return (
-                      <div
-                        style={{
-                          maxWidth: "30%",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis"
-                        }}
-                      >
-                        （{ms.min} 分 {String(ms.sec).padStart(2, "0")} 秒前）
-                      </div>
-                    );
-                  })()}
-                </div>
-              </div>
+              <LotUpdateStatus lastUpdated={active.lastUpdated} />
 
               <AiResultHistory
                 apiBase={apiBase}

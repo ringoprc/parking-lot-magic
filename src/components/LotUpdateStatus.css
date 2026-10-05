@@ -1,0 +1,16 @@
+.lot-update-status {
+  width: fit-content;
+  max-width: 100%;
+  margin: 5px 0;
+  color: #6f7973;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.lot-update-status.is-delayed {
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: #faf0dc;
+  color: #886126;
+}

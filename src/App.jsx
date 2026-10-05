@@ -733,6 +733,7 @@ export default function App() {
           <div className="sidebar-wrap">
             <LotsSidebar
               apiBase={apiBase}
+              count={visibleLots.length}
               title={listTitle}
               lots={displayedLots}
               setOpen={setMobileMenuOpen}

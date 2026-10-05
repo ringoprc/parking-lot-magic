@@ -6,6 +6,7 @@ import LotSearchBar from "./LotSearchBar";
 export default function LotsSidebar({
   apiBase,
   title,
+  count,
   lots,
   active,
   onSelect,
@@ -20,10 +21,12 @@ export default function LotsSidebar({
   focus
 }) {
   return (
-    <div className="side">
-      <div className="side-title">{title || `所有停車場 (${lots.length})`}</div>
+    <div className="side desktop-search-side">
+      {focus?.name && <div className="side-title">{title}</div>}
       <LotSearchBar
         apiBase={apiBase}
+        placeholder="搜尋停車場或目的地"
+        resultCount={count ?? lots.length}
         onPick={onPick}
         onClear={onClear}
         setOpen={setOpen}

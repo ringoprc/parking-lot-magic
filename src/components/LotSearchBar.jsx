@@ -45,6 +45,7 @@ function classicFetchPredictions(query, opts) {
 export default function LotSearchBar({
   apiBase = "",
   placeholder = "搜尋停車場/地點/地址…",
+  resultCount,
   onPick, // (place) => void
   onClear, // () => void
   setOpen,
@@ -618,8 +619,12 @@ export default function LotSearchBar({
           }}
         />
 
-        {q.trim() === "" && (
+        {(q.trim() === "" || resultCount != null) && (
           <FiSearch className="lot-search-icon" size={20} aria-hidden="true" />
+        )}
+
+        {resultCount != null && !q.trim() && (
+          <span className="desktop-search-count" aria-label={`目前地圖範圍內 ${resultCount} 個停車場`}>{resultCount} 個車場</span>
         )}
 
         {/* Clear (X) */}

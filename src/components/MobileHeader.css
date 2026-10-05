@@ -67,6 +67,37 @@
   .account-trigger { height: 44px; padding-inline: 14px; gap: 9px; font-size: 13px; }
   .account-trigger-initial { width: 26px; height: 26px; }
   .account-panel { top: calc(100% - 2px); right: 32px; }
+  .app-root .desktop-search-side .lot-search { margin: 16px 10px 12px; }
+  .app-root .desktop-search-side .lot-search-input {
+    height: 48px;
+    padding: 0 88px 0 40px;
+    border: 1px solid #e6ece8;
+    border-radius: 13px;
+    background: #f4f7f5;
+    font-size: 13px;
+    font-weight: 450;
+    box-shadow: none;
+  }
+  .app-root .desktop-search-side .lot-search-input:not(:placeholder-shown) { padding-right: 42px; }
+  .app-root .desktop-search-side .lot-search-input::placeholder { color: #7c8880; font-weight: 450; }
+  .app-root .desktop-search-side .lot-search-icon { left: 13px; right: auto; color: #44755a; stroke-width: 2; }
+  .desktop-search-count {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    padding-left: 10px;
+    border-left: 1px solid #dce4df;
+    color: #3e6650;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .app-root .desktop-search-side .lot-search:focus-within .lot-search-input { background: #fff; border-color: #8fb39e; box-shadow: 0 0 0 2px #31815d14; }
+  .app-root .desktop-search-side .lot-search-input.has-items { border-radius: 13px 13px 0 0; }
+  .app-root .desktop-search-side .lot-search-horizontal-div { border: 0; }
+  .app-root .desktop-search-side .side-title { font-size: 13px; font-weight: 500; color: #68766e; }
 }
 
 @media (max-width: 900px) {

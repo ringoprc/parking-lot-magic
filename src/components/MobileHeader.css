@@ -1,4 +1,6 @@
 /* Shared desktop and mobile brand and account header. */
+.desktop-search-count, .mobile-lots-count { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; line-height: 1.25; }
+.search-count-scope { color: #6c7c72; font-size: 10px; font-weight: 400; white-space: nowrap; }
 .app-root .title-bar {
   height: 72px;
   min-height: 72px;

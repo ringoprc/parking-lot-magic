@@ -624,7 +624,10 @@ export default function LotSearchBar({
         )}
 
         {resultCount != null && !q.trim() && (
-          <span className="desktop-search-count" aria-label={`目前地圖範圍內 ${resultCount} 個停車場`}>{resultCount} 個車場</span>
+          <span className="desktop-search-count" title="隨地圖移動或縮放更新" aria-label={`目前地圖範圍內 ${resultCount} 個停車場`}>
+            <span className="search-count-scope">地圖範圍內</span>
+            <span>{resultCount} 個車場</span>
+          </span>
         )}
 
         {/* Clear (X) */}

@@ -188,6 +188,7 @@ export default function GoogleAccount({ apiBase }) {
           {!user && <button type="button" onClick={() => { setError(""); setBusy(true); setAttempt((value) => value + 1); }}>重試</button>}
         </div>
       )}
+      <a className="account-privacy-link" href="/privacy.html">隱私權政策</a>
       <a className="account-admin-link" href="?admin=1"><span>管理後台</span><FiArrowUpRight size={16} /></a>
       </div>
     </div>

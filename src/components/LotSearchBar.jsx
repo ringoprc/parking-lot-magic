@@ -707,9 +707,6 @@ export default function LotSearchBar({
             type="button"
             ref={(el) => (itemRefs.current[0] = el)}
             className={`lot-search-dd-item is-my-location ${activeIdx === 0 ? "active" : ""}`}
-            style={{
-              background: "#fff3d7"
-            }}
             onMouseEnter={() => setActiveIdx(0)}
             onMouseDown={(e) => {
               e.preventDefault();

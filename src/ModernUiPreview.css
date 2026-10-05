@@ -167,10 +167,15 @@
   transition: background 140ms ease, color 140ms ease;
 }
 
-.ui-preview-modern .lot-search-dd-item.is-my-location {
+.ui-preview-modern .lot-search-dd-item.is-my-location,
+.ui-preview-modern .lot-search-dd-item.is-my-location.active,
+.ui-preview-modern .lot-search-dd-item.is-my-location:active {
   margin-bottom: 1px;
   border-bottom: 0;
+  background: #fff3d7;
 }
+
+.ui-preview-modern .lot-search-dd-item.is-my-location:hover { background: #ffedc4; }
 
 .ui-preview-modern .lot-search-dd-item:hover,
 .ui-preview-modern .lot-search-dd-item.active,
@@ -189,7 +194,7 @@
 }
 
 .ui-preview-modern .lot-search-dd-item.is-local-lot + .lot-search-dd-item.is-local-lot {
-  margin-top: 3px;
+  margin-top: 0px;
 }
 
 .ui-preview-modern .lot-search-dd-item.is-local-lot:hover,
@@ -219,7 +224,7 @@
 }
 
 .ui-preview-modern .lot-btn-list-inner {
-  padding: 8px 8px 22px;
+  padding: 8px 10px 22px;
 }
 
 .ui-preview-modern .lot-btn {
@@ -394,6 +399,7 @@
   .ui-preview-modern .mobile-lots-overlay .lot-btn-list-inner {
     padding-inline: 5px;
     padding-bottom: 8px;
+    padding-right: 10px;
   }
 
 }

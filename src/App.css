@@ -984,6 +984,9 @@ div .gm-style-iw {
   border-bottom: 1px solid #edf0ee;
 }
 
+.lot-search-dd-item.is-my-location { background: #fff3d7; }
+.lot-search-dd-item.is-my-location:hover { background: #ffedc4; }
+
 .lot-search-dd-item.is-local-lot:last-child,
 .lot-search-dd-item.is-group-end { border-bottom: 0; }
 

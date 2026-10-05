@@ -169,6 +169,7 @@
 
 .ui-preview-modern .lot-search-dd-item.is-my-location {
   margin-bottom: 2px;
+  border-bottom: 0;
 }
 
 .ui-preview-modern .lot-search-dd-item:hover,

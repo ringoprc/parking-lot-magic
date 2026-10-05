@@ -759,6 +759,7 @@ export default function LotSearchBar({
           )}
           {items.map((s, idx) => {
             const realIdx = idx + 1;
+            const isGroupEnd = idx === items.length - 1 || !!s.lot !== !!items[idx + 1].lot;
             return (
               <Fragment key={`${s.placePrediction.placeId}-${idx}`}>
               {(idx === 0 || !!s.lot !== !!items[idx - 1].lot) && (
@@ -769,7 +770,7 @@ export default function LotSearchBar({
               <button
                 type="button"
                 ref={(el) => (itemRefs.current[realIdx] = el)}
-                className={`lot-search-dd-item ${s.lot ? "is-local-lot" : ""} ${realIdx === activeIdx ? "active" : ""}`}
+                className={`lot-search-dd-item ${s.lot ? "is-local-lot" : ""} ${isGroupEnd ? "is-group-end" : ""} ${realIdx === activeIdx ? "active" : ""}`}
                 onMouseEnter={() => setActiveIdx(realIdx)}
                 onMouseDown={(e) => {
                   e.preventDefault();

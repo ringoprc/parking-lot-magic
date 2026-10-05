@@ -100,7 +100,7 @@
   }
   .app-root .desktop-search-side .lot-search:focus-within .lot-search-input { background: #fff; border-color: #8fb39e; box-shadow: 0 0 0 2px #31815d14; }
   .app-root .desktop-search-side .lot-search-input.has-items { border-radius: 13px 13px 0 0; }
-  .app-root .desktop-search-side .lot-search-horizontal-div { border: 0; }
+  .app-root .desktop-search-side .lot-search-horizontal-div { display: none; }
   .app-root .desktop-search-side .side-title { font-size: 13px; font-weight: 500; color: #68766e; }
 }
 
@@ -123,7 +123,7 @@
   .app-root .mobile-search-region .lot-search-icon { left: 13px; right: auto; color: #44755a; }
   .mobile-search-region .desktop-search-count { position: absolute; top: 50%; right: 12px; transform: translateY(-50%); padding-left: 10px; border-left: 1px solid #dce4df; color: #3e6650; font-size: 11px; font-weight: 600; pointer-events: none; white-space: nowrap; }
   .app-root .mobile-search-region .lot-search-horizontal-div { display: none; }
-  .app-root .mobile-search-region .lot-search-dd { top: 100%; max-height: min(300px, 45dvh); }
+  .app-root .mobile-search-region .lot-search-dd { top: 100%; max-height: min(300px, 45dvh, var(--search-dd-space, 45dvh)); }
   .app-root .mobile-search-region .lot-search-input.has-items { border-radius: 13px 13px 0 0; background: #fff; }
   .app-root .mobile-search-region .mobile-lots-overlay { position: absolute; top: 100%; width: 100%; }
   .app-root .mobile-lots-bar {

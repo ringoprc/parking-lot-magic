@@ -80,6 +80,30 @@ export default function LotSearchBar({
   const composingRef = useRef(false);
   const pendingPickRef = useRef(null);
   const ddRef = useRef(null);
+  useEffect(() => {
+    if (!suggestionOpen) return;
+    const root = rootRef.current;
+    const viewport = window.visualViewport;
+    const updateSpace = () => {
+      const bottom = viewport ? viewport.offsetTop + viewport.height : window.innerHeight;
+      const available = Math.max(0, bottom - root.getBoundingClientRect().bottom - 12);
+      root.style.setProperty("--search-dd-space", `${available}px`);
+    };
+    updateSpace();
+    const observer = new ResizeObserver(updateSpace);
+    observer.observe(root);
+    window.addEventListener("resize", updateSpace);
+    window.addEventListener("scroll", updateSpace, true);
+    viewport?.addEventListener("resize", updateSpace);
+    viewport?.addEventListener("scroll", updateSpace);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateSpace);
+      window.removeEventListener("scroll", updateSpace, true);
+      viewport?.removeEventListener("resize", updateSpace);
+      viewport?.removeEventListener("scroll", updateSpace);
+    };
+  }, [suggestionOpen]);
   const itemRefs = useRef([]); // includes [0]=myLocation, [1..]=suggestions
 
   const touchArmedRef = useRef(false);
@@ -677,7 +701,8 @@ export default function LotSearchBar({
       <div className="lot-search-horizontal-div"></div>
 
       {suggestionOpen && (
-        <div ref={ddRef} className="lot-search-dd">
+        <div className="lot-search-dd">
+          <div ref={ddRef} className="lot-search-dd-scroll">
           <button
             type="button"
             ref={(el) => (itemRefs.current[0] = el)}
@@ -811,6 +836,7 @@ export default function LotSearchBar({
             </button>
             )
           })}
+          </div>
         </div>
       )}
     </div>

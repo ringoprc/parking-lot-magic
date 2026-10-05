@@ -509,7 +509,7 @@ div .gm-style-iw {
   padding: 0 7px;
   place-items: center;
   border-radius: 999px;
-  background: rgba(49, 69, 59, 0.09);
+  background: #31453b17;
   color: currentColor;
   font-size: 12px;
   font-variant-numeric: tabular-nums;

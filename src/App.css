@@ -983,6 +983,8 @@ div .gm-style-iw {
   border-bottom: 1px solid #edf0ee;
 }
 
+.lot-search-dd-item.is-local-lot:last-child { border-bottom: 0; }
+
 .lot-search-dd-item.is-local-lot:hover,
 .lot-search-dd-item.is-local-lot.active,
 .lot-search-dd-item.is-local-lot:active {

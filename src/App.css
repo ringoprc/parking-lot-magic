@@ -932,6 +932,7 @@ div .gm-style-iw {
 }
 
 .lot-search-dd-scroll {
+  padding-right: 3px;
   position: relative;
   min-height: 0;
   overflow-y: auto;

@@ -49,7 +49,8 @@
 .google-account button:focus-visible { outline: 2px solid #4285f4 !important; outline-offset: 2px; }
 .google-account button:disabled { opacity: .6; cursor: wait; }
 .google-account-error { display: flex; align-items: center; gap: 4px; max-width: 280px; color: #a83228; font-size: 12px; }
-.account-privacy-link { display: inline-block; margin-top: 16px; color: #526c5e; font-size: 13px; text-underline-offset: 3px; }
+.account-privacy-link { display: inline-block; color: #737d77; font-size: 11px; font-weight: 400; text-decoration: none; text-underline-offset: 3px; }
+.account-privacy-link:hover { color: #526c5e; text-decoration: underline; }
 .account-privacy-link:focus-visible { outline: 2px solid #4285f4; outline-offset: 3px; }
 .account-panel-heading strong { padding-right: 88px; }
 .account-privacy-link {
@@ -57,7 +58,7 @@
   top: 18px;
   right: 16px;
   margin-top: 0;
-  font-size: 12px;
+  font-size: 11px;
   line-height: 24px;
   white-space: nowrap;
 }

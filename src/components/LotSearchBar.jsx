@@ -1,5 +1,5 @@
 // frontend/src/components/LotSearchBar.jsx
-import { useState, useEffect, useRef } from "react";
+import { Fragment, useState, useEffect, useRef } from "react";
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
 import toast from "react-hot-toast";
 
@@ -760,8 +760,13 @@ export default function LotSearchBar({
           {items.map((s, idx) => {
             const realIdx = idx + 1;
             return (
+              <Fragment key={`${s.placePrediction.placeId}-${idx}`}>
+              {(idx === 0 || !!s.lot !== !!items[idx - 1].lot) && (
+                <div className="lot-search-section-heading" role="heading" aria-level={3}>
+                  {s.lot ? "停車場" : "地點建議"}
+                </div>
+              )}
               <button
-                key={`${s.placePrediction.placeId}-${idx}`}
                 type="button"
                 ref={(el) => (itemRefs.current[realIdx] = el)}
                 className={`lot-search-dd-item ${s.lot ? "is-local-lot" : ""} ${realIdx === activeIdx ? "active" : ""}`}
@@ -834,6 +839,7 @@ export default function LotSearchBar({
                 );
               })()}
             </button>
+              </Fragment>
             )
           })}
           </div>

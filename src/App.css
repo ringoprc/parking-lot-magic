@@ -978,7 +978,7 @@ div .gm-style-iw {
 
 /* two-line layout inside each suggestion button */
 .lot-search-dd-item.is-local-lot {
-  background: #e6f2ff;
+  background: transparent;
   border-radius: 6px;
   border-bottom: 1px solid #edf0ee;
 }
@@ -986,7 +986,16 @@ div .gm-style-iw {
 .lot-search-dd-item.is-local-lot:hover,
 .lot-search-dd-item.is-local-lot.active,
 .lot-search-dd-item.is-local-lot:active {
-  background: #cfe5fb;
+  background: #e8f1ec;
+}
+
+.lot-search-section-heading {
+  margin: 12px 5px 6px;
+  padding: 0 7px 7px;
+  border-bottom: 1px solid #dce5df;
+  color: #6c7c72;
+  font-size: 11px;
+  font-weight: 500;
 }
 
 .lot-search-status {

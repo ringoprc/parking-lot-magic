@@ -183,8 +183,8 @@
 }
 
 .ui-preview-modern .lot-search-dd-item.is-local-lot {
-  background: #e6f2ff;
-  border-bottom-color: #fff;
+  background: transparent;
+  border-bottom-color: #edf0ee;
 }
 
 .ui-preview-modern .lot-search-dd-item.is-local-lot + .lot-search-dd-item.is-local-lot {
@@ -194,11 +194,11 @@
 .ui-preview-modern .lot-search-dd-item.is-local-lot:hover,
 .ui-preview-modern .lot-search-dd-item.is-local-lot.active,
 .ui-preview-modern .lot-search-dd-item.is-local-lot:active {
-  background: #cfe5fb;
+  background: var(--preview-green-soft);
 }
 
 .ui-preview-modern .lot-search-dd-item.is-local-lot:focus-visible {
-  outline: 2px solid #73a8d8 !important;
+  outline: 2px solid #9ab6a5 !important;
   outline-offset: -2px;
 }
 

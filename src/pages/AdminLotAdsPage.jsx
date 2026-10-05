@@ -1,5 +1,5 @@
 // frontend/src/pages/AdminLotAdsPage.jsx
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, memo, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Spinner } from "reactstrap";
 import "./AdminLotAdsPage.css";
@@ -71,6 +71,29 @@ function hasLotAdAsset(lot, slotKey) {
   );
 }
 
+const LotSearchResult = memo(function LotSearchResult({ lot: l, index, isSelected }) {
+  return (
+                    <button
+                      className={`ala-item ${isSelected ? "sel" : ""}`}
+                      data-index={index}
+                      aria-pressed={!!isSelected}
+                    >
+                      <div className="ala-item-main">
+                        <div className="ala-item-title" title={l.name || "(no name)"}>{l.name || "(no name)"}</div>
+                        <div className="ala-item-sub" title={`${l.lotId ? `lotId: ${l.lotId}` : ""}${l.district ? ` · ${l.district}` : ""}`}>
+                          {l.lotId ? `lotId: ${l.lotId}` : ""}
+                          {l.district ? ` · ${l.district}` : ""}
+                        </div>
+                        {l.adSponsor?.storeName ? (
+                          <div className="ala-item-sub" title={`廣告店家：${l.adSponsor.storeName}`}>
+                            廣告店家：{l.adSponsor.storeName}
+                          </div>
+                        ) : null}
+                      </div>
+                    </button>
+  );
+});
+
 export default function AdminLotAdsPage({ apiBase }) {
   const [adminKey, setAdminKey] = useState(() => localStorage.getItem("adminKey") || "");
 
@@ -80,6 +103,7 @@ export default function AdminLotAdsPage({ apiBase }) {
     hasBottomSheetExample: false,
     hasNavigationSquare: false,
     hasEntrancePhoto: false,
+    showOnMap: false,
   });
   const [allLots, setAllLots] = useState([]);
   const [loadingLots, setLoadingLots] = useState(false);
@@ -88,6 +112,14 @@ export default function AdminLotAdsPage({ apiBase }) {
   const [assets, setAssets] = useState({});
   const [loadingAssets, setLoadingAssets] = useState(false);
   const assetsRequestRef = useRef(0);
+  const assetsAbortRef = useRef(null);
+  const selectionTimerRef = useRef(null);
+
+  useEffect(() => () => {
+    clearTimeout(selectionTimerRef.current);
+    assetsAbortRef.current?.abort();
+    assetsRequestRef.current += 1;
+  }, []);
   const [adSponsorForm, setAdSponsorForm] = useState({
     storeName: "",
     storeAddress: "",
@@ -154,10 +186,14 @@ export default function AdminLotAdsPage({ apiBase }) {
     if (!adminKey || !lot?._id) return;
 
     const requestId = ++assetsRequestRef.current;
+    assetsAbortRef.current?.abort();
+    const controller = new AbortController();
+    assetsAbortRef.current = controller;
     setLoadingAssets(true);
     try {
       const res = await fetch(`${apiBase}/api/admin/lots/${lot._id}/ad-assets`, {
         headers: headersAuth(),
+        signal: controller.signal,
       });
 
       const data = await safeJson(res);
@@ -185,7 +221,7 @@ export default function AdminLotAdsPage({ apiBase }) {
         );
       }
     } catch (e) {
-      if (requestId !== assetsRequestRef.current) return;
+      if (requestId !== assetsRequestRef.current || e.name === "AbortError") return;
       toast.error(String(e?.message || e));
       setAssets({});
     } finally {
@@ -193,13 +229,21 @@ export default function AdminLotAdsPage({ apiBase }) {
     }
   }
 
-  function onPickLot(lot) {
+  function onPickLot(lot, deferAssets = false) {
+    clearTimeout(selectionTimerRef.current);
+    assetsRequestRef.current += 1;
+    assetsAbortRef.current?.abort();
     setSelectedLot(lot);
     setAdSponsorForm(normalizeAdSponsor(lot));
     setAssets({});
     setLocalFiles({});
     setLocalPreviewUrls({});
-    fetchAssets(lot);
+    setLoadingAssets(true);
+    if (deferAssets) {
+      selectionTimerRef.current = setTimeout(() => fetchAssets(lot), 200);
+    } else {
+      fetchAssets(lot);
+    }
   }
 
   function onSelectFile(slotKey, file) {
@@ -411,6 +455,7 @@ export default function AdminLotAdsPage({ apiBase }) {
       const s = `${l.lotId || ""} ${l.name || ""} ${l.addressZh || ""} ${l.district || ""} ${l.adSponsor?.storeName || ""} ${l.adSponsor?.storeAddress || ""}`.toLowerCase();
 
       if (q && !s.includes(q)) return false;
+      if (lotFilters.showOnMap && !l.isActive) return false;
 
       if (
         lotFilters.hasStoreAddress &&
@@ -450,10 +495,10 @@ export default function AdminLotAdsPage({ apiBase }) {
     event.preventDefault();
     const nextIndex = index + (event.key === "ArrowDown" ? 1 : -1);
     if (nextIndex < 0 || nextIndex >= visibleLots.length) return;
-    const nextButton = event.currentTarget.parentElement.querySelectorAll(".ala-item")[nextIndex];
+    const nextButton = event.currentTarget.querySelectorAll(".ala-item")[nextIndex];
     nextButton?.focus({ preventScroll: true });
     nextButton?.scrollIntoView({ block: "nearest", inline: "nearest" });
-    onPickLot(visibleLots[nextIndex]);
+    onPickLot(visibleLots[nextIndex], true);
   }
 
   return (
@@ -506,6 +551,14 @@ export default function AdminLotAdsPage({ apiBase }) {
                 <label>
                   <input
                     type="checkbox"
+                    checked={lotFilters.showOnMap}
+                    onChange={() => toggleLotFilter("showOnMap")}
+                  />
+                  <span>地圖上有顯示的停車場</span>
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
                     checked={lotFilters.hasStoreAddress}
                     onChange={() => toggleLotFilter("hasStoreAddress")}
                   />
@@ -548,7 +601,16 @@ export default function AdminLotAdsPage({ apiBase }) {
                 <Spinner className="ala-custom-spinner" size="sm" /> 正在載入
               </div>
             ) : (
-              <div className="ala-list">
+              <div className="ala-list"
+                onClick={(event) => {
+                  const button = event.target.closest(".ala-item");
+                  if (button) onPickLot(visibleLots[Number(button.dataset.index)]);
+                }}
+                onKeyDown={(event) => {
+                  const button = event.target.closest(".ala-item");
+                  if (button) handleLotKeyDown(event, Number(button.dataset.index));
+                }}
+              >
                 <div className="ala-result-count" role="status">
                   共 {visibleLots.length.toLocaleString("zh-TW")} 筆結果
                 </div>
@@ -556,26 +618,7 @@ export default function AdminLotAdsPage({ apiBase }) {
                   const isSelected = selectedLot && String(selectedLot._id) === String(l._id);
 
                   return (
-                    <button
-                      key={l._id}
-                      className={`ala-item ${isSelected ? "sel" : ""}`}
-                      onClick={() => onPickLot(l)}
-                      onKeyDown={(event) => handleLotKeyDown(event, index)}
-                      aria-pressed={!!isSelected}
-                    >
-                      <div className="ala-item-main">
-                        <div className="ala-item-title" title={l.name || "(no name)"}>{l.name || "(no name)"}</div>
-                        <div className="ala-item-sub" title={`${l.lotId ? `lotId: ${l.lotId}` : ""}${l.district ? ` · ${l.district}` : ""}`}>
-                          {l.lotId ? `lotId: ${l.lotId}` : ""}
-                          {l.district ? ` · ${l.district}` : ""}
-                        </div>
-                        {l.adSponsor?.storeName ? (
-                          <div className="ala-item-sub" title={`廣告店家：${l.adSponsor.storeName}`}>
-                            廣告店家：{l.adSponsor.storeName}
-                          </div>
-                        ) : null}
-                      </div>
-                    </button>
+                    <LotSearchResult key={l._id} lot={l} index={index} isSelected={!!isSelected} />
                   );
                 })}
 

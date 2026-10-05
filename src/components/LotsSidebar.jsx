@@ -4,6 +4,7 @@ import LotsList from "./LotsList";
 import LotSearchBar from "./LotSearchBar";
 
 export default function LotsSidebar({
+  apiBase,
   title,
   lots,
   active,
@@ -22,6 +23,7 @@ export default function LotsSidebar({
     <div className="side">
       <div className="side-title">{title || `所有停車場 (${lots.length})`}</div>
       <LotSearchBar
+        apiBase={apiBase}
         onPick={onPick}
         onClear={onClear}
         setOpen={setOpen}

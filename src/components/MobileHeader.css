@@ -1,0 +1,81 @@
+.header-brand-copy { min-width: 200px; }
+.mobile-brand-name, .account-trigger, .account-panel-heading, .account-admin-link { display: none; }
+
+@media (max-width: 900px) {
+  .app-root .title-bar {
+    height: 72px;
+    min-height: 72px;
+    padding: 0;
+    background: #fff;
+    border-bottom: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    position: relative;
+    z-index: 1200;
+  }
+  .app-root .title-bar-inner { padding: 0 18px; flex-wrap: nowrap; gap: 12px; }
+  .app-root .title-bar-left { gap: 9px; min-width: 0; }
+  .app-root .title-bar-logo-img { width: 35px; height: 39px; object-fit: contain; filter: none; }
+  .header-brand-copy { min-width: 0; }
+  .header-brand-copy > .title, .header-brand-copy > .subtitle-div { display: none; }
+  .mobile-brand-name { display: block; color: #172a23; font-size: 23px; font-weight: 800; line-height: 1; letter-spacing: -.9px; }
+  .mobile-brand-name > span:first-child { color: #31815d; }
+  .mobile-brand-caption { display: block; margin-top: 6px; color: #7b8580; font-size: 10px; font-weight: 500; letter-spacing: 2px; }
+  .title-bar-actions { flex: 0 0 auto; flex-wrap: nowrap; gap: 0; }
+  .title-bar-actions > .title-bar-admin-link { display: none; }
+  .account-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 40px;
+    padding: 0 11px;
+    border: 1px solid #e5eae7;
+    border-radius: 24px;
+    background: #fff;
+    color: #354b40;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .account-trigger:hover, .account-trigger[aria-expanded="true"] { background: #f1f6f3; border-color: #cbdcd2; }
+  .account-trigger-initial { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #dcece2; color: #24593e; }
+  .account-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% - 5px);
+    right: 14px;
+    width: min(314px, calc(100vw - 28px));
+    padding: 16px;
+    border: 1px solid #e5ebe7;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 16px 48px #183d2926, 0 2px 6px #183d2908;
+  }
+  .account-panel.is-open { display: block; }
+  .account-panel-heading { display: grid; gap: 5px; margin-bottom: 16px; }
+  .account-panel-heading strong { color: #243b2f; font-size: 16px; }
+  .account-panel-heading > span { color: #7a857e; font-size: 12px; }
+  .google-account-button { width: 280px; max-width: 100%; }
+  .google-account-name { max-width: 140px; }
+  .account-admin-link { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 14px 2px 0; border-top: 1px solid #edf0ee; color: #68766e; font-size: 12px; text-decoration: none; }
+  .app-root .mobile-lots-bar {
+    width: calc(100% - 32px);
+    height: 44px;
+    margin: 0 16px 12px;
+    padding: 0 13px;
+    gap: 9px;
+    border: 1px solid #e6ece8;
+    border-radius: 13px;
+    background: #f4f7f5;
+    color: #6b7c71;
+    box-shadow: none;
+    text-align: left;
+  }
+  .mobile-search-region { background: #fff; }
+  .mobile-search-leading { display: flex; flex: 0 0 auto; color: #44755a; }
+  .app-root .mobile-lots-label { flex: 1; min-width: 0; font-size: 13px; font-weight: 450; color: #7c8880; letter-spacing: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .mobile-lots-count { flex-shrink: 0; border-left: 1px solid #dce4df; padding-left: 10px; color: #3e6650; font-size: 11px; font-weight: 600; }
+  .app-root .mobile-lots-toggle { width: auto; height: auto; padding: 0; border: 0; background: none; }
+  .app-root .mobile-lots-bar:focus-visible { outline: 2px solid #31815d !important; outline-offset: 2px; }
+}

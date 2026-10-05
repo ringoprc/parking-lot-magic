@@ -285,6 +285,15 @@
   min-width: 0;
 }
 
+.ala-asset-divider {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin: 6px 0;
+  border: 0;
+  border-top: 1px solid #ddd;
+  opacity: 1;
+}
+
 .ala-asset-head {
   display: flex;
   align-items: flex-start;
@@ -467,4 +476,3 @@
     align-items: stretch;
   }
 }
-

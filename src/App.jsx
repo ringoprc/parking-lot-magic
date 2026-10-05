@@ -13,9 +13,11 @@ import MobileLotsOverlay from "./components/MobileLotsOverlay";
 import ParkingMap from "./components/ParkingMap";
 import VisitTracker from "./components/VisitTracker";
 import LotViewTracker from "./components/LotViewTracker";
+import GoogleAccount from "./components/GoogleAccount";
 
 import Spinner from "react-bootstrap/Spinner";
 import { FaCheck } from "react-icons/fa6";
+import { FiArrowLeft } from "react-icons/fi";
 
 import AdminLotsPage from "./pages/AdminLotsPage";
 import AdminDevicesPage from "./pages/AdminDevicesPage/AdminDevicesPage";
@@ -32,6 +34,7 @@ import DigitOcrTest from "./pages/DigitOcrTest";
 
 import "./App.css";
 import "./ModernUiPreview.css";
+import "./components/MobileHeader.css";
 
 function AdminMenuPage() {
   const adminItems = [
@@ -81,21 +84,22 @@ function AdminMenuPage() {
 
   return (
     <div className="admin-menu-page">
-      <div className="admin-menu-shell">
+      <header className="admin-menu-header">
         <div className="admin-menu-topbar">
           <a className="admin-menu-brand" href="/">
             <img src={logo} alt="ParkingJi" className="admin-menu-logo" />
             <div>
-              <div className="admin-menu-brand-title">停車急管家</div>
-              <div className="admin-menu-brand-subtitle">ParkingJi Admin</div>
+              <div className="admin-menu-brand-title">Parking<span>Ji</span></div>
+              <div className="admin-menu-brand-subtitle">停車急管家 · 後台</div>
             </div>
           </a>
 
           <a className="admin-menu-map-link" href="/">
-            回到地圖
+            <FiArrowLeft size={16} aria-hidden="true" />回到地圖
           </a>
         </div>
-
+      </header>
+      <div className="admin-menu-shell">
         <div className="admin-menu-hero">
           <div>
             <div className="admin-menu-kicker">後台管理中心</div>
@@ -501,6 +505,14 @@ export default function App() {
   }
 
   function handlePickPlace(p) {
+    if (p.kind === "lot") {
+      setFocus(null);
+      setSearchCenter(null);
+      setQueryCenter(null);
+      if (!hasNumberedAvailability(p)) setShowNumberedPinsOnly(false);
+      handleSelectLot(p);
+      return;
+    }
     setActive(null);
     // 1) move map (smoothly) — your ParkingMap already supports focus/fit viewport
     flyToRef.current?.({ lat: p.lat, lng: p.lng, zoom: 15 });
@@ -520,6 +532,13 @@ export default function App() {
 
   const isMobile = useMediaQuery("(max-width: 900px)");
   const flyToOffset = isMobile ? -0.002 : 0.002;
+
+  function handleSelectLot(lot) {
+    setActive(lot);
+    triggerLotPulse(lot.lotId);
+    flyToRef.current?.({ lat: lot.lat + flyToOffset, lng: lot.lng, zoom: 16 });
+    setMobileMenuOpen(false);
+  }
 
 
 
@@ -577,11 +596,8 @@ export default function App() {
                 onClick={onLogoTap}
               />
 
-              <div
-                style={{
-                  minWidth: "200px"
-                }}
-              >
+              <div className="header-brand-copy">
+                <div className="mobile-brand-name">Parking<span>Ji</span><span className="mobile-brand-caption">停車急管家</span></div>
                 <div className="title">
                   <span style={{ marginLeft: "6px" }}>停車</span>
                   <span className="title-hightlight-span">急</span>
@@ -599,9 +615,12 @@ export default function App() {
 
             </div>
 
-            <a className="title-bar-admin-link" href="?admin=1">
-              管理後台
-            </a>
+            <div className="title-bar-actions">
+              <GoogleAccount apiBase={apiBase} />
+              <a className="title-bar-admin-link" href="?admin=1">
+                管理後台
+              </a>
+            </div>
           </div>
         </div>
 
@@ -678,25 +697,20 @@ export default function App() {
         )}
 
         {/* Mobile-only expandable lots bar (row under title) */}
-        <div>
+        <div className="mobile-search-region">
           <MobileLotsBar
             title={listTitle}
-            count={displayedLots.length}
+            count={visibleLots.length}
             open={mobileMenuOpen}
             onToggle={() => setMobileMenuOpen((v) => !v)}
           />
           <MobileLotsOverlay
+            apiBase={apiBase}
             open={mobileMenuOpen}
             setOpen={setMobileMenuOpen}
             lots={displayedLots}
             active={active}
-            onSelect={(l) => {
-              setActive(l);
-              triggerLotPulse(l.lotId);
-              flyToRef.current?.({ lat: l.lat+flyToOffset, lng: l.lng, zoom: 16 });
-              //setFocus({ name: l.name, lat: l.lat, lng: l.lng, zoom: 15, kind: "lot" });
-              setMobileMenuOpen(false);
-            }}
+            onSelect={handleSelectLot}
             onPick={(p) => {
               handlePickPlace(p);
             }}
@@ -718,16 +732,12 @@ export default function App() {
           {/* Left Sidebar (desktop) */}
           <div className="sidebar-wrap">
             <LotsSidebar
+              apiBase={apiBase}
               title={listTitle}
               lots={displayedLots}
               setOpen={setMobileMenuOpen}
               active={active}
-              onSelect={(l) => {
-                setActive(l);
-                triggerLotPulse(l.lotId);
-                flyToRef.current?.({ lat: l.lat + flyToOffset, lng: l.lng, zoom: 16 });
-                setMobileMenuOpen(false);
-              }}
+              onSelect={handleSelectLot}
               onPick={handlePickPlace}
               onClear={handleClearPick}
               locatingMe={locatingMe}

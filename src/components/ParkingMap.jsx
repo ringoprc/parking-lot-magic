@@ -271,6 +271,7 @@ function buildMarkerPool(lots, active, viewport, previousPool, markerLimit) {
 const ParkingMarker = memo(function ParkingMarker({
   lot,
   pulse,
+  selected,
   setActive,
   triggerLotPulse,
   flyToRef,
@@ -307,7 +308,7 @@ const ParkingMarker = memo(function ParkingMarker({
   }, [flyToRef, isMobile, lot, map, setActive, triggerLotPulse]);
 
   return (
-    <AdvancedMarker position={position} onClick={handleClick}>
+    <AdvancedMarker position={position} onClick={handleClick} zIndex={selected ? 1000 : undefined}>
       <VacancyPin lot={lot} pulse={pulse} />
     </AdvancedMarker>
   );
@@ -498,19 +499,31 @@ function VisibleParkingMarkers({
   }, []);
 
   return useMemo(
-    () =>
-      renderedLots.map((lot) => (
+    () => {
+      // Selection must be visible immediately, even while zooming freezes the
+      // batched marker pool. Keep the same key when the pool catches up.
+      const hasActive = active?.lotId && Number.isFinite(active.lat) && Number.isFinite(active.lng);
+      const visibleMarkers = hasActive
+        ? renderedLots.some((lot) => lot.lotId === active.lotId)
+          ? renderedLots.map((lot) => lot.lotId === active.lotId ? active : lot)
+          : [...renderedLots, active]
+        : renderedLots;
+
+      return visibleMarkers.map((lot) => (
         <ParkingMarker
           key={lot.lotId}
           lot={lot}
+          selected={lot.lotId === active?.lotId}
           pulse={lot.lotId === pulseLotId}
           setActive={setActive}
           triggerLotPulse={triggerLotPulse}
           flyToRef={flyToRef}
           isMobile={isMobile}
         />
-      )),
+      ));
+    },
     [
+      active,
       flyToRef,
       isMobile,
       pulseLotId,

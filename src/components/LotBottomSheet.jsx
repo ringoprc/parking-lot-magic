@@ -335,9 +335,14 @@ export default function LotBottomSheet({
               <img
                 className="vl-sheet-hero-img"
                 onClick={() => openGoogleNav(active)}
-                //src="https://placehold.co/340x240/f9f9f9/999999/png?text=Parking"
-                src={lotImage}
-                alt=""
+                key={active?.adAssets?.entrancePhoto?.url || lotImage}
+                src={active?.adAssets?.entrancePhoto?.url || lotImage}
+                onError={(e) => {
+                  if (e.currentTarget.getAttribute("src") !== lotImage) {
+                    e.currentTarget.src = lotImage;
+                  }
+                }}
+                alt={`${active?.name || "停車場"}入口照片`}
                 loading="lazy"
               />
             </div>

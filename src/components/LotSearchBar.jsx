@@ -1,6 +1,7 @@
 // frontend/src/components/LotSearchBar.jsx
 import { useState, useEffect, useRef } from "react";
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
+import toast from "react-hot-toast";
 
 import { FiSearch, FiX } from "react-icons/fi";
 
@@ -42,7 +43,8 @@ function classicFetchPredictions(query, opts) {
 
 
 export default function LotSearchBar({
-  placeholder = "搜尋地點/地址…",
+  apiBase = "",
+  placeholder = "搜尋停車場/地點/地址…",
   onPick, // (place) => void
   onClear, // () => void
   setOpen,
@@ -54,7 +56,10 @@ export default function LotSearchBar({
   const places = useMapsLibrary("places");
 
   const [q, setQ] = useState("");
-  const [items, setItems] = useState([]); // suggestions
+  const [googleItems, setGoogleItems] = useState([]);
+  const [localItems, setLocalItems] = useState([]);
+  const [localSearchStatus, setLocalSearchStatus] = useState("idle");
+  const items = [...localItems, ...googleItems];
   const [suggestionOpen, setSuggestionOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
   const [searchFocused, setSearchFocused] = useState(false);
@@ -63,12 +68,11 @@ export default function LotSearchBar({
   //const locateTimeoutRef = useRef(null);
 
   const rootRef = useRef(null);
-  const placesLibRef = useRef(null);
   const tokenRef = useRef(null);
   const debounceRef = useRef(null);
   const inputRef = useRef(null);
   const skipNextFetchRef = useRef(false);
-  const lastFetchedQRef = useRef(""); // 記錄上次真的打 API 的 query
+  const searchRequestRef = useRef(0);
   const composingRef = useRef(false);
   const pendingPickRef = useRef(null);
   const ddRef = useRef(null);
@@ -162,108 +166,96 @@ export default function LotSearchBar({
   */
 
   useEffect(() => {
-
-    const g = window.google;
-    const lib = places; // 直接用 hook 回來的 library
-    const hasNew = !!lib?.AutocompleteSuggestion;
-    if (!g?.maps || !lib) return; // maps or places library not ready yet
-
+    const requestId = ++searchRequestRef.current;
+    const controller = new AbortController();
+    const isCurrent = () => !controller.signal.aborted && searchRequestRef.current === requestId;
     const query = q.trim();
-    if (!query) {
-      setItems([]);              // no place suggestions
-      tokenRef.current = null;
-      lastFetchedQRef.current = "";
+    setLocalItems([]);
+    setGoogleItems([]);
+    setLocalSearchStatus("idle");
 
-      if (searchFocused) {
-        setSuggestionOpen(true); // ✅ force dropdown open
-        setActiveIdx(0);         // ✅ highlight "my location"
-      } else {
-        setSuggestionOpen(false);
-        setActiveIdx(-1);
-      }
-      return;
-    }
-
-    // ✅ selection 造成的 setQ：不要打 API，也不要改 items
     if (skipNextFetchRef.current) {
-      console.log('HERE2 skipped!');
       skipNextFetchRef.current = false;
       setSuggestionOpen(false);
       setActiveIdx(-1);
       return;
     }
-
-    // ✅ 如果 q 沒變（例如 focus/blur 來回），不要重打 API
-    if (query === lastFetchedQRef.current) {
+    if (!query) {
+      tokenRef.current = null;
       return;
     }
 
-    clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(async () => {
-      try {
-        if (!tokenRef.current) {
-          tokenRef.current = new lib.AutocompleteSessionToken();
-        }
-
-        const req = {
-          input: query,
-
-          // ✅ ensure Traditional Chinese results where possible
-          language: "zh-TW",
-          region: "tw",
-
-          // Optional: bias to Taipei to improve ranking
-          // locationBias: { lat: 25.033, lng: 121.565, radius: 50000 },
-
-          sessionToken: tokenRef.current,
-        };
-
-        let list = [];
-
-        if (hasNew) {
-          const req = {
-            input: query,
-            language: "zh-TW",
-            region: "tw",
-            sessionToken: tokenRef.current,
-          };
-
-          const { suggestions } =
-            await lib.AutocompleteSuggestion.fetchAutocompleteSuggestions(req);
-
-          list = (suggestions || []).slice(0, 8);
-        } else {
-          // fallback: classic AutocompleteService
-          const preds = await classicFetchPredictions(query, { language: "zh-TW" });
-          list = preds.slice(0, 8).map((p) => ({
-            // 讓你下面 render/pickSuggestion 可以沿用類似結構
+    setSuggestionOpen(true);
+    setActiveIdx(-1);
+    setLocalSearchStatus("loading");
+    debounceRef.current = setTimeout(() => {
+      // Independent requests: local lots remain available if Google fails or
+      // its library has not loaded. Ignore responses for an older query.
+      fetch(`${apiBase}/api/lots/search?q=${encodeURIComponent(query)}`, {
+        signal: controller.signal,
+      })
+        .then(async (res) => {
+          if (!res.ok) throw new Error("停車場搜尋失敗");
+          const data = await res.json();
+          if (!isCurrent()) return;
+          setLocalItems((data.results || []).slice(0, 2).map((lot) => ({
+            lot,
             placePrediction: {
-              placeId: p.place_id,
-              text: { toString: () => p.description },
+              placeId: `local:${lot.lotId}`,
               structuredFormat: {
-                mainText: { toString: () => p.structured_formatting?.main_text || "" },
-                secondaryText: { toString: () => p.structured_formatting?.secondary_text || "" },
+                mainText: lot.name,
+                secondaryText: ["本站停車場", lot.address].filter(Boolean).join(" · "),
               },
-              _classic: p,
             },
-          }));
+          })));
+          setActiveIdx(-1);
+          setLocalSearchStatus("ready");
+        })
+        .catch((error) => {
+          if (isCurrent()) {
+            console.error("[lots] search failed:", error);
+            setLocalSearchStatus("error");
+          }
+        });
+
+      if (!window.google?.maps || !places) return;
+      (async () => {
+        try {
+          if (!tokenRef.current) tokenRef.current = new places.AutocompleteSessionToken();
+          let list;
+          if (places.AutocompleteSuggestion) {
+            const { suggestions } = await places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+              input: query,
+              language: "zh-TW",
+              region: "tw",
+              sessionToken: tokenRef.current,
+            });
+            list = (suggestions || []).slice(0, 8);
+          } else {
+            const preds = await classicFetchPredictions(query, { language: "zh-TW" });
+            list = preds.slice(0, 8).map((p) => ({
+              placePrediction: {
+                placeId: p.place_id,
+                text: p.description,
+                structuredFormat: {
+                  mainText: p.structured_formatting?.main_text || "",
+                  secondaryText: p.structured_formatting?.secondary_text || "",
+                },
+              },
+            }));
+          }
+          if (isCurrent()) setGoogleItems(list);
+        } catch (error) {
+          if (isCurrent()) console.error("[places] autocomplete failed:", error);
         }
-
-        lastFetchedQRef.current = query;
-        setItems(list);
-        setSuggestionOpen(true);
-        setActiveIdx(list.length ? 0 : -1);
-
-      } catch (e) {
-        console.error("[places] fetchAutocompleteSuggestions failed:", e);
-        setItems([]);
-        setSuggestionOpen(false);
-        setActiveIdx(-1);
-      }
+      })();
     }, 180);
 
-    return () => clearTimeout(debounceRef.current);
-  }, [q]);
+    return () => {
+      controller.abort();
+      clearTimeout(debounceRef.current);
+    };
+  }, [q, places, apiBase]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -375,6 +367,7 @@ export default function LotSearchBar({
     }, 250);
     */
     if (locatingMe) return;
+    searchRequestRef.current += 1;
 
     // UI: exactly what you already do on start
     skipNextFetchRef.current = true;
@@ -401,14 +394,12 @@ export default function LotSearchBar({
   }, []);
   */
 
-  useEffect(() => {
-    if (!suggestionOpen) return;
-
+  function scrollKeyboardSelectionIntoView(index) {
     const container = ddRef.current;
-    const el = itemRefs.current[activeIdx];
+    const el = itemRefs.current[index];
     if (!container || !el) return;
 
-    // Keep active item visible inside the dropdown scroll area
+    // Only keyboard navigation scrolls; hovering merely highlights the item.
     const cTop = container.scrollTop;
     const cBottom = cTop + container.clientHeight;
 
@@ -423,22 +414,23 @@ export default function LotSearchBar({
     } else if (eBottom > cBottom - pad) {
       container.scrollTop = eBottom - container.clientHeight + pad;
     }
-  }, [activeIdx, suggestionOpen]);
-
-  useEffect(() => {
-    if (!suggestionOpen) return;
-    itemRefs.current = [];
-  }, [suggestionOpen, items.length]);
+  }
 
   async function pickSuggestion(s) {
     if (!s?.placePrediction) return;
     /*if (composingRef.current) return;*/
 
+    const pickRequestId = ++searchRequestRef.current;
     try {
       const pp = s.placePrediction;
 
-      // 新 API
-      if (pp?.toPlace) {
+      if (s.lot) {
+        const res = await fetch(`${apiBase}/api/lots/${encodeURIComponent(s.lot.lotId)}/details`);
+        if (!res.ok) throw new Error("無法載入停車場資訊，請稍後再試");
+        const data = await res.json();
+        if (searchRequestRef.current !== pickRequestId) return;
+        onPick?.({ ...data.lot, kind: "lot" });
+      } else if (pp?.toPlace) {
         const place = pp.toPlace();
         await place.fetchFields({ fields: ["displayName", "formattedAddress", "location", "viewport"] });
         const loc = place.location;
@@ -510,6 +502,9 @@ export default function LotSearchBar({
 
     } catch (e) {
       console.log('[pickSuggestion] Error applying suggestion:', e);
+      if (s.lot && searchRequestRef.current === pickRequestId) {
+        toast.error("無法載入停車場資訊，請稍後再試");
+      }
     }
   }
 
@@ -547,7 +542,12 @@ export default function LotSearchBar({
           className={`lot-search-input ${((suggestionOpen && q !== "我現在的位置" && !!q) || suggestionOpen) ? "has-items" : ""}`}
           value={q}
           placeholder={placeholder}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={(e) => {
+            searchRequestRef.current += 1;
+            skipNextFetchRef.current = false;
+            setQ(e.target.value);
+            setSuggestionOpen(true);
+          }}
           onFocus={() => {
             if (items.length > 0 && q.trim()) setSuggestionOpen(true);
             if (!q.trim()) {
@@ -596,10 +596,14 @@ export default function LotSearchBar({
 
             if (e.key === "ArrowDown") {
               e.preventDefault();
-              setActiveIdx((i) => Math.min(i + 1, ddLen - 1));
+              const nextIndex = Math.min(activeIdx + 1, ddLen - 1);
+              setActiveIdx(nextIndex);
+              scrollKeyboardSelectionIntoView(nextIndex);
             } else if (e.key === "ArrowUp") {
               e.preventDefault();
-              setActiveIdx((i) => Math.max(i - 1, 0));
+              const nextIndex = Math.max(activeIdx - 1, 0);
+              setActiveIdx(nextIndex);
+              scrollKeyboardSelectionIntoView(nextIndex);
             } else if (e.key === "Enter") {
               e.preventDefault();
               if (activeIdx === 0) {
@@ -636,7 +640,7 @@ export default function LotSearchBar({
               // 你現在的策略：q 清空後 items 會被 effect 清掉
               // 這邊可以不手動 setItems([])，交給 effect
               tokenRef.current = null;
-              lastFetchedQRef.current = "";
+              searchRequestRef.current += 1;
               skipNextFetchRef.current = false;
 
               // 讓使用者可以立刻再輸入
@@ -656,7 +660,7 @@ export default function LotSearchBar({
           <button
             type="button"
             ref={(el) => (itemRefs.current[0] = el)}
-            className={`lot-search-dd-item ${activeIdx === 0 ? "active" : ""}`}
+            className={`lot-search-dd-item is-my-location ${activeIdx === 0 ? "active" : ""}`}
             style={{
               background: "#fff3d7"
             }}
@@ -701,6 +705,12 @@ export default function LotSearchBar({
               </div>
             </div>
           </button>
+          {localSearchStatus === "loading" && (
+            <div className="lot-search-status" role="status">正在搜尋本站停車場…</div>
+          )}
+          {localSearchStatus === "error" && (
+            <div className="lot-search-status" role="status">本站停車場暫時無法載入，請稍後再試。</div>
+          )}
           {items.map((s, idx) => {
             const realIdx = idx + 1;
             return (
@@ -708,7 +718,7 @@ export default function LotSearchBar({
                 key={`${s.placePrediction.placeId}-${idx}`}
                 type="button"
                 ref={(el) => (itemRefs.current[realIdx] = el)}
-                className={`lot-search-dd-item ${realIdx === activeIdx ? "active" : ""}`}
+                className={`lot-search-dd-item ${s.lot ? "is-local-lot" : ""} ${realIdx === activeIdx ? "active" : ""}`}
                 onMouseEnter={() => setActiveIdx(realIdx)}
                 onMouseDown={(e) => {
                   e.preventDefault();
@@ -785,4 +795,3 @@ export default function LotSearchBar({
     </div>
   );
 }
-

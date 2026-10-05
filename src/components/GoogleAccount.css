@@ -1,0 +1,51 @@
+.title-bar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.google-account { max-width: 100%; min-width: 0; }
+.google-account-button { width: clamp(200px, calc(100vw - 110px), 280px); max-width: 100%; min-height: 40px; }
+.app-root .content { height: calc(100% - var(--site-header-height, 76px)); }
+@media (max-width: 900px) {
+  .app-root .content { height: calc(100% - var(--site-header-height, 72px) - 56px); }
+}
+.google-account-loading, .google-account-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  border-radius: 999px;
+  background: #202124;
+  color: #f1f3f4;
+  padding: 4px 14px 4px 5px;
+  font-size: 14px;
+}
+.google-account-loading { justify-content: center; padding-inline: 20px; }
+.google-account-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e8f1ec;
+  color: #285f49;
+  font-weight: 700;
+}
+.google-account-name { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.google-account-profile > button { margin-left: auto; flex-shrink: 0; }
+.google-account-profile button, .google-account-error button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 6px;
+  font-size: 13px;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+.google-account button:focus-visible { outline: 2px solid #4285f4 !important; outline-offset: 2px; }
+.google-account button:disabled { opacity: .6; cursor: wait; }
+.google-account-error { display: flex; align-items: center; gap: 4px; max-width: 280px; color: #a83228; font-size: 12px; }

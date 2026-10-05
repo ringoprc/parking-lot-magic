@@ -147,7 +147,7 @@
 
 .ui-preview-modern .lot-search-dd {
   top: calc(100% - 15px);
-  gap: 4px;
+  gap: 0;
   padding: 7px;
   border: 1px solid rgba(35, 67, 51, 0.13);
   border-top: 0;
@@ -157,11 +157,16 @@
 }
 
 .ui-preview-modern .lot-search-dd-item {
-  padding: 10px 12px;
-  border-radius: 10px;
+  padding: 13px 12px;
+  border-radius: 6px;
+  border-bottom: 1px solid #edf0ee;
   color: var(--preview-ink);
   font-size: 14px;
   transition: background 140ms ease, color 140ms ease;
+}
+
+.ui-preview-modern .lot-search-dd-item.is-my-location {
+  margin-bottom: 6px;
 }
 
 .ui-preview-modern .lot-search-dd-item:hover,
@@ -175,9 +180,37 @@
   font-size: 14px;
 }
 
+.ui-preview-modern .lot-search-dd-item.is-local-lot {
+  background: #e6f2ff;
+  border-bottom-color: #fff;
+}
+
+.ui-preview-modern .lot-search-dd-item.is-local-lot + .lot-search-dd-item.is-local-lot {
+  margin-top: 3px;
+}
+
+.ui-preview-modern .lot-search-dd-item.is-local-lot:hover,
+.ui-preview-modern .lot-search-dd-item.is-local-lot.active,
+.ui-preview-modern .lot-search-dd-item.is-local-lot:active {
+  background: #cfe5fb;
+}
+
+.ui-preview-modern .lot-search-dd-item.is-local-lot:focus-visible {
+  outline: 2px solid #73a8d8 !important;
+  outline-offset: -2px;
+}
+
+.ui-preview-modern .lot-search-dd-item:last-child { border-bottom-color: transparent; }
+
+.ui-preview-modern .lot-search-dd-item:focus-visible {
+  outline: 2px solid #9ab6a5 !important;
+  outline-offset: -2px;
+}
+
 .ui-preview-modern .lot-search-dd-sub {
   color: var(--preview-muted);
-  font-weight: 600;
+  font-weight: 450;
+  line-height: 1.45;
 }
 
 .ui-preview-modern .lot-btn-list-inner {
@@ -211,15 +244,35 @@
   margin-bottom: 7px;
   padding-bottom: 7px;
   border-bottom-color: rgba(35, 67, 51, 0.08);
-  gap: 6px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
 }
 
 .ui-preview-modern .lot-btn-name {
-  margin-bottom: 5px;
+  min-width: 0;
+  margin-bottom: 0;
+  overflow-wrap: anywhere;
   color: var(--preview-ink);
   font-size: 14px;
   font-weight: 850;
   letter-spacing: -0.12px;
+}
+
+.ui-preview-modern .lot-btn-sub-vacancy-count {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.ui-preview-modern .lot-btn-sub-vacancy-count .lot-dist {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: right;
 }
 
 .ui-preview-modern .lot-btn-sub-vacancy-count > span:first-child {
@@ -230,6 +283,7 @@
 }
 
 .ui-preview-modern .lot-btn-sub-address {
+  overflow-wrap: anywhere;
   color: #637067;
   font-weight: 620;
 }
@@ -335,6 +389,7 @@
   .ui-preview-modern .mobile-lots-overlay .lot-btn-list-inner {
     padding-inline: 5px;
   }
+
 }
 
 @media (max-width: 430px) {
@@ -343,8 +398,8 @@
   }
 
   .ui-preview-modern .title-bar-logo-img {
-    width: 43px;
-    height: 43px;
+    width: 40px;
+    height: 40px;
   }
 
   .ui-preview-modern .title {
@@ -366,7 +421,7 @@
 
   .ui-preview-modern .subtitle {
     padding-left: 6px;
-    font-size: 8.5px;
+    font-size: 10.5px;
     letter-spacing: 0.15px;
   }
 

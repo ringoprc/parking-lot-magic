@@ -4,6 +4,7 @@ import LotsList from "./LotsList";
 import LotSearchBar from "./LotSearchBar";
 
 export default function MobileLotsOverlay({
+  apiBase,
   open,
   setOpen,
   lots,
@@ -24,6 +25,7 @@ export default function MobileLotsOverlay({
       <div className="mobile-lots-overlay-scroll">
         <div className="mobile-lots-overlay-list">
           <LotSearchBar
+            apiBase={apiBase}
             onPick={onPick}
             onClear={onClear}
             setOpen={setOpen}
@@ -48,4 +50,3 @@ export default function MobileLotsOverlay({
     </div>
   );
 }
-

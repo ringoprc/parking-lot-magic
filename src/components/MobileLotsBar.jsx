@@ -3,21 +3,12 @@ import { FiSearch, FiX } from "react-icons/fi";
 
 export default function MobileLotsBar({ title, count, open, onToggle }) {
   return (
-    <div 
-    	className="mobile-lots-bar"
-    	onClick={onToggle}
-    >
-      <div className="mobile-lots-label">
-      	{title || `點此搜尋所有停車場 (${count})`}
-      </div>
-
-      <button
-        type="button"
-        className="mobile-lots-toggle"
-        aria-label={open ? "關閉停車場清單" : "展開停車場清單"}
-      >
-        {open ? <FiX size={22} /> : <FiSearch size={22} />}
-      </button>
-    </div>
+    <button type="button" className="mobile-lots-bar" onClick={onToggle}
+      aria-expanded={open} aria-label={`${open ? "關閉" : "展開"}停車場搜尋，${title || `${count} 個停車場`}`}>
+      <span className="mobile-search-leading"><FiSearch size={19} /></span>
+      <span className="mobile-lots-label">搜尋停車場或目的地</span>
+      <span className="mobile-lots-count">{count} 個車場</span>
+      {open && <span className="mobile-lots-toggle"><FiX size={18} /></span>}
+    </button>
   );
 }

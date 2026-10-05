@@ -1,5 +1,5 @@
 // frontend/src/pages/AdminLotAdsPage.jsx
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Spinner } from "reactstrap";
 import "./AdminLotAdsPage.css";
@@ -24,6 +24,12 @@ const ASSET_SLOTS = [
     title: "優惠券圖片",
     hint: "可為正方形或橫圖，之後可用於店家優惠券顯示。",
     acceptShape: "正方形 / 橫圖",
+  },
+  {
+    key: "entrancePhoto",
+    title: "停車場入口照片",
+    hint: "建議橫圖，顯示在地圖資訊視窗與底部資訊卡中，商家廣告左側。未上傳時顯示預設圖片。",
+    acceptShape: "橫圖",
   },
 ];
 
@@ -468,7 +474,7 @@ export default function AdminLotAdsPage({ apiBase }) {
               </button>
             </div>
 
-            <div className="ala-hint">點選停車場 → 右側上傳廣告圖片</div>
+            <div className="ala-hint">點選停車場 → 右側上傳入口照片或廣告圖片</div>
             <div
               style={{
                 display: "flex",
@@ -665,7 +671,11 @@ export default function AdminLotAdsPage({ apiBase }) {
                   const isUploading = uploadingSlot === slot.key;
 
                   return (
-                    <div key={slot.key} className="ala-asset-card">
+                    <Fragment key={slot.key}>
+                      {slot.key === "entrancePhoto" && (
+                        <hr className="ala-asset-divider" />
+                      )}
+                    <div className="ala-asset-card">
                       <div className="ala-asset-head">
                         <div>
                           <div className="ala-asset-title">{slot.title}</div>
@@ -727,6 +737,7 @@ export default function AdminLotAdsPage({ apiBase }) {
                       </div>
 
                     </div>
+                    </Fragment>
                   );
                 })}
               </div>
@@ -737,6 +748,4 @@ export default function AdminLotAdsPage({ apiBase }) {
     </div>
   );
 }
-
-
 

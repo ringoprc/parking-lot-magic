@@ -168,7 +168,7 @@
 }
 
 .ui-preview-modern .lot-search-dd-item.is-my-location {
-  margin-bottom: 6px;
+  margin-bottom: 2px;
 }
 
 .ui-preview-modern .lot-search-dd-item:hover,
@@ -202,7 +202,7 @@
   outline-offset: -2px;
 }
 
-.ui-preview-modern .lot-search-dd-item:last-child { border-bottom-color: transparent; }
+.ui-preview-modern .lot-search-dd-item:last-child { border-bottom: 0; }
 
 .ui-preview-modern .lot-search-dd-item:focus-visible {
   outline: 2px solid #9ab6a5 !important;

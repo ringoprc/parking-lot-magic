@@ -1,5 +1,5 @@
 // frontend/src/pages/AdminLotAdsPage.jsx
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Spinner } from "reactstrap";
 import "./AdminLotAdsPage.css";
@@ -87,6 +87,7 @@ export default function AdminLotAdsPage({ apiBase }) {
   const [selectedLot, setSelectedLot] = useState(null);
   const [assets, setAssets] = useState({});
   const [loadingAssets, setLoadingAssets] = useState(false);
+  const assetsRequestRef = useRef(0);
   const [adSponsorForm, setAdSponsorForm] = useState({
     storeName: "",
     storeAddress: "",
@@ -152,6 +153,7 @@ export default function AdminLotAdsPage({ apiBase }) {
   async function fetchAssets(lot) {
     if (!adminKey || !lot?._id) return;
 
+    const requestId = ++assetsRequestRef.current;
     setLoadingAssets(true);
     try {
       const res = await fetch(`${apiBase}/api/admin/lots/${lot._id}/ad-assets`, {
@@ -159,6 +161,8 @@ export default function AdminLotAdsPage({ apiBase }) {
       });
 
       const data = await safeJson(res);
+      // Rapid keyboard selection must not let an older response restore a lot.
+      if (requestId !== assetsRequestRef.current) return;
       if (!res.ok) throw new Error(data?.error || "load ad assets failed");
 
       setAssets(data?.adAssets || {});
@@ -181,10 +185,11 @@ export default function AdminLotAdsPage({ apiBase }) {
         );
       }
     } catch (e) {
+      if (requestId !== assetsRequestRef.current) return;
       toast.error(String(e?.message || e));
       setAssets({});
     } finally {
-      setLoadingAssets(false);
+      if (requestId === assetsRequestRef.current) setLoadingAssets(false);
     }
   }
 
@@ -439,6 +444,18 @@ export default function AdminLotAdsPage({ apiBase }) {
     });
   }, [allLots, lotSearch, lotFilters]);
 
+  function handleLotKeyDown(event, index) {
+    if (event.altKey || event.ctrlKey || event.metaKey || event.nativeEvent.isComposing) return;
+    if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+    event.preventDefault();
+    const nextIndex = index + (event.key === "ArrowDown" ? 1 : -1);
+    if (nextIndex < 0 || nextIndex >= visibleLots.length) return;
+    const nextButton = event.currentTarget.parentElement.querySelectorAll(".ala-item")[nextIndex];
+    nextButton?.focus({ preventScroll: true });
+    nextButton?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    onPickLot(visibleLots[nextIndex]);
+  }
+
   return (
     <div className="ala-outer">
       <div className="ala-topbar">
@@ -540,7 +557,7 @@ export default function AdminLotAdsPage({ apiBase }) {
                 <div className="ala-result-count" role="status">
                   共 {visibleLots.length.toLocaleString("zh-TW")} 筆結果
                 </div>
-                {visibleLots.map((l) => {
+                {visibleLots.map((l, index) => {
                   const isSelected = selectedLot && String(selectedLot._id) === String(l._id);
 
                   return (
@@ -548,6 +565,8 @@ export default function AdminLotAdsPage({ apiBase }) {
                       key={l._id}
                       className={`ala-item ${isSelected ? "sel" : ""}`}
                       onClick={() => onPickLot(l)}
+                      onKeyDown={(event) => handleLotKeyDown(event, index)}
+                      aria-pressed={!!isSelected}
                     >
                       <div className="ala-item-main">
                         <div className="ala-item-title" title={l.name || "(no name)"}>{l.name || "(no name)"}</div>

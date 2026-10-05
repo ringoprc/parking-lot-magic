@@ -500,51 +500,46 @@ export default function AdminLotAdsPage({ apiBase }) {
             </div>
 
             <div className="ala-hint">點選停車場 → 右側上傳入口照片或廣告圖片</div>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-                marginTop: 10,
-                fontSize: 13,
-              }}
-            >
-              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <input
-                  type="checkbox"
-                  checked={lotFilters.hasStoreAddress}
-                  onChange={() => toggleLotFilter("hasStoreAddress")}
-                />
-                僅顯示已有商家地址
-              </label>
+            <fieldset className="ala-filters">
+              <legend>僅顯示</legend>
+              <div className="ala-filter-grid">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={lotFilters.hasStoreAddress}
+                    onChange={() => toggleLotFilter("hasStoreAddress")}
+                  />
+                  <span>已有商家地址</span>
+                </label>
 
-              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <input
-                  type="checkbox"
-                  checked={lotFilters.hasBottomSheetExample}
-                  onChange={() => toggleLotFilter("hasBottomSheetExample")}
-                />
-                僅顯示已有底部資訊卡圖片
-              </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={lotFilters.hasBottomSheetExample}
+                    onChange={() => toggleLotFilter("hasBottomSheetExample")}
+                  />
+                  <span>已有底部資訊卡圖片</span>
+                </label>
 
-              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <input
-                  type="checkbox"
-                  checked={lotFilters.hasNavigationSquare}
-                  onChange={() => toggleLotFilter("hasNavigationSquare")}
-                />
-                僅顯示已有導航準備廣告圖
-              </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={lotFilters.hasNavigationSquare}
+                    onChange={() => toggleLotFilter("hasNavigationSquare")}
+                  />
+                  <span>已有導航準備廣告圖</span>
+                </label>
 
-              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <input
-                  type="checkbox"
-                  checked={lotFilters.hasEntrancePhoto}
-                  onChange={() => toggleLotFilter("hasEntrancePhoto")}
-                />
-                僅顯示已有停車場入口照片
-              </label>
-            </div>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={lotFilters.hasEntrancePhoto}
+                    onChange={() => toggleLotFilter("hasEntrancePhoto")}
+                  />
+                  <span>已有停車場入口照片</span>
+                </label>
+              </div>
+            </fieldset>
           </div>
 
           <div className="ala-scroll">

@@ -194,7 +194,7 @@
 .ui-preview-modern .lot-search-dd-item.is-local-lot:hover,
 .ui-preview-modern .lot-search-dd-item.is-local-lot.active,
 .ui-preview-modern .lot-search-dd-item.is-local-lot:active {
-  background: var(--preview-green-soft);
+  background: #e6f2ff;
 }
 
 .ui-preview-modern .lot-search-dd-item.is-local-lot:focus-visible {

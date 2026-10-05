@@ -79,6 +79,7 @@ export default function AdminLotAdsPage({ apiBase }) {
     hasStoreAddress: false,
     hasBottomSheetExample: false,
     hasNavigationSquare: false,
+    hasEntrancePhoto: false,
   });
   const [allLots, setAllLots] = useState([]);
   const [loadingLots, setLoadingLots] = useState(false);
@@ -427,6 +428,13 @@ export default function AdminLotAdsPage({ apiBase }) {
         return false;
       }
 
+      if (
+        lotFilters.hasEntrancePhoto &&
+        !hasLotAdAsset(l, "entrancePhoto")
+      ) {
+        return false;
+      }
+
       return true;
     });
   }, [allLots, lotSearch, lotFilters]);
@@ -509,6 +517,15 @@ export default function AdminLotAdsPage({ apiBase }) {
                   onChange={() => toggleLotFilter("hasNavigationSquare")}
                 />
                 僅顯示已有導航準備廣告圖
+              </label>
+
+              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={lotFilters.hasEntrancePhoto}
+                  onChange={() => toggleLotFilter("hasEntrancePhoto")}
+                />
+                僅顯示已有停車場入口照片
               </label>
             </div>
           </div>

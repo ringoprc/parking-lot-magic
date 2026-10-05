@@ -13,6 +13,7 @@ import {
 } from "../utils/availability";
 import AiResultHistory from "./AiResultHistory";
 import LotUpdateStatus from "./LotUpdateStatus";
+import EntrancePhoto from "./EntrancePhoto";
 
 import "./LotBottomSheet.css";
 
@@ -328,18 +329,12 @@ export default function LotBottomSheet({
         
           <div className="vl-sheet-hero">
             <div className="vl-sheet-hero-img-div">
-              <img
+              <EntrancePhoto
+                key={active.lotId}
                 className="vl-sheet-hero-img"
-                onClick={() => openGoogleNav(active)}
-                key={active?.adAssets?.entrancePhoto?.url || lotImage}
-                src={active?.adAssets?.entrancePhoto?.url || lotImage}
-                onError={(e) => {
-                  if (e.currentTarget.getAttribute("src") !== lotImage) {
-                    e.currentTarget.src = lotImage;
-                  }
-                }}
-                alt={`${active?.name || "停車場"}入口照片`}
-                loading="lazy"
+                src={active?.adAssets?.entrancePhoto?.url}
+                fallback={lotImage}
+                name={active.name}
               />
             </div>
             <div className="vl-sheet-sponsor-img-div">

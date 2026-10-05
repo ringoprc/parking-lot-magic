@@ -15,37 +15,11 @@ import {
 } from "../utils/availability";
 import AiResultHistory from "./AiResultHistory";
 import LotUpdateStatus from "./LotUpdateStatus";
+import EntrancePhoto from "./EntrancePhoto";
 
 import "./ParkingLotInfoWindow.css";
 
 const NAV_AD_SECONDS = 3;
-
-function openGoogleNavFromLot(lot) {
-  if (!lot) return;
-
-  const lat = lot.lat ?? lot.latitude;
-  const lng = lot.lng ?? lot.longitude;
-
-  let url = "";
-
-  // Testing default to [lat, lng]
-  if (lot.addressZh && !lot.addressZh) {
-    url =
-      `https://www.google.com/maps/dir/?api=1` +
-      `&destination=${encodeURIComponent(lot.addressZh)}` +
-      `&travelmode=driving`;
-  } else if (lat != null && lng != null) {
-    const dest = `${lat},${lng}`;
-    url =
-      `https://www.google.com/maps/dir/?api=1` +
-      `&destination=${encodeURIComponent(dest)}` +
-      `&travelmode=driving`;
-  } else {
-    return;
-  }
-
-  window.open(url, "_blank", "noopener,noreferrer");
-}
 
 function getGoogleNavUrl(lot) {
   if (!lot) return "";
@@ -317,18 +291,12 @@ export default function ParkingLotInfoWindow({
 
           <div className="iw-sheet-hero">
             <div className="iw-sheet-hero-img-div">
-              <img
+              <EntrancePhoto
+                key={active.lotId}
                 className="iw-sheet-hero-img"
-                onClick={() => openGoogleNavFromLot(active)}
-                key={active?.adAssets?.entrancePhoto?.url || lotImage}
-                src={active?.adAssets?.entrancePhoto?.url || lotImage}
-                onError={(e) => {
-                  if (e.currentTarget.getAttribute("src") !== lotImage) {
-                    e.currentTarget.src = lotImage;
-                  }
-                }}
-                alt={`${active?.name || "停車場"}入口照片`}
-                loading="lazy"
+                src={active?.adAssets?.entrancePhoto?.url}
+                fallback={lotImage}
+                name={active.name}
               />
             </div>
             <div className="iw-sheet-sponsor-img-div">

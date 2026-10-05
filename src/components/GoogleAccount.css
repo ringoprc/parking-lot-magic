@@ -51,6 +51,18 @@
 .google-account-error { display: flex; align-items: center; gap: 4px; max-width: 280px; color: #a83228; font-size: 12px; }
 .account-privacy-link { display: inline-block; margin-top: 16px; color: #526c5e; font-size: 13px; text-underline-offset: 3px; }
 .account-privacy-link:focus-visible { outline: 2px solid #4285f4; outline-offset: 3px; }
+@media (max-width: 900px) {
+  .account-panel-heading strong { padding-right: 88px; }
+  .account-privacy-link {
+    position: absolute;
+    top: 18px;
+    right: 16px;
+    margin-top: 0;
+    font-size: 12px;
+    line-height: 24px;
+    white-space: nowrap;
+  }
+}
 @media (min-width: 901px) {
   .account-panel { display: flex; align-items: center; gap: 16px; }
   .account-privacy-link { margin-top: 0; white-space: nowrap; }

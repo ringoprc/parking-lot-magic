@@ -80,11 +80,11 @@
 }
 
 .ui-preview-modern .vl-sheet-body {
-  padding: 14px 16px calc(20px + env(safe-area-inset-bottom));
+  padding: 10px 16px calc(20px + env(safe-area-inset-bottom));
 }
 
 .ui-preview-modern .vl-sheet-titleRow {
-  padding: 0 0 14px;
+  padding: 0 0 8px;
   border-bottom-color: var(--preview-line);
 }
 
@@ -120,8 +120,8 @@
 .ui-preview-modern .vl-sheet-vacNum { font-weight: 600; }
 
 .ui-preview-modern .vl-sheet-addr {
-  margin-top: 9px;
-  font-size: 12px;
+  margin-top: 1px;
+  font-size: 11px;
   line-height: 1.6;
   color: var(--preview-muted);
   overflow-wrap: anywhere;
@@ -147,7 +147,7 @@
 }
 
 .ui-preview-modern .vl-sheet .lot-ai-history {
-  padding: 12px 10px;
+  padding: 7px 10px 10px;
   border-radius: 14px;
   border-color: var(--preview-line);
   background: #f3f7f4;
@@ -156,9 +156,9 @@
 .ui-preview-modern .vl-sheet .lot-ai-history-head > span { font-weight: 600; }
 
 .ui-preview-modern .vl-sheet-navBtn {
-  width: 100%;
+  width: calc(100% - 16px);
   min-height: 40px;
-  margin: 14px 0 0;
+  margin: 11px 8px 0;
   padding: 5px 16px;
   border: 1px solid #31815d;
   border-radius: 14px;

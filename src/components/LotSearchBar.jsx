@@ -75,6 +75,7 @@ export default function LotSearchBar({
   const tokenRef = useRef(null);
   const debounceRef = useRef(null);
   const inputRef = useRef(null);
+  const expandOnlyClickRef = useRef(false);
   const skipNextFetchRef = useRef(false);
   const searchRequestRef = useRef(0);
   const composingRef = useRef(false);
@@ -570,6 +571,26 @@ export default function LotSearchBar({
           className={`lot-search-input ${((suggestionOpen && q !== "我現在的位置" && !!q) || suggestionOpen) ? "has-items" : ""}`}
           value={q}
           placeholder={placeholder}
+          onPointerDown={(event) => {
+            // The first mobile tap opens the list without focusing the input
+            // or showing the keyboard/suggestions. A second tap starts search.
+            expandOnlyClickRef.current = mobileExpanded === false;
+            if (expandOnlyClickRef.current) {
+              event.preventDefault();
+              setSuggestionOpen(false);
+              onSearchFocus?.();
+            }
+          }}
+          onClick={() => {
+            if (expandOnlyClickRef.current) {
+              expandOnlyClickRef.current = false;
+              return;
+            }
+            if (mobileExpanded === true) {
+              setSuggestionOpen(true);
+              if (!q.trim()) setActiveIdx(0);
+            }
+          }}
           onChange={(e) => {
             searchRequestRef.current += 1;
             skipNextFetchRef.current = false;
@@ -578,6 +599,7 @@ export default function LotSearchBar({
           }}
           onFocus={() => {
             onSearchFocus?.();
+            if (mobileExpanded === false) return;
             if (items.length > 0 && q.trim()) setSuggestionOpen(true);
             if (!q.trim()) {
               setSuggestionOpen(true);   // empty → show "my location"

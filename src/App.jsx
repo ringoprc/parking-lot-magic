@@ -452,6 +452,9 @@ export default function App() {
         };
       })
       .sort((a, b) => {
+        const recognitionDifference = Number(hasKnownAvailability(b.lot)) - Number(hasKnownAvailability(a.lot));
+        if (recognitionDifference !== 0) return recognitionDifference;
+
         const distanceDifference = a.distance - b.distance;
 
         if (distanceDifference !== 0) {

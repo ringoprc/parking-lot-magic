@@ -4,6 +4,7 @@ import LotsList from "./LotsList";
 
 
 export default function MobileLotsOverlay({
+  apiBase,
   open,
   lots,
   active,
@@ -19,7 +20,7 @@ export default function MobileLotsOverlay({
           <div
             className="lot-btn-list-outer"
           >
-            <LotsList
+            <LotsList apiBase={apiBase}
               lots={lots}
               active={active}
               onSelect={(l) => onSelect?.(l)}

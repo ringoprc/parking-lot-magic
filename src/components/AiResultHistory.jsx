@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getAvailabilityPinPresentation } from "../utils/availability";
-import { minutesAgo } from "../utils/time";
 import "./AiResultHistory.css";
 
 function displayResult(result) {
@@ -30,16 +29,7 @@ function formatResultTime(value) {
   }).format(date);
 }
 
-function formatLatestRecognition(rows) {
-  const latestAt = rows?.[0]?.at;
-  if (!latestAt) return "";
-
-  const elapsedMinutes = minutesAgo(latestAt);
-  const elapsed = elapsedMinutes == null ? "" : `（${Math.max(0, elapsedMinutes)} 分前）`;
-  return `最近一次辨識 ${formatResultTime(latestAt)}${elapsed}`;
-}
-
-export default function AiResultHistory({ apiBase = "", lotId, onDisplayChange }) {
+export default function AiResultHistory({ apiBase = "", lotId, onDisplayChange, hideWhenEmpty = false, enabled = true }) {
   const [history, setHistory] = useState({
     lotId: null,
     rows: [],
@@ -53,7 +43,7 @@ export default function AiResultHistory({ apiBase = "", lotId, onDisplayChange }
   }, [onDisplayChange]);
 
   useEffect(() => {
-    if (!lotId) return undefined;
+    if (!lotId || !enabled) return undefined;
 
     let mounted = true;
     let controller = null;
@@ -99,13 +89,15 @@ export default function AiResultHistory({ apiBase = "", lotId, onDisplayChange }
       controller?.abort();
       clearTimeout(refreshTimer);
     };
-  }, [apiBase, lotId]);
+  }, [apiBase, lotId, enabled]);
 
   const loading = history.lotId !== lotId;
   const orderedRows = useMemo(
     () => history.lotId === lotId ? [...history.rows].reverse() : [],
     [history.lotId, history.rows, lotId]
   );
+
+  if (hideWhenEmpty && (loading || history.error || !orderedRows.length)) return null;
 
   return (
     <section className="lot-ai-history" aria-label="最近十次 AI 辨識結果">
@@ -136,11 +128,7 @@ export default function AiResultHistory({ apiBase = "", lotId, onDisplayChange }
             fontSize: "8px"
           }}
         >現在</span>
-        {/*
-        <small>
-          {history.lotId === lotId ? formatLatestRecognition(history.rows) : ""}
-        </small>
-        */}
+
       </div>
 
       {loading ? (

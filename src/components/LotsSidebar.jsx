@@ -34,7 +34,7 @@ export default function LotsSidebar({
         requestMyLocation={requestMyLocation}
         myPos={myPos}
       />
-      <LotsList 
+      <LotsList apiBase={apiBase}
         lots={lots} 
         active={active} 
         onSelect={onSelect} 

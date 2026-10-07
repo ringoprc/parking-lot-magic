@@ -937,6 +937,27 @@
   font-size: 12px;
 }
 
+.admin-dev-prompt-lot-heading { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 4px 16px; }
+.admin-dev-prompt-lot-heading > .admin-dev-prompt-deviceid { grid-column: 1; overflow-wrap: anywhere; }
+.admin-dev-prompt-lot-heading .admin-dev-prompt-label { margin-bottom: 0; }
+.admin-dev-prompt-lot-label { display: flex; align-items: center; gap: 6px; }
+.admin-dev-prompt-mode { display: inline-flex; flex: 0 0 auto; padding: 3px 6px; border: 1px solid; border-radius: 4px; font: 700 9px/1.3 ui-sans-serif, system-ui, sans-serif; }
+.admin-dev-prompt-mode.is-boolean { border-color: #3f6250; color: #28633e; background: #fff; }
+.admin-dev-prompt-mode.is-count { border-color: #3b536c; color: #315d88; background: #fff; }
+.admin-dev-prompt-mode-options { grid-column: 2; grid-row: 1 / 3; display: grid; grid-template-columns: auto auto; align-items: center; gap: 5px; }
+.admin-dev-prompt-mode-options .admin-dev-prompt-mode { cursor: pointer; justify-content: center; padding: 4px 7px; font-size: 11px; }
+.admin-dev-prompt-mode-options .admin-dev-prompt-mode:not(.is-active) { border-color: #cbd5e1; color: #777; }
+.admin-dev-prompt-mode-options .admin-dev-prompt-mode.is-active { color: #fff; }
+.admin-dev-prompt-mode-options .admin-dev-prompt-mode.is-count.is-active { background: #315d88; }
+.admin-dev-prompt-mode-options .admin-dev-prompt-mode.is-boolean.is-active { background: #28633e; }
+.admin-dev-prompt-mode-options .admin-dev-prompt-mode:focus-visible { outline: 2px solid #7c3aed; outline-offset: 3px; }
+.admin-dev-prompt-mode-options .admin-dev-prompt-mode:disabled { opacity: .6; cursor: wait; }
+.admin-dev-prompt-mode-note { grid-column: 1 / -1; text-align: right; color: #8e8e8e; font-size: 10px; }
+@media (max-width: 575px) {
+  .admin-dev-prompt-lot-heading { grid-template-columns: minmax(0, 1fr); }
+  .admin-dev-prompt-mode-options { grid-column: 1; grid-row: 3; justify-self: end; }
+}
+
 .admin-dev-prompt-help {
   font-size: 12px;
   color: #555;
@@ -966,6 +987,35 @@
   outline: none;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 }
+
+.admin-dev-prompt-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-dev-prompt-preset {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-dev-prompt-preset span { font-size: 11px; font-weight: 400; }
+.admin-dev-prompt-preset:not(:disabled):hover,
+.admin-dev-prompt-preset.is-selected { border-color: #7c3aed; background: #f5f3ff; color: #6d28d9; }
+.admin-dev-prompt-preset:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
+.admin-dev-prompt-preset:disabled { background: #f8fafc; color: #64748b; cursor: not-allowed; }
+.admin-dev-prompt-preset-help { margin: 0 0 8px; color: #8e8e8e; font-size: 10px; line-height: 1.2; }
+.admin-dev-prompt-editor-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+.admin-dev-prompt-editor-heading .admin-dev-prompt-label { margin-bottom: 0; }
 
 .admin-dev-prompt-textarea:focus {
   border-color: #7c3aed;

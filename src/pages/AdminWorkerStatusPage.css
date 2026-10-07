@@ -162,7 +162,7 @@
 @keyframes aws-blink { 50% { opacity: .45; } }
 .aws-job-state { display: flex; align-items: center; justify-content: flex-end; gap: 8px; color: #77867e; font: 9px ui-monospace, monospace; }
 
-.aws-status-pill { display: inline-flex; align-items: center; justify-content: center; min-width: 48px; padding: 4px 7px; border: 1px solid #3b4942; border-radius: 999px; color: #a7b3ad; background: #18201c; font: 800 8px ui-monospace, monospace; white-space: nowrap; }
+.aws-status-pill { text-align: center; display: inline-flex; align-items: center; justify-content: center; min-width: 48px; padding: 4px 7px; border: 1px solid #3b4942; border-radius: 999px; color: #a7b3ad; background: #18201c; font: 800 8px ui-monospace, monospace; white-space: nowrap; }
 .aws-status-pill.is-completed { border-color: #315f42; color: var(--aws-green); background: #12251a; }
 .aws-status-pill.is-healthy { border-color: #315f42; color: var(--aws-green); background: #12251a; }
 .aws-status-pill.is-running, .aws-status-pill.is-claimed { border-color: #6a562d; color: var(--aws-amber); background: #251f12; }
@@ -211,11 +211,15 @@
 .aws-device-title strong, .aws-device-title span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .aws-device-title strong { color: #dce5e0; font-size: 11px; }
 .aws-device-title span { margin-top: 2px; color: #617068; font: 8px ui-monospace, monospace; }
+.aws-device-name { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.aws-device-title .aws-device-mode { display: inline-flex; flex: 0 0 auto; margin: 0; padding: 3px 6px; border: 1px solid #3c4c43; border-radius: 4px; color: #a9b8af; background: #18211c; font: 700 9px/1.3 ui-sans-serif, system-ui, sans-serif; }
+.aws-device-title .aws-device-mode.is-boolean { border-color: #3f6250; color: #90d4ac; background: #15261c; }
+.aws-device-title .aws-device-mode.is-count { border-color: #3b536c; color: #a0c4ec; background: #15212c; }
 .aws-device-bottom { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 10px; }
 .aws-result-history { display: flex; align-items: center; min-width: 0; }
 .aws-history-step { display: inline-flex; align-items: center; min-width: 0; }
 .aws-history-step i { width: 17px; color: #46544d; font: 13px/1 ui-monospace, monospace; text-align: center; font-style: normal; }
-.aws-history-value { display: grid; place-items: center; min-width: 22px; height: 22px; padding: 0 4px; border: 1px solid #314239; border-radius: 4px; color: var(--aws-green); background: #111b16; font: 700 9px ui-monospace, monospace; }
+.aws-history-value { display: grid; place-items: center; min-width: 22px; height: 22px; padding: 0 4px; border: 1px solid #314239; border-radius: 4px; color: var(--aws-green); background: #111b16; font: 700 9px ui-monospace, monospace !important; }
 .aws-history-value.is-error { border-color: #6a3a37; color: var(--aws-red); background: #251514; }
 .aws-history-value.is-unknown { border-color: #70582d; color: var(--aws-amber); background: #241e12; }
 .aws-history-value.is-muted { color: #77847d; }
@@ -327,3 +331,23 @@
   .aws-failure summary { grid-template-columns: 29px minmax(0, 1fr) 18px; }
   .aws-failure summary time { display: none; }
 }
+
+.aws-history-value:not(:disabled) { cursor: pointer; }
+.aws-history-value:not(:disabled):hover { filter: brightness(1.4); border-color: currentColor; }
+.aws-history-value:focus-visible { outline: 2px solid var(--aws-green); outline-offset: 3px; }
+.aws-history-value:disabled { cursor: default; }
+.aws-result-dialog { width: min(760px, calc(100% - 24px)); max-height: calc(100dvh - 32px); padding: 0; overflow-y: auto; border: 1px solid var(--aws-line); border-radius: 12px; background: #111714; color: var(--aws-ink); box-shadow: 0 24px 80px #0008; }
+.aws-result-dialog::backdrop { background: #000a; }
+.aws-result-dialog .aws-panel-head { align-items: center; }
+.aws-result-dialog .aws-panel-head p { overflow-wrap: anywhere; font-size: 12px; }
+.aws-result-detail-body { padding: 20px; font-size: 13px; }
+.aws-result-detail-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 0 0 24px; }
+.aws-result-detail-meta dt { margin-bottom: 5px; color: #84948c; font-size: 11px; }
+.aws-result-detail-meta dd { margin: 0; overflow-wrap: anywhere; }
+.aws-result-detail-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.aws-result-dialog h3 { margin: 0; font-size: 13px; }
+.aws-result-raw, .aws-result-error pre { margin: 0; padding: 16px; border: 1px solid var(--aws-line); border-radius: 7px; background: #0b0f0d; color: #dfe8e3; font: 13px/1.7 ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+.aws-result-error { margin-top: 20px; }
+.aws-result-error h3 { margin-bottom: 10px; color: var(--aws-red); }
+.aws-result-error pre { color: #ffc3be; }
+.aws-result-no-raw { color: #a4b2aa; line-height: 1.7; }

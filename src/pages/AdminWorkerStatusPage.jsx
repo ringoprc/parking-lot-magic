@@ -117,12 +117,12 @@ function MetricCard({ label, value, note, tone = "" }) {
   return <article className={`aws-metric ${tone ? `is-${tone}` : ""}`}><div className="aws-metric-label">{label}</div><strong>{value}</strong><div className="aws-metric-note">{note}</div></article>;
 }
 
-function ResultHistory({ items = [] }) {
+function ResultHistory({ items = [], onSelect }) {
   const history = [...items].reverse();
   if (!history.length) return <span className="aws-history-empty">尚無結果</span>;
   return <div className="aws-result-history" aria-label="最近辨識結果">{history.map((item, index) => {
     const result = resultValue(item);
-    return <span className="aws-history-step" key={item.attemptId || `${item.at}-${index}`}><span className={`aws-history-value is-${result.tone}`} title={`${STATUS_LABELS[item.status] || item.status} · ${formatDateTime(item.at)}`}>{result.text}</span>{index < history.length - 1 && <i aria-hidden="true">›</i>}</span>;
+    return <span className="aws-history-step" key={item.attemptId || `${item.at}-${index}`}><button type="button" className={`aws-history-value is-${result.tone}`} disabled={!item.attemptId} onClick={() => onSelect(item)} aria-label={`查看 ${formatDateTime(item.at)} 的辨識結果 ${result.text} 原始回傳資料`} title={`${STATUS_LABELS[item.status] || item.status} · ${formatDateTime(item.at)} · 點擊查看原始回傳`}>{result.text}</button>{index < history.length - 1 && <i aria-hidden="true">›</i>}</span>;
   })}</div>;
 }
 
@@ -150,14 +150,20 @@ function WorkerFleet({ workers, serverNow, loading }) {
   </section>;
 }
 
-function DevicesPanel({ data, group, setGroup, query, setQuery, loading }) {
+function DeviceModeBadge({ device }) {
+  const mode = device.availabilityMode || device.resultHistory?.[0]?.availabilityMode;
+  const label = mode === "boolean" ? "有無" : mode === "count" ? "數字" : "模式未提供";
+  return <span className={`aws-device-mode is-${mode || "unknown"}`} title="最近一次辨識使用的模式">{label}</span>;
+}
+
+function DevicesPanel({ data, group, setGroup, query, setQuery, loading, onSelectResult }) {
   const rows = data?.rows || [];
   return <section className="aws-panel aws-devices-panel">
-    <header className="aws-panel-head aws-device-head"><div><span className="aws-eyebrow">FLEET QUALITY</span><h2>裝置辨識品質</h2><p>每台裝置最近 10 次結果，跨 worker 合併</p></div><div className="aws-device-actions"><div className="aws-search-box"><MdOutlineSearch size={18} /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜尋裝置或停車場" aria-label="搜尋裝置或停車場" /></div><span className="aws-panel-count">{data?.totalCount || 0} 台</span></div></header>
+    <header className="aws-panel-head aws-device-head"><div><span className="aws-eyebrow">FLEET QUALITY</span><h2>裝置辨識品質</h2><p>每台裝置最近 10 次結果，跨 worker 合併；點擊結果查看原始回傳</p></div><div className="aws-device-actions"><div className="aws-search-box"><MdOutlineSearch size={18} /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜尋裝置或停車場" aria-label="搜尋裝置或停車場" /></div><span className="aws-panel-count">{data?.totalCount || 0} 台</span></div></header>
     <div className="aws-tabs" role="tablist" aria-label="裝置品質篩選">{[["all", "全部"], ["healthy", "成功較多"], ["attention", "需要注意"]].map(([value, label]) => <button type="button" role="tab" aria-selected={group === value} className={group === value ? "active" : ""} onClick={() => setGroup(value)} key={value}>{label}</button>)}</div>
     <div className={`aws-device-list ${loading ? "is-loading" : ""}`}>{!rows.length ? <div className="aws-empty-state">{loading ? "讀取裝置資料中…" : "目前沒有符合條件的裝置。"}</div> : rows.map((device, index) => <article className="aws-device-row" key={device.deviceId}>
-      <span className="aws-device-rank">{String(index + 1).padStart(2, "0")}</span><div className="aws-device-main"><div className="aws-device-title"><div title={device.deviceId}><strong>{device.parkingLotName || device.deviceId}</strong><span>{device.deviceId}{device.lastWorkerId ? ` · ${device.lastWorkerId}` : ""}</span></div><StatusPill status={device.health} /></div>
-      <div className="aws-device-bottom"><ResultHistory items={device.resultHistory} /><div className="aws-device-counts"><span className="is-good"><b>{device.successfulCount || 0}</b> 成功</span><span><b>{device.unknownCount || 0}</b> 無法辨識</span><span className="is-bad"><b>{(device.failedCount || 0) + (device.staleCount || 0) + (device.abandonedCount || 0)}</b> 失敗</span><time>{formatAge(device.lastResultAt)}</time></div></div></div>
+      <span className="aws-device-rank">{String(index + 1).padStart(2, "0")}</span><div className="aws-device-main"><div className="aws-device-title"><div title={device.deviceId}><div className="aws-device-name"><DeviceModeBadge device={device} /><strong>{device.parkingLotName || device.deviceId}</strong></div><span>{device.deviceId}{device.lastWorkerId ? ` · ${device.lastWorkerId}` : ""}</span></div><StatusPill status={device.health} /></div>
+      <div className="aws-device-bottom"><ResultHistory items={device.resultHistory} onSelect={(item) => onSelectResult({ ...item, deviceId: device.deviceId, parkingLotName: device.parkingLotName })} /><div className="aws-device-counts"><span className="is-good"><b>{device.successfulCount || 0}</b> 成功</span><span><b>{device.unknownCount || 0}</b> 無法辨識</span><span className="is-bad"><b>{(device.failedCount || 0) + (device.staleCount || 0) + (device.abandonedCount || 0)}</b> 失敗</span><time>{formatAge(device.lastResultAt)}</time></div></div></div>
     </article>)}</div>
   </section>;
 }
@@ -201,6 +207,49 @@ async function fetchJson(url, adminKey, signal) {
   return data;
 }
 
+function ResultDetail({ selection, apiBase, adminKey, onClose }) {
+  const dialogRef = useRef(null);
+  const [attempt, setAttempt] = useState(null);
+  const [error, setError] = useState("");
+  const [retry, setRetry] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    const previousFocus = document.activeElement;
+    dialog.showModal();
+    return () => { dialog.close(); previousFocus?.focus(); };
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchJson(`${apiBase}/api/admin/devices/ai-monitor/attempts/${encodeURIComponent(selection.attemptId)}`, adminKey, controller.signal)
+      .then((data) => { if (!controller.signal.aborted) setAttempt(data.attempt); })
+      .catch((cause) => { if (!controller.signal.aborted) setError(cause.message || "無法讀取原始回傳資料"); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [apiBase, adminKey, selection.attemptId, retry]);
+
+  const rawText = attempt?.result?.rawText;
+  const hasRawText = typeof rawText === "string" && rawText.length > 0;
+  async function copyRawText() {
+    try { await navigator.clipboard.writeText(rawText); toast.success("已複製原始回傳資料"); }
+    catch { toast.error("無法複製，請選取原文手動複製"); }
+  }
+
+  return <dialog ref={dialogRef} className="aws-result-dialog" aria-labelledby="aws-result-detail-title" onCancel={(event) => { event.preventDefault(); onClose(); }}>
+    <header className="aws-panel-head"><div><span className="aws-eyebrow">WORKER RESPONSE</span><h2 id="aws-result-detail-title">原始回傳資料</h2><p>{selection.parkingLotName || selection.deviceId}</p></div><button type="button" className="aws-refresh-btn" onClick={onClose} autoFocus>關閉</button></header>
+    <div className="aws-result-detail-body" aria-busy={loading}>
+      <dl className="aws-result-detail-meta"><div><dt>裝置</dt><dd>{attempt?.deviceId || selection.deviceId}</dd></div><div><dt>Worker</dt><dd>{attempt?.workerId || selection.workerId || "—"}</dd></div><div><dt>時間</dt><dd>{formatDateTime(attempt?.completedAt || selection.at)}</dd></div><div><dt>狀態</dt><dd><StatusPill status={attempt?.status || selection.status} /></dd></div></dl>
+      {loading ? <p role="status">正在讀取原始回傳資料…</p> : error ? <div role="alert"><p className="aws-error-banner">{error}</p><button type="button" className="aws-refresh-btn" onClick={() => { setLoading(true); setError(""); setRetry((value) => value + 1); }}>重試</button></div> : <>
+        <div className="aws-result-detail-label"><h3>Worker 原始回傳文字</h3><button type="button" className="aws-refresh-btn" disabled={!hasRawText} onClick={copyRawText}>複製原文</button></div>
+        {hasRawText ? <pre className="aws-result-raw" tabIndex={0}>{rawText}</pre> : <p className="aws-result-no-raw">這筆紀錄沒有原始回傳資料；worker 可能尚未回傳、處理中斷，或當時未保存原文。</p>}
+        {(attempt?.failure?.message || attempt?.result?.error) && <div className="aws-result-error"><h3>錯誤訊息</h3><pre>{attempt.failure?.message || attempt.result.error}</pre></div>}
+      </>}
+    </div>
+  </dialog>;
+}
+
 function useDebounced(value, delay = 350) {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => { const timeout = setTimeout(() => setDebounced(value), delay); return () => clearTimeout(timeout); }, [delay, value]);
@@ -219,6 +268,7 @@ export default function AdminWorkerStatusPage({ apiBase }) {
   const fleetAbort = useRef(null);
   const [overview, setOverview] = useState(null);
   const [devices, setDevices] = useState(null);
+  const [selectedResult, setSelectedResult] = useState(null);
   const [attempts, setAttempts] = useState(null);
   const [deviceGroup, setDeviceGroup] = useState("all");
   const [deviceQuery, setDeviceQuery] = useState("");
@@ -335,9 +385,10 @@ export default function AdminWorkerStatusPage({ apiBase }) {
     <main className="aws-content">{errorMessages.map((message) => <div className="aws-error-banner" key={message}>{message}</div>)}
       <section className="aws-overview-strip"><div className="aws-fleet-pulse"><div><strong>{fleetSummary?.aliveWorkerCount ?? "—"}</strong><span>ONLINE</span></div><p>{fleetSummary?.workerCount ?? "—"} workers<br /><b>{fleetSummary?.downWorkerCount ?? "—"} down</b></p></div><div className="aws-metrics-grid">{metrics.map((metric) => <MetricCard {...metric} key={metric.label} />)}</div></section>
       <div className="aws-workbench"><Pipeline attempts={overview?.activeAttempts || []} serverNow={overview?.serverNow} loading={!overview && Boolean(connectedKey) && !errors.overview} /><WorkerFleet workers={fleet?.workers || overview?.workers || []} serverNow={fleet?.serverNow || overview?.serverNow} loading={!fleet && !overview && Boolean(connectedKey) && !errors.fleet} /></div>
-      <DevicesPanel data={devices} group={deviceGroup} setGroup={setDeviceGroup} query={deviceQuery} setQuery={setDeviceQuery} loading={devicesLoading} />
+      <DevicesPanel data={devices} group={deviceGroup} setGroup={setDeviceGroup} query={deviceQuery} setQuery={setDeviceQuery} loading={devicesLoading} onSelectResult={setSelectedResult} />
       <FailuresPanel failures={overview?.recentFailures || []} serverNow={overview?.serverNow} />
       <AttemptsPanel data={attempts} filters={attemptFilters} setFilters={setAttemptFilters} loading={attemptsLoading} loadingMore={loadingMore} onLoadMore={() => loadAttempts({ append: true, cursor: attempts?.nextCursor })} serverNow={attempts?.serverNow} />
     </main>
+    {selectedResult && <ResultDetail key={`${apiBase}:${connectedKey}:${selectedResult.attemptId}`} selection={selectedResult} apiBase={apiBase} adminKey={connectedKey} onClose={() => setSelectedResult(null)} />}
   </div>;
 }

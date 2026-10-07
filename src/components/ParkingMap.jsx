@@ -10,6 +10,7 @@ import Spinner from "react-bootstrap/Spinner";
 import { FaCircle } from "react-icons/fa";
 import { TiLocationArrow } from "react-icons/ti";
 
+import MapViewPreference from "./MapViewPreference";
 import ParkingLotInfoWindow from "./ParkingLotInfoWindow";
 import LotBottomSheet from "./LotBottomSheet";
 import {
@@ -536,6 +537,8 @@ function VisibleParkingMarkers({
 
 
 export default function ParkingMap({
+  accountUser,
+  saveMapViewRef,
   apiBase,
   onLotDisplayChange,
   lots,
@@ -610,6 +613,8 @@ export default function ParkingMap({
             </div>
           </AdvancedMarker>
         )}
+
+        <MapViewPreference user={accountUser} apiBase={apiBase} saveRef={saveMapViewRef} />
 
         <VisibleParkingMarkers
           lots={lots}

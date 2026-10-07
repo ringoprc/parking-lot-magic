@@ -161,6 +161,8 @@ export default function App() {
   const apiBase = import.meta.env.VITE_API_BASE || "";
 
   const flyToRef = useRef(null);
+  const [accountUser, setAccountUser] = useState(null);
+  const saveMapViewRef = useRef(null);
   const [focus, setFocus] = useState(null); // { lat, lng, viewport? }
   const [searchCenter, setSearchCenter] = useState(null); // { lat, lng }
   const [queryCenter, setQueryCenter] = useState(null); // initial
@@ -627,7 +629,7 @@ export default function App() {
             </div>
 
             <div className="title-bar-actions">
-              <GoogleAccount apiBase={apiBase} />
+              <GoogleAccount apiBase={apiBase} onUserChange={setAccountUser} beforeLogoutRef={saveMapViewRef} />
               <a className="title-bar-admin-link" href="?admin=1">
                 管理後台
               </a>
@@ -787,6 +789,8 @@ export default function App() {
             onKeyDownCapture={resumeListViewport}
           >
             <ParkingMap
+              accountUser={accountUser}
+              saveMapViewRef={saveMapViewRef}
               apiBase={apiBase}
               onLotDisplayChange={applyDisplayAvailability}
               lots={mapLots}

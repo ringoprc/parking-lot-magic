@@ -29,7 +29,7 @@ function loadGoogleIdentity() {
   return googleScript;
 }
 
-export default function GoogleAccount({ apiBase }) {
+export default function GoogleAccount({ apiBase, onUserChange, beforeLogoutRef }) {
   const [user, setUser] = useState(null);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
@@ -42,6 +42,10 @@ export default function GoogleAccount({ apiBase }) {
   // Production auth goes through Vercel's same-origin proxy so mobile browsers
   // can retain HttpOnly cookies even when third-party cookies are blocked.
   const base = import.meta.env.DEV ? apiBase.replace(/\/$/, "") : "";
+
+  useEffect(() => {
+    onUserChange?.(user);
+  }, [user, onUserChange]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -147,6 +151,7 @@ export default function GoogleAccount({ apiBase }) {
     setBusy(true);
     setError("");
     try {
+      await beforeLogoutRef?.current?.();
       const response = await fetch(`${base}/api/auth/logout`, {
         method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
         body: "{}", signal: AbortSignal.timeout(20000),

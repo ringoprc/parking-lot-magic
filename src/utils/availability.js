@@ -8,8 +8,11 @@ function toVacancyNum(v) {
   return Number.isFinite(n) ? n : null;
 }
 
-export function hasNumberedAvailability(lot) {
-  return !isBooleanAvailability(lot) && toVacancyNum(lot?.vacancy) != null;
+export function hasKnownAvailability(lot) {
+  if (isBooleanAvailability(lot)) {
+    return lot?.hasAvailableSpace === true || lot?.hasAvailableSpace === false;
+  }
+  return toVacancyNum(lot?.vacancy) != null;
 }
 
 export function mergeLotDisplayAvailability(lot, display) {

@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLots } from "./hooks/useLots";
 import { haversineMeters } from "./utils/geo";
-import { hasNumberedAvailability } from "./utils/availability";
+import { hasKnownAvailability } from "./utils/availability";
 
 import { Toaster } from "react-hot-toast";
 import { APIProvider } from "@vis.gl/react-google-maps";
@@ -419,7 +419,7 @@ export default function App() {
   const mapLots = useMemo(
     () =>
       showNumberedPinsOnly
-        ? validLots.filter(hasNumberedAvailability)
+        ? validLots.filter(hasKnownAvailability)
         : validLots,
     [showNumberedPinsOnly, validLots]
   );
@@ -515,7 +515,7 @@ export default function App() {
       setFocus(null);
       setSearchCenter(null);
       setQueryCenter(null);
-      if (!hasNumberedAvailability(p)) setShowNumberedPinsOnly(false);
+      if (!hasKnownAvailability(p)) setShowNumberedPinsOnly(false);
       handleSelectLot(p, false);
       return;
     }

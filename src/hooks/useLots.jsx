@@ -1,7 +1,7 @@
 // frontend/src/hooks/useLots.jsx
 import { useCallback, useEffect, useState } from "react";
 import {
-  hasNumberedAvailability,
+  hasKnownAvailability,
   mergeLotDisplayAvailability,
 } from "../utils/availability";
 
@@ -38,7 +38,7 @@ export function useLots({
     setMeta(data.meta || null);
     if (data.meta?.totalActive === nextLots.length) {
       setGlobalNumberedCount(
-        nextLots.filter(hasNumberedAvailability).length
+        nextLots.filter(hasKnownAvailability).length
       );
     }
     setLastFrontendFetchAt(new Date().toISOString());
@@ -86,13 +86,10 @@ export function useLots({
       const rows = Array.isArray(data?.rows) ? data.rows : [];
       applyDisplayRows(rows);
 
-      const summaryCount = Number(data?.meta?.numberedCount);
+      // The feed includes all active lots. Count both numeric and boolean
+      // results instead of the backend's numeric-only numberedCount summary.
       setGlobalNumberedCount(
-        Number.isInteger(summaryCount) && summaryCount >= 0
-          ? summaryCount
-          : rows.filter((row) =>
-              hasNumberedAvailability(row?.display)
-            ).length
+        rows.filter((row) => hasKnownAvailability(row?.display)).length
       );
     } catch {
       // The next lightweight poll retries; keep the last rendered snapshot.

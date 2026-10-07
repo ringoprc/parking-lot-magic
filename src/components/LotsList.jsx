@@ -31,7 +31,7 @@ function LotCard({ l, active, onSelect, showDistance, formatDist, focus, apiBase
                 >
                   <span
                     style={{
-                      marginBottom: "1px",
+                      marginBottom: "0px",
                       marginRight: "3px",
                       fontWeight: "700",
                       fontSize: "11.5px"

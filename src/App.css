@@ -279,7 +279,7 @@ div .gm-style-iw {
 .lot-btn-name {
   max-width: 100%;
   font-weight: 700;
-  margin-top: 2px;
+  margin-top: 0px;
   margin-bottom: 4px;
   font-size: 14.5px;
 }
@@ -780,6 +780,14 @@ div .gm-style-iw {
     margin-top: 3px;
     margin-left: 6px;
   }
+}
+
+.mobile-lots-list-label {
+  margin: 0 0 10px;
+  color: #637067;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
 }
 
 .mobile-lots-overlay-list {

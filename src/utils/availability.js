@@ -15,6 +15,19 @@ export function hasKnownAvailability(lot) {
   return toVacancyNum(lot?.vacancy) != null;
 }
 
+// These backend reasons require at least one valid reading in the history.
+const VALID_HISTORY_REASONS = new Set([
+  "stale", "too_many_failures", "boolean_conflict", "unconfirmed_jump",
+]);
+
+export function getAvailabilitySortPriority(lot) {
+  if (hasKnownAvailability(lot)) return 3;
+  if (VALID_HISTORY_REASONS.has(lot?.availabilityReason)) return 2;
+  // A timestamp alone only proves an attempt exists; it may have returned X.
+  if (lot?.lastUpdated && Number.isFinite(new Date(lot.lastUpdated).getTime())) return 1;
+  return 0;
+}
+
 export function mergeLotDisplayAvailability(lot, display) {
   if (!lot || !display) return lot;
 

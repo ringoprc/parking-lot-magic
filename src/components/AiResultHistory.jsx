@@ -21,12 +21,18 @@ function formatResultTime(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "時間未知";
   return new Intl.DateTimeFormat("zh-TW", {
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
+    timeZone: "Asia/Taipei",
+    month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hourCycle: "h23",
   }).format(date);
+}
+
+function formatHistoryAge(value, now, latest = false) {
+  const timestamp = value ? new Date(value).getTime() : NaN;
+  if (!Number.isFinite(timestamp)) return "時間未知";
+  const age = Math.max(0, now - timestamp);
+  if (latest && age < 60_000) return "現在";
+  return `${Math.floor(age / 60_000)} 分前`;
 }
 
 export default function AiResultHistory({ apiBase = "", lotId, onDisplayChange, hideWhenEmpty = false, enabled = true }) {
@@ -37,6 +43,12 @@ export default function AiResultHistory({ apiBase = "", lotId, onDisplayChange, 
     error: "",
   });
   const onDisplayChangeRef = useRef(onDisplayChange);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!enabled) return undefined;
+    const timer = setInterval(() => setNow(Date.now()), 15_000);
+    return () => clearInterval(timer);
+  }, [enabled]);
 
   useEffect(() => {
     onDisplayChangeRef.current = onDisplayChange;
@@ -101,34 +113,14 @@ export default function AiResultHistory({ apiBase = "", lotId, onDisplayChange, 
 
   return (
     <section className="lot-ai-history" aria-label="最近十次 AI 辨識結果">
-      <div className="lot-ai-history-head"
-        style={{
-          alignItems: "flex-end"
-        }}
-      >
-        <span
-          style={{
-            color: "#999",
-            marginLeft: "3px",
-            marginBottom: "0.5px",
-            fontSize: "8px"
-          }}
-        >5分鐘前</span>
-        <span
-          style={{
-            fontSize: "10px"
-          }}
-        >AI 最近 10 次辨識結果</span>
-        <span
-          style={{
-            color: "#999",
-            marginLeft: "8px",
-            marginRight: "3px",
-            marginBottom: "0.5px",
-            fontSize: "8px"
-          }}
-        >現在</span>
-
+      <div className="lot-ai-history-head">
+        <small title={orderedRows.length ? formatResultTime(orderedRows[0].at) : undefined}>
+          {orderedRows.length ? formatHistoryAge(orderedRows[0].at, now) : ""}
+        </small>
+        <span>AI 最近 10 次辨識結果</span>
+        <small title={orderedRows.length ? formatResultTime(orderedRows.at(-1).at) : undefined}>
+          {orderedRows.length ? formatHistoryAge(orderedRows.at(-1).at, now, true) : ""}
+        </small>
       </div>
 
       {loading ? (
@@ -146,8 +138,8 @@ export default function AiResultHistory({ apiBase = "", lotId, onDisplayChange, 
             return (
               <span
                 className="lot-ai-result"
-                title={`${formatResultTime(row.at)} · ${row.status === "ok" ? "辨識成功" : "未辨識成功"}`}
                 key={row.attemptId || `${row.at}-${index}`}
+                title={`${formatResultTime(row.at)} · ${row.status === "ok" ? "辨識成功" : "未辨識成功"}`}
                 style={{
                   "--history-result-bg": result.bg,
                   "--history-result-border": result.border,
@@ -156,6 +148,7 @@ export default function AiResultHistory({ apiBase = "", lotId, onDisplayChange, 
               >
                 {result.label}
               </span>
+
             );
           })}
         </div>

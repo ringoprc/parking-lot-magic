@@ -17,6 +17,7 @@ export default function MobileLotsOverlay({
     <div className={`mobile-lots-overlay ${open ? "open" : ""}`}>
       <div className="mobile-lots-overlay-scroll">
         <div className="mobile-lots-overlay-list">
+          <p className="mobile-lots-list-label">目前地圖範圍內的停車場</p>
           <div
             className="lot-btn-list-outer"
           >

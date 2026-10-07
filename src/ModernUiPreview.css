@@ -21,16 +21,17 @@
 .ui-preview-modern .vl-sheet {
   display: flex;
   flex-direction: column;
-  background: #fffdf9;
   color: var(--preview-ink);
   border: 1px solid var(--preview-line);
   border-bottom: 0;
   border-radius: 24px 24px 0 0;
   box-shadow: 0 -12px 40px rgba(31, 51, 41, 0.14);
+  border-color: rgba(237, 255, 246, 0.18);
+  background: linear-gradient(135deg, rgb(252 252 252 / 98%), rgb(229 240 235));
 }
 
 .ui-preview-modern .vl-sheet-handle {
-  flex: 0 0 48px;
+  flex: 0 0 34px;
   background: transparent;
 }
 
@@ -42,7 +43,8 @@
 }
 
 .ui-preview-modern .vl-sheet-close {
-  top: 8px;
+  display: none;
+  top: 0px;
   right: 11px;
   width: 34px;
   height: 34px;
@@ -160,15 +162,18 @@
   min-height: 40px;
   margin: 11px 8px 0;
   padding: 5px 16px;
-  border: 1px solid #31815d;
+  border: none;
   border-radius: 14px;
-  background: #31815d;
+  background: #34a854;
   color: #fff;
   font-size: 14px;
   font-weight: 500;
 }
 
-.ui-preview-modern .vl-sheet-navBtn:hover { background: #204d3b; }
+.ui-preview-modern .vl-sheet-navBtn:hover {
+  background: #1b8638;
+  border: none;
+}
 .ui-preview-modern .vl-sheet-close:hover { background: var(--preview-green-soft); }
 .ui-preview-modern .vl-sheet button:focus-visible {
   outline: 2px solid #739883;

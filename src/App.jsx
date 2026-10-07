@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLots } from "./hooks/useLots";
 import { haversineMeters } from "./utils/geo";
-import { hasKnownAvailability } from "./utils/availability";
+import { getAvailabilitySortPriority, hasKnownAvailability } from "./utils/availability";
 
 import { Toaster } from "react-hot-toast";
 import { APIProvider } from "@vis.gl/react-google-maps";
@@ -452,7 +452,7 @@ export default function App() {
         };
       })
       .sort((a, b) => {
-        const recognitionDifference = Number(hasKnownAvailability(b.lot)) - Number(hasKnownAvailability(a.lot));
+        const recognitionDifference = getAvailabilitySortPriority(b.lot) - getAvailabilitySortPriority(a.lot);
         if (recognitionDifference !== 0) return recognitionDifference;
 
         const distanceDifference = a.distance - b.distance;

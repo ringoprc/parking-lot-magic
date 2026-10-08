@@ -25,6 +25,7 @@ import AdminLinkagePage from "./pages/AdminLinkagePage";
 import AdminLotAdsPage from "./pages/AdminLotAdsPage";
 import AdminWorkerStatusPage from "./pages/AdminWorkerStatusPage";
 import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
+import AiCoverageCard from "./components/AiCoverageCard";
 
 import { useMyLocationAction } from "./hooks/useMyLocationAction";
 import { useMediaQuery } from "./hooks/useMediaQuery";
@@ -36,7 +37,7 @@ import "./App.css";
 import "./ModernUiPreview.css";
 import "./components/MobileHeader.css";
 
-function AdminMenuPage() {
+function AdminMenuPage({ apiBase }) {
   const adminItems = [
     {
       title: "停車場清單管理",
@@ -107,6 +108,7 @@ function AdminMenuPage() {
           </div>
         </div>
 
+        <AiCoverageCard apiBase={apiBase} />
         <div className="admin-menu-grid">
           {adminItems.map((item) => (
             <a className="admin-menu-card" href={item.href} key={item.href}>
@@ -589,7 +591,7 @@ export default function App() {
   else if (showAdsManage) page = <AdminLotAdsPage apiBase={apiBase} />;
   else if (showWorkers) page = <AdminWorkerStatusPage apiBase={apiBase} />;
   else if (showAnalytics) page = <AdminAnalyticsPage apiBase={apiBase} />;
-  else if (showAdminMenu) page = <AdminMenuPage />;
+  else if (showAdminMenu) page = <AdminMenuPage apiBase={apiBase} />;
   else page = (
     <APIProvider
       apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}

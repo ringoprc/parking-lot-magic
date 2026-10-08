@@ -1,0 +1,26 @@
+.ai-coverage-card { margin: 0 0 24px; padding: 24px; background: #fff; border: 1px solid #dfe7e2; border-radius: 22px; color: #243c30; }
+.ai-coverage-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.ai-coverage-topbar { gap: 8px; flex-wrap: wrap; }
+.ai-coverage-topbar .ai-coverage-latest { margin-left: auto; text-align: right; }
+.ai-coverage-heading h2 { margin: 0 0 10px; font-size: 21px; font-weight: 900; letter-spacing: -0.3px; }
+.ai-coverage-heading p, .ai-coverage-caption { color: #708076; font-size: 12px; margin: 8px 0; }
+.ai-coverage-ranges { display: flex; gap: 6px; margin-right: 10px; }
+.ai-coverage-card button { border: 1px solid #dfe7e2; background: #f6f9f7; color: #345d46; padding: 6px 10px; border-radius: 10px; cursor: pointer; font-size: 13px; }
+.ai-coverage-ranges button[aria-pressed="true"] { background: #31815d; color: white; border-color: #31815d; }
+.ai-coverage-summary { display: flex; align-items: baseline; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+.ai-coverage-summary strong { font-size: 38px; line-height: 1.2; }
+.ai-coverage-summary span { font-size: 13px; color: #708076; }
+.ai-coverage-chart { width: 90%; display: block; margin: 12px 0; position: relative; left: 5%; }
+.ai-coverage-chart text { font-size: 11px; fill: #708076; }
+.ai-coverage-auth { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 18px 0; }
+.ai-coverage-auth input { max-width: 100%; padding: 8px; border: 1px solid #dfe7e2; border-radius: 8px; }
+.ai-coverage-card summary { cursor: pointer; font-size: 13px; }
+.ai-coverage-table { max-height: 260px; overflow: auto; margin: 12px 0; }
+.ai-coverage-table table { width: 100%; font-size: 12px; border-collapse: collapse; }
+.ai-coverage-table th, .ai-coverage-table td { padding: 8px; border-bottom: 1px solid #e1e9e3; text-align: left; }
+@media (max-width: 900px) {
+  .ai-coverage-card { padding: 18px; }
+  .ai-coverage-heading p, .ai-coverage-caption { color: #708076; font-size: 10px; margin: 8px 0; }
+  .ai-coverage-chart { width: 100%; left: 0%; }
+  .ai-coverage-chart text { font-size: 12px; }
+}

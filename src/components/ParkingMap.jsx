@@ -273,6 +273,7 @@ const ParkingMarker = memo(function ParkingMarker({
   lot,
   pulse,
   selected,
+  zIndex,
   setActive,
   triggerLotPulse,
   flyToRef,
@@ -309,7 +310,7 @@ const ParkingMarker = memo(function ParkingMarker({
   }, [flyToRef, isMobile, lot, map, setActive, triggerLotPulse]);
 
   return (
-    <AdvancedMarker position={position} onClick={handleClick} zIndex={selected ? 1000 : undefined}>
+    <AdvancedMarker position={position} onClick={handleClick} zIndex={selected ? 1000 : zIndex}>
       <VacancyPin lot={lot} pulse={pulse} />
     </AdvancedMarker>
   );
@@ -329,6 +330,15 @@ function VisibleParkingMarkers({
   const markerLimit = isMobile
     ? MAX_RENDERED_MARKERS_MOBILE
     : MAX_RENDERED_MARKERS_DESKTOP;
+  // Rank by lot identity, never viewport position or pool insertion order.
+  // Negative indices keep ordinary lots below selection and location markers.
+  const markerZIndices = useMemo(() => {
+    const ids = [...new Set([
+      ...(lots || []).map((lot) => lot.lotId),
+      ...(active?.lotId ? [active.lotId] : []),
+    ])].sort();
+    return new globalThis.Map(ids.map((id, index) => [id, index - ids.length]));
+  }, [lots, active?.lotId]);
   const [renderedLots, setRenderedLots] = useState([]);
   const renderedLotsRef = useRef([]);
   const targetLotsRef = useRef([]);
@@ -434,29 +444,19 @@ function VisibleParkingMarkers({
         zoom,
       };
 
-      const previousViewport = lastViewportRef.current;
       lastViewportRef.current = nextViewport;
 
-      // A zoom must never alter marker membership. Existing markers already
-      // cover the zoom target, and keeping them mounted prevents the bulk
-      // AdvancedMarker repaint that caused the original blink.
-      const zoomChanged =
-        previousViewport &&
-        Math.abs(previousViewport.zoom - nextViewport.zoom) > 0.001;
-
-      if (zoomChanged) {
-        targetLotsRef.current = renderedLotsRef.current;
-      } else {
-        setTargetLots(
-          buildMarkerPool(
-            lotsRef.current,
-            activeRef.current,
-            nextViewport,
-            renderedLotsRef.current,
-            markerLimitRef.current
-          )
-        );
-      }
+      // Reconcile after both pans and zooms using the settled bounds. The
+      // batched pool keeps existing markers mounted while adding nearby lots.
+      setTargetLots(
+        buildMarkerPool(
+          lotsRef.current,
+          activeRef.current,
+          nextViewport,
+          renderedLotsRef.current,
+          markerLimitRef.current
+        )
+      );
 
       onViewportChange?.(nextViewport);
     };
@@ -515,6 +515,7 @@ function VisibleParkingMarkers({
           key={lot.lotId}
           lot={lot}
           selected={lot.lotId === active?.lotId}
+          zIndex={markerZIndices.get(lot.lotId)}
           pulse={lot.lotId === pulseLotId}
           setActive={setActive}
           triggerLotPulse={triggerLotPulse}
@@ -527,6 +528,7 @@ function VisibleParkingMarkers({
       active,
       flyToRef,
       isMobile,
+      markerZIndices,
       pulseLotId,
       renderedLots,
       setActive,

@@ -45,7 +45,7 @@ function LotCard({ l, active, onSelect, showDistance, formatDist, focus, apiBase
 
                 </span>
               </div>
-              <AiResultHistory apiBase={apiBase} lotId={l.lotId} hideWhenEmpty enabled={visible} />
+              <AiResultHistory apiBase={apiBase} lotId={l.lotId} enabled={visible} />
               <div className="lot-btn-sub">
                                   {showDistance && l._dist != null && (
                     <span className="lot-btn-distance">

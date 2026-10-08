@@ -538,12 +538,12 @@
 }
 
 .ui-preview-modern .lot-btn-name-div {
-  margin-bottom: 7px;
+  margin-bottom: 2px;
   padding-bottom: 7px;
-  border-bottom-color: rgba(35, 67, 51, 0.08);
   flex-direction: row;
   align-items: center;
   gap: 8px;
+  margin-left: 2px;
 }
 
 .ui-preview-modern .lot-btn-name {
@@ -679,8 +679,8 @@
 
   .ui-preview-modern .mobile-lots-overlay .lot-btn-list-outer {
     border-bottom: 0;
-    -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 6px), transparent 100%);
-    mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 6px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 4px), transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 4px), transparent 100%);
   }
 
   .ui-preview-modern .mobile-lots-overlay .lot-btn-list-inner {

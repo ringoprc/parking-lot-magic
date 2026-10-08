@@ -53,6 +53,7 @@ export function minutesAgo(d) {
   if (!d) return null;
   const dt = new Date(d);
   if (isNaN(dt.getTime())) return null;
-  const diffMs = Date.now() - dt.getTime();
+  // Server timestamps can be slightly ahead of the device clock.
+  const diffMs = Math.max(0, Date.now() - dt.getTime());
   return Math.floor(diffMs / 60000);
 }

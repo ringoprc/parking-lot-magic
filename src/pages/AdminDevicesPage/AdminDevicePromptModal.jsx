@@ -1,3 +1,4 @@
+import { adminFetch } from "../../utils/adminAccess";
 // frontend/src/pages/AdminDeviceLinkModal.jsx
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -48,7 +49,7 @@ export default function AdminDevicePromptModal({
   isOpen,
   device,
   apiBase,
-  adminKey,
+  canManage,
   onClose,
   onSaved,
 }) {
@@ -83,18 +84,17 @@ export default function AdminDevicePromptModal({
   }
 
   async function savePrompt() {
-    if (!adminKey) return;
+    if (!canManage) return;
     if (!device?.deviceId) return;
 
     setSaving(true);
     try {
-      const res = await fetch(
+      const res = await adminFetch(
         `${apiBase}/api/admin/devices/${encodeURIComponent(device.deviceId)}/config`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-admin-key": adminKey,
           },
           body: JSON.stringify({
             vlmPromptOverride: promptText,
@@ -117,12 +117,12 @@ export default function AdminDevicePromptModal({
   }
 
   async function changeMode(nextMode) {
-    if (busy || nextMode === availabilityMode || !device?.lot?._id || !adminKey) return;
+    if (busy || nextMode === availabilityMode || !device?.lot?._id || !canManage) return;
     setSavingMode(true);
     try {
-      const response = await fetch(`${apiBase}/api/admin/lots/${encodeURIComponent(device.lot._id)}/availability-mode`, {
+      const response = await adminFetch(`${apiBase}/api/admin/lots/${encodeURIComponent(device.lot._id)}/availability-mode`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+        headers: { "Content-Type": "application/json", },
         body: JSON.stringify({ availabilityMode: nextMode }),
       });
       const data = await response.json();
@@ -179,7 +179,7 @@ export default function AdminDevicePromptModal({
                     key={mode} type="button"
                     className={`admin-dev-prompt-mode is-${mode}${availabilityMode === mode ? " is-active" : ""}`}
                     aria-pressed={availabilityMode === mode}
-                    disabled={busy || !adminKey || !device.lot._id}
+                    disabled={busy || !canManage || !device.lot._id}
                     onClick={() => changeMode(mode)}
                   >{label}</button>)}
                   <span className="admin-dev-prompt-mode-note" role="status">{savingMode ? "更新中…" : "點選立即生效"}</span>

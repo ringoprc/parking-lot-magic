@@ -1,3 +1,4 @@
+import { adminFetch } from "../../utils/adminAccess";
 // frontend/src/pages/AdminDeviceLocationModal.jsx
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -164,7 +165,7 @@ export default function AdminDeviceLocationModal({
   isOpen,
   deviceId,
   apiBase,
-  adminKey,
+  canManage,
   onClose,
 }) {
   const [loading, setLoading] = useState(false);
@@ -172,7 +173,7 @@ export default function AdminDeviceLocationModal({
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    if (!isOpen || !deviceId || !adminKey) return;
+    if (!isOpen || !deviceId || !canManage) return;
 
     let cancelled = false;
 
@@ -182,13 +183,12 @@ export default function AdminDeviceLocationModal({
       setData(null);
 
       try {
-        const res = await fetch(
+        const res = await adminFetch(
           `${apiBase}/api/admin/devices/${encodeURIComponent(
             deviceId
           )}/locations?limit=3000`,
           {
             headers: {
-              "x-admin-key": adminKey,
             },
           }
         );
@@ -226,7 +226,7 @@ export default function AdminDeviceLocationModal({
     isOpen,
     deviceId,
     apiBase,
-    adminKey,
+    canManage,
   ]);
 
   const chronologicalRows = useMemo(() => {

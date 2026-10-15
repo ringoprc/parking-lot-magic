@@ -1,3 +1,4 @@
+import { adminFetch, useAdminAccess } from "../utils/adminAccess";
 import { useEffect, useRef, useState } from 'react';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import './AiCoverageCard.css';
@@ -9,8 +10,7 @@ const formatTime = (value) => new Intl.DateTimeFormat('zh-TW', {
 }).format(new Date(value));
 
 export default function AiCoverageCard({ apiBase = '' }) {
-  const [key, setKey] = useState(() => localStorage.getItem('adminKey') || '');
-  const [credential, setCredential] = useState(key);
+  const { canManage: key } = useAdminAccess();
   const [days, setDays] = useState(1);
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
@@ -26,10 +26,10 @@ export default function AiCoverageCard({ apiBase = '' }) {
     async function load() {
       setLoading(true);
       try {
-        const response = await fetch(`${apiBase}/api/admin/ai-coverage?days=30`, {
-          headers: { 'x-admin-key': key }, signal: controller.signal,
+        const response = await adminFetch(`${apiBase}/api/admin/ai-coverage?days=30`, {
+          signal: controller.signal,
         });
-        if (!response.ok) throw new Error(response.status === 401 ? '管理金鑰不正確' : '暫時無法讀取統計');
+        if (!response.ok) throw new Error(response.status === 401 ? '帳號尚未取得權限' : '暫時無法讀取統計');
         const result = await response.json();
         if (!controller.signal.aborted) { setData(result); setError(''); }
       } catch (err) {
@@ -82,12 +82,7 @@ export default function AiCoverageCard({ apiBase = '' }) {
         {[1, 7, 30].map(value => <button key={value} type="button" aria-pressed={days === value} onClick={() => setDays(value)}>{value} 天</button>)}
       </div>
     </div>
-    {(!key || error) && <form className="ai-coverage-auth" onSubmit={event => {
-      event.preventDefault(); localStorage.setItem('adminKey', credential); setData(null); setKey(credential); setRetry(value => value + 1);
-    }}>
-      <label>管理金鑰 <input type="password" value={credential} onChange={event => setCredential(event.target.value)} autoComplete="off" required /></label>
-      <button type="submit">查看統計</button>
-    </form>}
+    {error && <button onClick={() => setRetry(value => value + 1)}>重新載入</button>}
     {error && <p role="alert">{error}</p>}
     {loading && <p role="status">讀取統計中…</p>}
     {data && <>

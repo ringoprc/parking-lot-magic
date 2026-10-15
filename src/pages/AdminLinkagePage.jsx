@@ -1,3 +1,4 @@
+import { adminFetch, useAdminAccess } from "../utils/adminAccess";
 // frontend/src/pages/AdminLinkagePage.jsx
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -24,11 +25,7 @@ function reorder(list, startIndex, endIndex) {
 }
 
 export default function AdminLinkagePage({ apiBase }) {
-  const [adminKey, setAdminKey] = useState(() => localStorage.getItem("adminKey") || "");
-  function persistAdminKey(v) {
-    setAdminKey(v);
-    localStorage.setItem("adminKey", v);
-  }
+  const { canManage } = useAdminAccess();
 
 
   //--------------------------------------------
@@ -93,11 +90,10 @@ export default function AdminLinkagePage({ apiBase }) {
   function headersJson() {
     return {
       "Content-Type": "application/json",
-      "x-admin-key": adminKey,
     };
   }
   function headersAuth() {
-    return { "x-admin-key": adminKey };
+    return { };
   }
 
   async function safeJson(res) {
@@ -105,8 +101,8 @@ export default function AdminLinkagePage({ apiBase }) {
   }
 
   async function fetchGroups() {
-    if (!adminKey) return;
-    const res = await fetch(`${apiBase}/api/admin/parking-lot-groups`, {
+    if (!canManage) return;
+    const res = await adminFetch(`${apiBase}/api/admin/parking-lot-groups`, {
       headers: headersAuth(),
     });
     const data = await safeJson(res);
@@ -115,7 +111,7 @@ export default function AdminLinkagePage({ apiBase }) {
   }
 
   async function fetchGroupLots(nextGroupId) {
-    if (!adminKey) return;
+    if (!canManage) return;
     if (!nextGroupId || nextGroupId === "all") {
       setGroupLots([]);
       return;
@@ -123,7 +119,7 @@ export default function AdminLinkagePage({ apiBase }) {
 
     setLoadingGroupLots(true);
     try {
-      const res = await fetch(`${apiBase}/api/admin/parking-lot-groups/${nextGroupId}/lots`, {
+      const res = await adminFetch(`${apiBase}/api/admin/parking-lot-groups/${nextGroupId}/lots`, {
         headers: headersAuth(),
       });
       const data = await safeJson(res);
@@ -137,11 +133,11 @@ export default function AdminLinkagePage({ apiBase }) {
   }
 
   async function fetchAllLots() {
-    if (!adminKey) return;
+    if (!canManage) return;
     setLoadingLots(true);
     try {
       const qs = new URLSearchParams({ pageSize: "10000", page: "1" });
-      const res = await fetch(`${apiBase}/api/admin/lots?${qs.toString()}`, {
+      const res = await adminFetch(`${apiBase}/api/admin/lots?${qs.toString()}`, {
         headers: headersAuth(),
       });
       const data = await safeJson(res);
@@ -155,10 +151,10 @@ export default function AdminLinkagePage({ apiBase }) {
   }
 
   async function fetchLotDevices(lot) {
-    if (!adminKey || !lot?._id) return;
+    if (!canManage || !lot?._id) return;
     setLoadingLotDevices(true);
     try {
-      const res = await fetch(`${apiBase}/api/admin/lots/${lot._id}/devices`, {
+      const res = await adminFetch(`${apiBase}/api/admin/lots/${lot._id}/devices`, {
         headers: headersAuth(),
       });
       const data = await safeJson(res);
@@ -172,7 +168,7 @@ export default function AdminLinkagePage({ apiBase }) {
   }
 
   async function suggestDevices(q) {
-    if (!adminKey) return;
+    if (!canManage) return;
 
     const query = q.trim();
     setDeviceSuggestionsLoaded(false);
@@ -183,7 +179,7 @@ export default function AdminLinkagePage({ apiBase }) {
         query,
         limit: "20",
       });
-      const res = await fetch(`${apiBase}/api/admin/devices/suggest?${qs.toString()}`, {
+      const res = await adminFetch(`${apiBase}/api/admin/devices/suggest?${qs.toString()}`, {
         headers: headersAuth(),
       });
       const data = await safeJson(res);
@@ -205,12 +201,12 @@ export default function AdminLinkagePage({ apiBase }) {
   //--------------------------------------------
 
   async function createGroup(name) {
-    if (!adminKey) return;
+    if (!canManage) return;
     const n = String(name ?? "").trim();
     if (!n) return toast.error("請輸入群組名稱");
 
     try {
-      const res = await fetch(`${apiBase}/api/admin/parking-lot-groups`, {
+      const res = await adminFetch(`${apiBase}/api/admin/parking-lot-groups`, {
         method: "POST",
         headers: headersJson(),
         body: JSON.stringify({ name: n }),
@@ -229,11 +225,11 @@ export default function AdminLinkagePage({ apiBase }) {
   }
 
   async function deleteGroup() {
-    if (!adminKey) return;
+    if (!canManage) return;
     if (!groupId || groupId === "all") return toast.error("請先選擇一個群組");
 
     try {
-      const res = await fetch(`${apiBase}/api/admin/parking-lot-groups/${groupId}`, {
+      const res = await adminFetch(`${apiBase}/api/admin/parking-lot-groups/${groupId}`, {
         method: "DELETE",
         headers: headersAuth(),
       });
@@ -270,7 +266,7 @@ export default function AdminLinkagePage({ apiBase }) {
   // Add and Delete Lots in Groups
   //--------------------------------------------
   async function addLotToGroup(lot) {
-    if (!adminKey) return;
+    if (!canManage) return;
     if (!groupId || groupId === "all") {
       toast.error("請先選擇一個群組");
       return;
@@ -286,7 +282,7 @@ export default function AdminLinkagePage({ apiBase }) {
     setGroupLots((prev) => [lot, ...prev]);
 
     try {
-      const res = await fetch(`${apiBase}/api/admin/parking-lot-groups/${groupId}/lots/add`, {
+      const res = await adminFetch(`${apiBase}/api/admin/parking-lot-groups/${groupId}/lots/add`, {
         method: "POST",
         headers: headersJson(),
         body: JSON.stringify({ lotId: lot._id }),
@@ -302,14 +298,14 @@ export default function AdminLinkagePage({ apiBase }) {
   }
 
   async function removeLotFromGroup(lotId) {
-    if (!adminKey || !lotId) return;
+    if (!canManage || !lotId) return;
     if (!groupId || groupId === "all") return;
 
     const prev = groupLots;
     setGroupLots((p) => p.filter((x) => String(x._id) !== String(lotId)));
 
     try {
-      const res = await fetch(`${apiBase}/api/admin/parking-lot-groups/${groupId}/lots/${lotId}`, {
+      const res = await adminFetch(`${apiBase}/api/admin/parking-lot-groups/${groupId}/lots/${lotId}`, {
         method: "DELETE",
         headers: headersAuth(),
       });
@@ -323,11 +319,11 @@ export default function AdminLinkagePage({ apiBase }) {
   }
 
   async function persistGroupOrder(nextLots) {
-    if (!adminKey) return;
+    if (!canManage) return;
     if (!groupId || groupId === "all") return;
 
     try {
-      const res = await fetch(`${apiBase}/api/admin/parking-lot-groups/${groupId}/lots/reorder`, {
+      const res = await adminFetch(`${apiBase}/api/admin/parking-lot-groups/${groupId}/lots/reorder`, {
         method: "POST",
         headers: headersJson(),
         body: JSON.stringify({ lotIds: nextLots.map((x) => x._id) }),
@@ -347,14 +343,14 @@ export default function AdminLinkagePage({ apiBase }) {
   //--------------------------------------------
 
   async function linkDeviceToLot(deviceId, force = false) {
-    if (!adminKey) return;
+    if (!canManage) return;
     if (!selectedLot?._id) {
       toast.error("請先選擇停車場");
       return;
     }
 
     try {
-      const res = await fetch(`${apiBase}/api/admin/lots/${selectedLot._id}/link-device`, {
+      const res = await adminFetch(`${apiBase}/api/admin/lots/${selectedLot._id}/link-device`, {
         method: "POST",
         headers: headersJson(),
         body: JSON.stringify({ deviceId, force }),
@@ -372,14 +368,14 @@ export default function AdminLinkagePage({ apiBase }) {
   }
 
   async function unlinkDeviceFromLot(deviceId) {
-    if (!adminKey) return;
+    if (!canManage) return;
     if (!selectedLot?._id) return;
 
     const prev = lotDevices;
     setLotDevices((p) => p.filter((d) => d.deviceId !== deviceId));
 
     try {
-      const res = await fetch(`${apiBase}/api/admin/lots/${selectedLot._id}/devices/${encodeURIComponent(deviceId)}`, {
+      const res = await adminFetch(`${apiBase}/api/admin/lots/${selectedLot._id}/devices/${encodeURIComponent(deviceId)}`, {
         method: "DELETE",
         headers: headersAuth(),
       });
@@ -431,24 +427,24 @@ export default function AdminLinkagePage({ apiBase }) {
   //----------------------------------------
   // Fetch Groups
   useEffect(() => {
-    if (!adminKey) return;
+    if (!canManage) return;
     fetchGroups().catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adminKey]);
+  }, [canManage]);
 
   // Fetch Lots in Groups
   useEffect(() => {
-    if (!adminKey) return;
+    if (!canManage) return;
     fetchGroupLots(groupId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adminKey, groupId]);
+  }, [canManage, groupId]);
 
   // Fetch All Lots
   useEffect(() => {
-    if (!adminKey) return;
+    if (!canManage) return;
     fetchAllLots();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adminKey]);
+  }, [canManage]);
 
 
   //------------------------------------------
@@ -456,11 +452,11 @@ export default function AdminLinkagePage({ apiBase }) {
   //------------------------------------------
 
   useEffect(() => {
-    if (!adminKey) return;
+    if (!canManage) return;
     const t = setTimeout(() => suggestDevices(deviceQuery), 180);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adminKey, deviceQuery]);
+  }, [canManage, deviceQuery]);
 
   const filteredDeviceSuggestions = useMemo(() => {
     if (!selectedLot?._id) return deviceSuggestions;
@@ -490,7 +486,7 @@ export default function AdminLinkagePage({ apiBase }) {
     });
   }, [allLots, lotSearch]);
 
-  
+
 
   //---------------------------------------------
   // Return
@@ -507,20 +503,11 @@ export default function AdminLinkagePage({ apiBase }) {
         <div className="al-title">停車場群組與裝置管理</div>
 
         <div className="al-adminkey">
-          <div className="al-label">管理員密碼</div>
-          <input
-            type="text"
-            spellCheck="false"
-            className="al-input"
-            style={{ minWidth: 360 }}
-            value={adminKey}
-            onChange={(e) => persistAdminKey(e.target.value)}
-            placeholder="admin key"
-          />
+
           <button
             className="al-btn"
             onClick={async() => {
-              if (!adminKey) return toast.error("請先輸入管理員密碼");
+              if (!canManage) return toast.error("請使用獲授權的 Google 帳號登入");
               fetchGroups().catch(() => {});
               fetchGroupLots(groupId);
               await fetchAllLots();
@@ -756,7 +743,7 @@ export default function AdminLinkagePage({ apiBase }) {
                           })
                         </p>
                       </div>
-                   
+
                       <div className="al-suggest">
                         {filteredDeviceSuggestions.length ? (
                           <div className="al-suggest-inner-div">

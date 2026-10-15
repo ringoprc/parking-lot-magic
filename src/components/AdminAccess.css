@@ -1,0 +1,5 @@
+.admin-account-bar { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:10px 24px; background:#eef5f1; color:#234d3b; border-bottom:1px solid #d5e4db; position:relative; z-index:1100; font-size:14px; }
+.admin-account-bar .google-account { flex-shrink:0; }
+.admin-page-content .admin-menu-page { padding-top:0; }
+.admin-page-content .admin-menu-header { position:relative; z-index:1; }
+@media (max-width:600px) { .admin-account-bar { padding:10px 14px; font-size:12px; } }

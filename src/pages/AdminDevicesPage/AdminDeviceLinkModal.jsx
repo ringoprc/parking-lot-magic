@@ -1,3 +1,4 @@
+import { adminFetch } from "../../utils/adminAccess";
 // frontend/src/pages/AdminDeviceLinkModal.jsx
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -7,7 +8,7 @@ export default function AdminDeviceLinkModal({
   isOpen,
   device,
   apiBase,
-  adminKey,
+  canManage,
   onClose,
   onSaved,
 }) {
@@ -24,7 +25,7 @@ export default function AdminDeviceLinkModal({
   const skipNextLotSuggestRef = useRef(false);
 
   async function fetchLotSuggestions(query, opts = {}) {
-    if (!adminKey) return;
+    if (!canManage) return;
 
     const {
       keepSelectedLotId = "",
@@ -47,8 +48,8 @@ export default function AdminDeviceLinkModal({
         limit: "8",
       });
 
-      const res = await fetch(`${apiBase}/api/admin/lots/suggest?${qs.toString()}`, {
-        headers: { "x-admin-key": adminKey },
+      const res = await adminFetch(`${apiBase}/api/admin/lots/suggest?${qs.toString()}`, {
+        headers: { },
       });
 
       const data = await res.json();
@@ -89,7 +90,7 @@ export default function AdminDeviceLinkModal({
   }
 
   async function saveDeviceLotLink() {
-    if (!adminKey) return;
+    if (!canManage) return;
     if (!device?.deviceId) return;
 
     if (!selectedLotId) {
@@ -99,13 +100,12 @@ export default function AdminDeviceLinkModal({
 
     setLinkSaving(true);
     try {
-      const res = await fetch(
+      const res = await adminFetch(
         `${apiBase}/api/admin/devices/${encodeURIComponent(device.deviceId)}/link-lot`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-admin-key": adminKey,
           },
           body: JSON.stringify({
             lotId: selectedLotId,
@@ -128,7 +128,7 @@ export default function AdminDeviceLinkModal({
   }
 
   async function unlinkDeviceFromLot() {
-    if (!adminKey) return;
+    if (!canManage) return;
     if (!device?.deviceId) return;
 
     setLinkSaving(true);
@@ -142,12 +142,11 @@ export default function AdminDeviceLinkModal({
         return;
       }
 
-      const res = await fetch(
+      const res = await adminFetch(
         `${apiBase}/api/admin/lots/${encodeURIComponent(currentLotId)}/devices/${encodeURIComponent(device.deviceId)}`,
         {
           method: "DELETE",
           headers: {
-            "x-admin-key": adminKey,
           },
         }
       );

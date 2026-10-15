@@ -1,3 +1,4 @@
+import { adminFetch, useAdminAccess } from "../utils/adminAccess";
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { MdOutlineArrowBackIos } from "react-icons/md";
@@ -116,7 +117,7 @@ function ChartLoadingSpinner({ tone, label }) {
 }
 
 export default function AdminAnalyticsPage({ apiBase }) {
-  const [adminKey, setAdminKey] = useState(() => localStorage.getItem("adminKey") || "");
+  const { canManage } = useAdminAccess();
   const [days, setDays] = useState(30);
   const [minuteRange, setMinuteRange] = useState(60);
   const [minuteMetric, setMinuteMetric] = useState("uniqueVisitors");
@@ -149,15 +150,11 @@ export default function AdminAnalyticsPage({ apiBase }) {
   const [visibleJourneyCount, setVisibleJourneyCount] = useState(10);
   const [showValidJourneysOnly, setShowValidJourneysOnly] = useState(false);
 
-  function persistAdminKey(value) {
-    setAdminKey(value);
-    localStorage.setItem("adminKey", value);
-  }
 
   function changeDays(value) {
     if (value === days) return;
 
-    if (adminKey) {
+    if (canManage) {
       setLoading(true);
       setLotViewsLoading(true);
       setJourneysLoading(true);
@@ -169,8 +166,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
   }
 
   async function load({ silent = false } = {}) {
-    if (!adminKey) {
-      if (!silent) toast.error("請先輸入管理員密碼");
+    if (!canManage) {
       return;
     }
 
@@ -183,10 +179,10 @@ export default function AdminAnalyticsPage({ apiBase }) {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         `${apiBase}/api/admin/analytics/visits?days=${days}&minutes=${minuteRange}`,
         {
-          headers: { "x-admin-key": adminKey },
+          headers: { },
           signal: controller.signal,
         }
       );
@@ -208,7 +204,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
   }
 
   async function loadLotViews() {
-    if (!adminKey) return;
+    if (!canManage) return;
 
     const requestId = lotViewRequestIdRef.current + 1;
     lotViewRequestIdRef.current = requestId;
@@ -221,8 +217,8 @@ export default function AdminAnalyticsPage({ apiBase }) {
     try {
       const query = new URLSearchParams({ days: String(days) });
       if (selectedLotId) query.set("lotId", selectedLotId);
-      const response = await fetch(`${apiBase}/api/admin/analytics/lot-views?${query}`, {
-        headers: { "x-admin-key": adminKey },
+      const response = await adminFetch(`${apiBase}/api/admin/analytics/lot-views?${query}`, {
+        headers: { },
         signal: controller.signal,
       });
       const data = await response.json().catch(() => null);
@@ -239,7 +235,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
   }
 
   async function loadJourneys() {
-    if (!adminKey) return;
+    if (!canManage) return;
 
     const requestId = journeyRequestIdRef.current + 1;
     journeyRequestIdRef.current = requestId;
@@ -250,10 +246,10 @@ export default function AdminAnalyticsPage({ apiBase }) {
     setJourneysLoading(true);
     setJourneyError("");
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         `${apiBase}/api/admin/analytics/journeys?days=${days}&limit=50`,
         {
-          headers: { "x-admin-key": adminKey },
+          headers: { },
           signal: controller.signal,
         }
       );
@@ -407,21 +403,6 @@ export default function AdminAnalyticsPage({ apiBase }) {
         </div>
 
         <div className="analytics-controls">
-          <label>
-            <span>管理員密碼</span>
-            <input
-              type="password"
-              value={adminKey}
-              onChange={(event) => persistAdminKey(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key !== "Enter") return;
-                load();
-                loadLotViews();
-                loadJourneys();
-              }}
-              placeholder="admin key"
-            />
-          </label>
           <button
             type="button"
             onClick={() => {
@@ -458,7 +439,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
               <p>
                 {report
                   ? `${report.minuteStart} — ${report.minuteEnd}（台北時間）`
-                  : "輸入密碼後載入資料"}
+                  : "取得權限後載入資料"}
               </p>
             </div>
             <div className="analytics-minute-controls">
@@ -589,7 +570,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
           <div className="analytics-panel-title">
             <div>
               <h2>每日進站人數</h2>
-              <p>{report ? `${report.startDate} — ${report.endDate}` : "輸入密碼後載入資料"}</p>
+              <p>{report ? `${report.startDate} — ${report.endDate}` : "取得權限後載入資料"}</p>
             </div>
             <div className="analytics-daily-controls">
               <div className="analytics-toggle" aria-label="每日指標">
@@ -718,7 +699,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
                   ? `${lotViewReport.startDate} — ${lotViewReport.endDate}・${
                       lotViewReport.selectedLot?.name || "所有停車場"
                     }`
-                  : "輸入密碼後載入資料"}
+                  : "取得權限後載入資料"}
               </p>
             </div>
 
@@ -942,7 +923,7 @@ export default function AdminAnalyticsPage({ apiBase }) {
               <p>
                 {journeyReport
                   ? `最近 ${journeyReport.days} 天・顯示最新 ${formatter.format(journeys.length)} 個匿名 Session`
-                  : "輸入密碼後載入旅程資料"}
+                  : "取得權限後載入旅程資料"}
               </p>
             </div>
             <div className="analytics-journey-title-actions">

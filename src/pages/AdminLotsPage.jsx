@@ -1,3 +1,4 @@
+import { adminFetch, useAdminAccess } from "../utils/adminAccess";
 // frontend/src/pages/AdminLotsPage.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -58,7 +59,7 @@ function toLocalParts(d) {
 }
 
 export default function AdminLotsPage({ apiBase }) {
-  const [adminKey, setAdminKey] = useState(() => localStorage.getItem("adminKey") || "");
+  const { canManage } = useAdminAccess();
   const [isAdminConfirmed, setIsAdminConfirmed] = useState(false);
   const [page, setPage] = useState(1);
   const [district, setDistrict] = useState("all");
@@ -81,8 +82,7 @@ export default function AdminLotsPage({ apiBase }) {
 
   async function load() {
 
-    if (!adminKey) {
-      toast.error("請先輸入管理員密碼");
+    if (!canManage) {
       return;
     }
 
@@ -94,8 +94,8 @@ export default function AdminLotsPage({ apiBase }) {
         district,
         search,
       });
-      const res = await fetch(`${apiBase}/api/admin/lots?${qs.toString()}`, {
-        headers: { "x-admin-key": adminKey },
+      const res = await adminFetch(`${apiBase}/api/admin/lots?${qs.toString()}`, {
+        headers: { },
       });
 
       console.log('res:', res);
@@ -104,12 +104,12 @@ export default function AdminLotsPage({ apiBase }) {
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data?.error || "密碼不正確");
+        toast.error(data?.error || "帳號尚未取得權限");
         setIsAdminConfirmed(false);
         throw new Error(data?.error || "load failed");
       }
 
-      toast.success((isAdminConfirmed ? "已套用條件" : "密碼正確"));
+      toast.success((isAdminConfirmed ? "已套用條件" : "資料已載入"));
 
       setIsAdminConfirmed(true);
 
@@ -144,7 +144,7 @@ export default function AdminLotsPage({ apiBase }) {
   }
 
   useEffect(() => {
-    load();
+    if (canManage) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, district]);
 
@@ -197,11 +197,11 @@ export default function AdminLotsPage({ apiBase }) {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [addOpen, adminKey, addForm]); // ok for now
+  }, [addOpen, canManage, addForm]); // ok for now
 
   async function submitAddModal(e) {
     e?.preventDefault?.();
-    if (!adminKey) return;
+    if (!canManage) return;
 
     const lotId = String(addForm.lotId || "").trim();
     const name = String(addForm.name || "").trim();
@@ -224,11 +224,10 @@ export default function AdminLotsPage({ apiBase }) {
       hasAvailableSpace: addForm.hasAvailableSpace,
     };
 
-    const res = await fetch(`${apiBase}/api/admin/lots`, {
+    const res = await adminFetch(`${apiBase}/api/admin/lots`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-admin-key": adminKey,
       },
       body: JSON.stringify(payload),
     });
@@ -251,15 +250,14 @@ export default function AdminLotsPage({ apiBase }) {
   }
 
   async function saveAll() {
-    if (!adminKey) return;
+    if (!canManage) return;
     const dirty = rows.filter((r) => dirtyIds.has(r._id));
     if (!dirty.length) return;
 
-    const res = await fetch(`${apiBase}/api/admin/bulkUpsert`, {
+    const res = await adminFetch(`${apiBase}/api/admin/bulkUpsert`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-admin-key": adminKey,
       },
       body: JSON.stringify({ rows: dirty }),
     });
@@ -278,12 +276,12 @@ export default function AdminLotsPage({ apiBase }) {
   }
 
   async function delRow(id) {
-    if (!adminKey) return;
+    if (!canManage) return;
     if (!confirm("Delete this row?")) return;
 
-    const res = await fetch(`${apiBase}/api/admin/lots/${id}`, {
+    const res = await adminFetch(`${apiBase}/api/admin/lots/${id}`, {
       method: "DELETE",
-      headers: { "x-admin-key": adminKey },
+      headers: { },
     });
     const data = await res.json();
     if (!res.ok) return toast.error(data?.error || "刪除停車場資料失敗");
@@ -312,8 +310,7 @@ export default function AdminLotsPage({ apiBase }) {
   // Excel Export
   //--------------------------------
   async function exportToExcel() {
-    if (!adminKey) {
-      toast.error("請先輸入管理員密碼");
+    if (!canManage) {
       return;
     }
 
@@ -333,8 +330,8 @@ export default function AdminLotsPage({ apiBase }) {
           search,
         });
 
-        const res = await fetch(`${apiBase}/api/admin/lots?${qs.toString()}`, {
-          headers: { "x-admin-key": adminKey },
+        const res = await adminFetch(`${apiBase}/api/admin/lots?${qs.toString()}`, {
+          headers: { },
         });
 
         const data = await res.json();
@@ -477,28 +474,11 @@ export default function AdminLotsPage({ apiBase }) {
         </div>
 
         <div className="admin-lot-password-outer-div">
-          <div className="admin-lot-password-row">
-            <div>
-              <p className="mb-0 admin-lot-password-label">管理員密碼：</p>
-            </div>
-            <div style={{ maxWidth: "calc(100% - 90px)" }}>
-              <input className="admin-lot-password-input"
-                placeholder="輸入密碼 (自動儲存於主機上)"
-                value={adminKey}
-                onChange={(e) => {
-                  setAdminKey(e.target.value);
-                  setIsAdminConfirmed(false);
-                  localStorage.setItem("adminKey", e.target.value);
-                }}
-              />
-            </div>
-          </div>
-
           <div className="admin-lot-action-row">
             <button className="admin-lot-action-btn"
               onClick={load}
             >
-              {isAdminConfirmed ? "重新讀取" : "確認密碼"}
+              {isAdminConfirmed ? "重新讀取" : "讀取資料"}
             </button>
             <button 
               className={`admin-lot-action-btn ` 
@@ -813,7 +793,7 @@ export default function AdminLotsPage({ apiBase }) {
               <tr>
                 {/* colSpan={7} is correct visually */}
                 <td colSpan={7} className="admin-lot-td-no-data">
-                  {isAdminConfirmed ? "沒有資料" : "輸入管理員密碼"}
+                  {isAdminConfirmed ? "沒有資料" : "尚未取得後台權限"}
                 </td>
               </tr>
             )}

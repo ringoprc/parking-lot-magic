@@ -1,3 +1,4 @@
+import { adminFetch, useAdminAccess } from "../../utils/adminAccess";
 // frontend/src/pages/AdminDevicesPage.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -222,7 +223,7 @@ export default function AdminDevicesPage({ apiBase }) {
   //-----------------------------
   // States
   //-----------------------------
-  const [adminKey, setAdminKey] = useState(() => localStorage.getItem("adminKey") || "");
+  const { canManage } = useAdminAccess();
   const [isAdminConfirmed, setIsAdminConfirmed] = useState(false);
 
   // ParkingLotGroup: [{ _id, name, lotIds, ... }]
@@ -305,19 +306,15 @@ export default function AdminDevicesPage({ apiBase }) {
   //-----------------------------
   // Set Admin Key
   //-----------------------------
-  function persistAdminKey(v) {
-    setAdminKey(v);
-    localStorage.setItem("adminKey", v);
-  }
 
 
   //-------------------------------------
   // Fetch Lot Groups and Update Mode
   //-------------------------------------
   async function fetchGroups() {
-    if (!adminKey) return;
-    const res = await fetch(`${apiBase}/api/admin/parking-lot-groups`, {
-      headers: { "x-admin-key": adminKey },
+    if (!canManage) return;
+    const res = await adminFetch(`${apiBase}/api/admin/parking-lot-groups`, {
+      headers: { },
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data?.error || "load groups failed");
@@ -327,11 +324,11 @@ export default function AdminDevicesPage({ apiBase }) {
   async function fetchVacancyApplyMode(opts = {}) {
     const { silent = false } = opts;
 
-    if (!adminKey) return;
+    if (!canManage) return;
 
     try {
-      const res = await fetch(`${apiBase}/api/admin/devices/vacancy-apply-mode`, {
-        headers: { "x-admin-key": adminKey },
+      const res = await adminFetch(`${apiBase}/api/admin/devices/vacancy-apply-mode`, {
+        headers: { },
       });
 
       const data = await res.json();
@@ -348,7 +345,7 @@ export default function AdminDevicesPage({ apiBase }) {
   }
 
   async function saveVacancyApplyMode(nextMode) {
-    if (!adminKey) return;
+    if (!canManage) return;
     if (vacancyApplyModeSaving) return;
 
     const mode = nextMode === VACANCY_MODE_AUTO
@@ -361,11 +358,10 @@ export default function AdminDevicesPage({ apiBase }) {
     setVacancyApplyModeSaving(true);
 
     try {
-      const res = await fetch(`${apiBase}/api/admin/devices/vacancy-apply-mode`, {
+      const res = await adminFetch(`${apiBase}/api/admin/devices/vacancy-apply-mode`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-admin-key": adminKey,
         },
         body: JSON.stringify({
           aiVacancyApplyMode: mode,
@@ -394,20 +390,19 @@ export default function AdminDevicesPage({ apiBase }) {
     }
   }
 
-  // fetch groups after adminKey is available (and whenever adminKey changes)
+  // fetch groups after canManage is available (and whenever canManage changes)
   useEffect(() => {
-    if (!adminKey) return;
+    if (!canManage) return;
     fetchGroups().catch(() => {});
     fetchVacancyApplyMode({ silent: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adminKey]);
+  }, [canManage]);
 
   //-----------------------------
   // Fetch Filtered Lots
   //-----------------------------
   async function load(opts = {}) {
     const {
-      silent = false,
       searchOverride,
       pageOverride,
       groupIdOverride,
@@ -430,8 +425,7 @@ export default function AdminDevicesPage({ apiBase }) {
       onlyAiProcessingEnabledOverride ?? onlyAiProcessingEnabled
     );
 
-    if (!adminKey) {
-      if (!silent) toast.error("請先輸入管理員密碼");
+    if (!canManage) {
       return;
     }
     if (inFlightRef.current) return;
@@ -450,15 +444,15 @@ export default function AdminDevicesPage({ apiBase }) {
         onlyAiProcessingEnabled: effOnlyAiProcessingEnabled ? "1" : "0",
       });
 
-      const res = await fetch(`${apiBase}/api/admin/devices/phones?${qs.toString()}`, {
-        headers: { "x-admin-key": adminKey },
+      const res = await adminFetch(`${apiBase}/api/admin/devices/phones?${qs.toString()}`, {
+        headers: { },
       });
       const data = await res.json();
 
       console.log('[AdminDevicesPage] data:', data);
 
       if (!res.ok) {
-        toast.error(data?.error || "密碼不正確");
+        toast.error(data?.error || "帳號尚未取得權限");
         setIsAdminConfirmed(false);
         throw new Error(data?.error || "load failed");
       }
@@ -467,7 +461,7 @@ export default function AdminDevicesPage({ apiBase }) {
       setLastFetchError("");
 
       // Confirm Admin Status
-      if (!isAdminConfirmed) toast.success("密碼正確");
+      if (!isAdminConfirmed) toast.success("資料已載入");
       setIsAdminConfirmed(true);
 
       const nextRows = Array.isArray(data?.rows) ? data.rows : [];
@@ -585,7 +579,7 @@ export default function AdminDevicesPage({ apiBase }) {
 
   // Auto refresh every 30 seconds (after admin is confirmed or something changed)
   useEffect(() => {
-    if (!adminKey) return;
+    if (!canManage) return;
     if (!isAdminConfirmed) return;
 
     const t = setInterval(() => {
@@ -595,7 +589,7 @@ export default function AdminDevicesPage({ apiBase }) {
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    adminKey,
+    canManage,
     isAdminConfirmed,
     page,
     groupId,
@@ -607,13 +601,13 @@ export default function AdminDevicesPage({ apiBase }) {
     onlyAiProcessingEnabled,
   ]);
 
-  
+
   //-----------------------------
   // Confirm Vacancy
   //-----------------------------
 
   async function confirmAvailability(deviceId) {
-    if (!adminKey) return;
+    if (!canManage) return;
 
     const row = rows.find((item) => item.deviceId === deviceId);
     const editedValue = editMap[deviceId];
@@ -634,11 +628,10 @@ export default function AdminDevicesPage({ apiBase }) {
       payload = { deviceId, vacancy };
     }
 
-    const res = await fetch(`${apiBase}/api/admin/devices/confirm-vacancy`, {
+    const res = await adminFetch(`${apiBase}/api/admin/devices/confirm-vacancy`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-admin-key": adminKey,
       },
       body: JSON.stringify(payload),
     });
@@ -656,7 +649,7 @@ export default function AdminDevicesPage({ apiBase }) {
 
   // Confirm all
   async function confirmAllOnPage() {
-    if (!adminKey) return;
+    if (!canManage) return;
     if (confirmAllLoading) return;
     if (!rows?.length) return;
 
@@ -682,11 +675,10 @@ export default function AdminDevicesPage({ apiBase }) {
           payload = { deviceId, vacancy };
         }
 
-        const res = await fetch(`${apiBase}/api/admin/devices/confirm-vacancy`, {
+        const res = await adminFetch(`${apiBase}/api/admin/devices/confirm-vacancy`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-admin-key": adminKey,
           },
           body: JSON.stringify(payload),
         });
@@ -710,7 +702,7 @@ export default function AdminDevicesPage({ apiBase }) {
   // Save Capture Interval
   //-----------------------------
   async function handleCaptureIntervalClick(deviceId, seconds) {
-    if (!adminKey) return;
+    if (!canManage) return;
     if (!deviceId) return;
 
     const n = Number(seconds);
@@ -728,13 +720,12 @@ export default function AdminDevicesPage({ apiBase }) {
     }));
 
     try {
-      const res = await fetch(
+      const res = await adminFetch(
         `${apiBase}/api/admin/devices/${encodeURIComponent(deviceId)}/config`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-admin-key": adminKey,
           },
           body: JSON.stringify({ captureIntervalSec: n }),
         }
@@ -764,7 +755,7 @@ export default function AdminDevicesPage({ apiBase }) {
   // Save AI Processing Enabled
   //-----------------------------
   async function handleAiProcessingEnabledChange(deviceId, checked) {
-    if (!adminKey) return;
+    if (!canManage) return;
     if (!deviceId) return;
 
     const nextValue = !!checked;
@@ -781,13 +772,12 @@ export default function AdminDevicesPage({ apiBase }) {
     }));
 
     try {
-      const res = await fetch(
+      const res = await adminFetch(
         `${apiBase}/api/admin/devices/${encodeURIComponent(deviceId)}/ai-processing-enabled`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-admin-key": adminKey,
           },
           body: JSON.stringify({ aiProcessingEnabled: nextValue }),
         }
@@ -828,7 +818,7 @@ export default function AdminDevicesPage({ apiBase }) {
   // Save Zoom
   //-----------------------------
   async function saveZoom(deviceId) {
-    if (!adminKey) return;
+    if (!canManage) return;
 
     const zRaw = zoomMap[deviceId];
     const z = Number(zRaw);
@@ -839,11 +829,10 @@ export default function AdminDevicesPage({ apiBase }) {
 
     setZoomSavingMap((p) => ({ ...p, [deviceId]: true }));
     try {
-      const res = await fetch(`${apiBase}/api/admin/devices/${encodeURIComponent(deviceId)}/config`, {
+      const res = await adminFetch(`${apiBase}/api/admin/devices/${encodeURIComponent(deviceId)}/config`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-admin-key": adminKey,
         },
         body: JSON.stringify({ zoomRatio }),
       });
@@ -866,7 +855,7 @@ export default function AdminDevicesPage({ apiBase }) {
     minOverride,
     maxOverride
   ) {
-    if (!adminKey) return;
+    if (!canManage) return;
     if (!deviceId) return;
 
     const raw = valueOverride ?? exposureCompensationMap[deviceId];
@@ -886,13 +875,12 @@ export default function AdminDevicesPage({ apiBase }) {
     setExposureSavingMap((p) => ({ ...p, [deviceId]: true }));
 
     try {
-      const res = await fetch(
+      const res = await adminFetch(
         `${apiBase}/api/admin/devices/${encodeURIComponent(deviceId)}/config`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-admin-key": adminKey,
           },
           body: JSON.stringify({ exposureCompensationIndex }),
         }
@@ -918,7 +906,7 @@ export default function AdminDevicesPage({ apiBase }) {
   }
 
   async function saveShutterSpeed(deviceId, rawValue) {
-    if (!adminKey || !deviceId) return;
+    if (!canManage || !deviceId) return;
 
     const previousRow = rows.find((row) => row.deviceId === deviceId);
     const manualExposureTimeNs = rawValue === "auto" ? null : Number(rawValue);
@@ -940,13 +928,12 @@ export default function AdminDevicesPage({ apiBase }) {
     setShutterSavingMap((prev) => ({ ...prev, [deviceId]: true }));
 
     try {
-      const res = await fetch(
+      const res = await adminFetch(
         `${apiBase}/api/admin/devices/${encodeURIComponent(deviceId)}/config`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-admin-key": adminKey,
           },
           body: JSON.stringify({ manualExposureTimeNs }),
         }
@@ -981,17 +968,16 @@ export default function AdminDevicesPage({ apiBase }) {
 
   async function saveFocusPoint(focusPoint) {
     const deviceId = focusModalDeviceId;
-    if (!adminKey || !deviceId || focusSaving) return;
+    if (!canManage || !deviceId || focusSaving) return;
 
     setFocusSaving(true);
     try {
-      const res = await fetch(
+      const res = await adminFetch(
         `${apiBase}/api/admin/devices/${encodeURIComponent(deviceId)}/config`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-admin-key": adminKey,
           },
           body: JSON.stringify({ focusPoint }),
         }
@@ -1095,18 +1081,8 @@ export default function AdminDevicesPage({ apiBase }) {
         <div className="admin-dev-title">裝置管理頁面</div>
 
         <div className="admin-dev-adminkey">
-          <div className="admin-dev-label">管理員密碼</div>
+
           <div>
-            <input
-              className="admin-dev-input admin-password"
-              value={adminKey}
-              onChange={(e) => persistAdminKey(e.target.value)}
-              style={{
-                padding: "2px 10px",
-                marginRight: "6px"
-              }}
-              placeholder="admin key"
-            />
             <button className="admin-dev-btn apply-password" 
               onClick={() => {
                 const s = search.trim();
@@ -1295,7 +1271,7 @@ export default function AdminDevicesPage({ apiBase }) {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-          
+
           <div className="admin-dev-lastfetchat-div">
             <span style={{ marginRight: 10 }}>
               最近載入圖像：{" "}
@@ -1423,7 +1399,7 @@ export default function AdminDevicesPage({ apiBase }) {
                     : "#999"
                 : "#333";
               const edited = editMap[deviceId] ?? "";
-              
+
               // shotAgo color rules: > 60s red, > 30s orange
               const lastUploadAt = r?.phone?.lastUploadAt ?? null;
               const shotSecAgo = lastUploadAt
@@ -1803,10 +1779,10 @@ export default function AdminDevicesPage({ apiBase }) {
                     </div>
 
                     <div className="admin-dev-deviceid">
-                      
+
                     </div>
                   </div>
-                  
+
                   <div className="admin-dev-imgwrap">
                     {r.imageUrl ? (
                       <img className="admin-dev-img" src={r.imageUrl} alt={deviceId} />
@@ -1913,7 +1889,7 @@ export default function AdminDevicesPage({ apiBase }) {
         isOpen={!!locationModalDeviceId}
         deviceId={locationModalDeviceId}
         apiBase={apiBase}
-        adminKey={adminKey}
+        canManage={canManage}
         onClose={() =>
           setLocationModalDeviceId(null)
         }
@@ -1935,7 +1911,7 @@ export default function AdminDevicesPage({ apiBase }) {
         isOpen={linkModalOpen}
         device={linkModalDevice}
         apiBase={apiBase}
-        adminKey={adminKey}
+        canManage={canManage}
         onClose={closeLinkModal}
         onSaved={() => load({ silent: true })}
       />
@@ -1943,7 +1919,7 @@ export default function AdminDevicesPage({ apiBase }) {
         isOpen={promptModalOpen}
         device={promptModalDevice}
         apiBase={apiBase}
-        adminKey={adminKey}
+        canManage={canManage}
         onClose={closePromptModal}
         onSaved={() => load({ silent: true })}
       />

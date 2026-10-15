@@ -1,0 +1,34 @@
+.admin-accounts .account-role-trigger {
+  display:inline-flex; align-items:center; gap:10px; min-width:132px;
+  padding:11px 14px; border:1px solid #dce4db; border-radius:12px;
+  background:#fff; color:#435248; font-size:13px; line-height:1.4;
+  box-shadow:0 2px 3px rgba(42,64,45,.02);
+}
+.account-role-dot { width:6px; height:6px; border-radius:50%; background:#9aa597; flex-shrink:0; }
+.role-admin .account-role-dot { background:#b99845; }
+.role-staff .account-role-dot { background:#4c956c; }
+.account-role-trigger > svg { margin-left:auto; width:16px; height:16px; color:#7d8b80; transition:transform .15s; }
+.account-role-trigger[aria-expanded="true"] > svg { transform:rotate(180deg); }
+.admin-accounts .account-role-trigger[aria-expanded="true"] { border-color:#8db59b; box-shadow:0 0 0 3px #e8f1e9; background:#fcfefb; }
+.account-role-menu {
+  position:fixed; z-index:2000; padding:7px; box-sizing:border-box;
+  border:1px solid #e0e6db; border-radius:16px; background:#fffefa;
+  box-shadow:0 16px 48px rgba(38,57,42,.16),0 3px 10px rgba(38,57,42,.06);
+  max-height:calc(100vh - 24px); overflow-y:auto; font-family:inherit;
+}
+.account-role-menu-title { padding:7px 11px 10px; font-size:10px; font-weight:600; letter-spacing:1.3px; color:#969e8e; }
+.account-role-option {
+  display:flex; align-items:center; gap:11px; width:100%; padding:11px 10px;
+  border:0; border-radius:10px; background:transparent; text-align:left;
+  font-family:inherit; color:#455044; cursor:pointer;
+}
+.account-role-option + .account-role-option { margin-top:3px; }
+.account-role-option.is-selected { background:#eef5ed; }
+.account-role-option:hover,.account-role-option:focus-visible { outline:2px solid #bbd2bc; outline-offset:-2px; background:#f0f5eb; }
+.account-role-icon { width:32px; height:32px; display:grid; place-items:center; border-radius:9px; flex-shrink:0; background:#eef0ea; color:#899180; }
+.role-admin .account-role-icon { background:#fff2d0; color:#a78531; }
+.role-staff .account-role-icon { background:#e8f2e9; color:#568366; }
+.account-role-copy { flex:1; }
+.account-role-copy strong { display:block; font-size:13px; font-weight:600; line-height:1.4; }
+.account-role-copy small { display:block; margin-top:3px; font-size:10px; line-height:1.5; color:#8b9484; }
+.account-role-check { width:16px; height:16px; color:#528361; flex-shrink:0; }

@@ -1,3 +1,4 @@
+import { adminFetch, useAdminAccess } from "../utils/adminAccess";
 // frontend/src/pages/AdminLotAdsPage.jsx
 import { Fragment, memo, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -95,7 +96,7 @@ const LotSearchResult = memo(function LotSearchResult({ lot: l, index, isSelecte
 });
 
 export default function AdminLotAdsPage({ apiBase }) {
-  const [adminKey, setAdminKey] = useState(() => localStorage.getItem("adminKey") || "");
+  const { canManage } = useAdminAccess();
 
   const [lotSearch, setLotSearch] = useState("");
   const [lotFilters, setLotFilters] = useState({
@@ -132,13 +133,9 @@ export default function AdminLotAdsPage({ apiBase }) {
   const [localPreviewUrls, setLocalPreviewUrls] = useState({});
   const [uploadingSlot, setUploadingSlot] = useState("");
 
-  function persistAdminKey(v) {
-    setAdminKey(v);
-    localStorage.setItem("adminKey", v);
-  }
 
   function headersAuth() {
-    return { "x-admin-key": adminKey };
+    return { };
   }
 
   function toggleLotFilter(key) {
@@ -149,13 +146,13 @@ export default function AdminLotAdsPage({ apiBase }) {
   }
 
   async function fetchAllLots() {
-    if (!adminKey) return toast.error("請先輸入管理員密碼");
+    if (!canManage) return toast.error("請使用獲授權的 Google 帳號登入");
 
     setLoadingLots(true);
     try {
       const qs = new URLSearchParams({ pageSize: "10000", page: "1" });
 
-      const res = await fetch(`${apiBase}/api/admin/lots?${qs.toString()}`, {
+      const res = await adminFetch(`${apiBase}/api/admin/lots?${qs.toString()}`, {
         headers: headersAuth(),
       });
 
@@ -183,7 +180,7 @@ export default function AdminLotAdsPage({ apiBase }) {
   }
 
   async function fetchAssets(lot) {
-    if (!adminKey || !lot?._id) return;
+    if (!canManage || !lot?._id) return;
 
     const requestId = ++assetsRequestRef.current;
     assetsAbortRef.current?.abort();
@@ -191,7 +188,7 @@ export default function AdminLotAdsPage({ apiBase }) {
     assetsAbortRef.current = controller;
     setLoadingAssets(true);
     try {
-      const res = await fetch(`${apiBase}/api/admin/lots/${lot._id}/ad-assets`, {
+      const res = await adminFetch(`${apiBase}/api/admin/lots/${lot._id}/ad-assets`, {
         headers: headersAuth(),
         signal: controller.signal,
       });
@@ -270,7 +267,7 @@ export default function AdminLotAdsPage({ apiBase }) {
   }
 
   async function uploadSlot(slotKey) {
-    if (!adminKey) return toast.error("請先輸入管理員密碼");
+    if (!canManage) return toast.error("請使用獲授權的 Google 帳號登入");
     if (!selectedLot?._id) return toast.error("請先選擇停車場");
 
     const file = localFiles[slotKey];
@@ -282,7 +279,7 @@ export default function AdminLotAdsPage({ apiBase }) {
       const formData = new FormData();
       formData.append("image", file);
 
-      const res = await fetch(`${apiBase}/api/admin/lots/${selectedLot._id}/ad-assets/${slotKey}`, {
+      const res = await adminFetch(`${apiBase}/api/admin/lots/${selectedLot._id}/ad-assets/${slotKey}`, {
         method: "POST",
         headers: headersAuth(),
         body: formData,
@@ -315,14 +312,14 @@ export default function AdminLotAdsPage({ apiBase }) {
   }
 
   async function deleteSlot(slotKey) {
-    if (!adminKey) return toast.error("請先輸入管理員密碼");
+    if (!canManage) return toast.error("請使用獲授權的 Google 帳號登入");
     if (!selectedLot?._id) return toast.error("請先選擇停車場");
 
     const ok = window.confirm("確定要刪除這張圖片嗎？");
     if (!ok) return;
 
     try {
-      const res = await fetch(`${apiBase}/api/admin/lots/${selectedLot._id}/ad-assets/${slotKey}`, {
+      const res = await adminFetch(`${apiBase}/api/admin/lots/${selectedLot._id}/ad-assets/${slotKey}`, {
         method: "DELETE",
         headers: headersAuth(),
       });
@@ -338,7 +335,7 @@ export default function AdminLotAdsPage({ apiBase }) {
   }
 
   async function saveAdSponsor() {
-    if (!adminKey) return toast.error("請先輸入管理員密碼");
+    if (!canManage) return toast.error("請使用獲授權的 Google 帳號登入");
     if (!selectedLot?._id) return toast.error("請先選擇停車場");
 
     setSavingAdSponsor(true);
@@ -358,7 +355,7 @@ export default function AdminLotAdsPage({ apiBase }) {
             : Number(adSponsorForm.walkMinutes),
       };
 
-      const res = await fetch(`${apiBase}/api/admin/lots/${selectedLot._id}/ad-sponsor`, {
+      const res = await adminFetch(`${apiBase}/api/admin/lots/${selectedLot._id}/ad-sponsor`, {
         method: "PATCH",
         headers: {
           ...headersAuth(),
@@ -395,7 +392,7 @@ export default function AdminLotAdsPage({ apiBase }) {
   }
 
   async function clearAdSponsor() {
-    if (!adminKey) return toast.error("請先輸入管理員密碼");
+    if (!canManage) return toast.error("請使用獲授權的 Google 帳號登入");
     if (!selectedLot?._id) return toast.error("請先選擇停車場");
 
     const ok = window.confirm("確定要清除這個停車場的廣告店家資訊嗎？");
@@ -404,7 +401,7 @@ export default function AdminLotAdsPage({ apiBase }) {
     setSavingAdSponsor(true);
 
     try {
-      const res = await fetch(`${apiBase}/api/admin/lots/${selectedLot._id}/ad-sponsor`, {
+      const res = await adminFetch(`${apiBase}/api/admin/lots/${selectedLot._id}/ad-sponsor`, {
         method: "DELETE",
         headers: headersAuth(),
       });
@@ -437,10 +434,10 @@ export default function AdminLotAdsPage({ apiBase }) {
   }
 
   useEffect(() => {
-    if (!adminKey) return;
+    if (!canManage) return;
     fetchAllLots();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adminKey]);
+  }, [canManage]);
 
   useEffect(() => {
     return () => {
@@ -512,16 +509,7 @@ export default function AdminLotAdsPage({ apiBase }) {
         <div className="ala-title">商家廣告圖片管理</div>
 
         <div className="ala-adminkey">
-          <div className="ala-label">管理員密碼</div>
-          <input
-            type="text"
-            spellCheck="false"
-            className="ala-input"
-            style={{ minWidth: 360 }}
-            value={adminKey}
-            onChange={(e) => persistAdminKey(e.target.value)}
-            placeholder="admin key"
-          />
+
 
           <button className="ala-btn" onClick={fetchAllLots}>
             重新載入

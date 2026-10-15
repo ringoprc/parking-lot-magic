@@ -4,6 +4,10 @@
     {
       "source": "/api/auth/:path*",
       "destination": "https://parking-backend-254825260530.asia-east1.run.app/api/auth/:path*"
+    },
+    {
+      "source": "/api/admin/:path*",
+      "destination": "https://parking-backend-254825260530.asia-east1.run.app/api/admin/:path*"
     }
   ]
 }

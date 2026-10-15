@@ -1,3 +1,5 @@
+import AdminAccess from "./components/AdminAccess";
+import AdminAccountsPage from "./pages/AdminAccountsPage";
 // frontend/src/App.jsx
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLots } from "./hooks/useLots";
@@ -39,6 +41,7 @@ import "./components/MobileHeader.css";
 
 function AdminMenuPage({ apiBase }) {
   const adminItems = [
+    { title: "帳號管理", description: "管理 Google 帳號的管理員、內勤與後台存取權限", badge: "Accounts", href: "?admin=accounts" },
     {
       title: "停車場清單管理",
       description: "新增、編輯、檢查停車場基本資料。",
@@ -571,27 +574,29 @@ export default function App() {
   const showLinkage = adminRoute === "link" || searchParams.get("link") === "1";
   const showAdsManage = adminRoute === "ads" || searchParams.get("ads") === "1";
   const showWorkers = adminRoute === "workers" || searchParams.get("workers") === "1";
+  const showAccounts = adminRoute === "accounts";
   const showAnalytics = adminRoute === "analytics";
   const useModernUi = searchParams.get("uiPreview") !== "plain";
 
   let page = null;
   if (showOcr) page = <DigitOcrTest />;
-  else if (showAdminLots) page = <AdminLotsPage apiBase={apiBase} />;
+  else if (showAccounts) page = <AdminAccountsPage apiBase={import.meta.env.DEV ? apiBase : ""} />;
+  else if (showAdminLots) page = <AdminLotsPage apiBase={import.meta.env.DEV ? apiBase : ""} />;
   else if (showDevices) {
     page = (
       <APIProvider
         apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
         libraries={["places", "marker"]}
       >
-        <AdminDevicesPage apiBase={apiBase} />
+        <AdminDevicesPage apiBase={import.meta.env.DEV ? apiBase : ""} />
       </APIProvider>
     );
   }
-  else if (showLinkage) page = <AdminLinkagePage apiBase={apiBase} />;
-  else if (showAdsManage) page = <AdminLotAdsPage apiBase={apiBase} />;
-  else if (showWorkers) page = <AdminWorkerStatusPage apiBase={apiBase} />;
-  else if (showAnalytics) page = <AdminAnalyticsPage apiBase={apiBase} />;
-  else if (showAdminMenu) page = <AdminMenuPage apiBase={apiBase} />;
+  else if (showLinkage) page = <AdminLinkagePage apiBase={import.meta.env.DEV ? apiBase : ""} />;
+  else if (showAdsManage) page = <AdminLotAdsPage apiBase={import.meta.env.DEV ? apiBase : ""} />;
+  else if (showWorkers) page = <AdminWorkerStatusPage apiBase={import.meta.env.DEV ? apiBase : ""} />;
+  else if (showAnalytics) page = <AdminAnalyticsPage apiBase={import.meta.env.DEV ? apiBase : ""} />;
+  else if (showAdminMenu) page = <AdminMenuPage apiBase={import.meta.env.DEV ? apiBase : ""} />;
   else page = (
     <APIProvider
       apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
@@ -828,7 +833,7 @@ export default function App() {
 
   return (
     <>
-      {page}
+      {showAccounts || showAdminMenu || showAdminLots || showDevices || showLinkage || showAdsManage || showWorkers || showAnalytics ? <AdminAccess apiBase={apiBase}>{page}</AdminAccess> : page}
       <Toaster position="top-center" toastOptions={{ duration: 2000 }} />
     </>
   );

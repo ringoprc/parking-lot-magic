@@ -67,7 +67,8 @@ export default function GoogleAccount({ apiBase, onUserChange, beforeLogoutRef }
 
   useEffect(() => {
     const header = buttonRef.current.closest(".title-bar");
-    const root = header.closest(".app-root");
+    const root = header?.closest(".app-root");
+    if (!header || !root) return;
     const observer = new ResizeObserver(() => {
       root.style.setProperty("--site-header-height", `${header.getBoundingClientRect().height}px`);
     });

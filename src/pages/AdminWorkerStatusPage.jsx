@@ -1,3 +1,4 @@
+import { adminFetch, useAdminAccess } from "../utils/adminAccess";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import {
@@ -200,14 +201,15 @@ function AttemptsPanel({ data, filters, setFilters, loading, onLoadMore, loading
   </section>;
 }
 
-async function fetchJson(url, adminKey, signal) {
-  const response = await fetch(url, { headers: { "x-admin-key": adminKey }, signal });
+async function fetchJson(url, _canManage, signal) {
+  if (!_canManage) throw new Error("尚未取得後台權限");
+  const response = await adminFetch(url, { headers: { }, signal });
   const data = await response.json().catch(() => null);
   if (!response.ok) throw new Error(data?.error || `Request failed (${response.status})`);
   return data;
 }
 
-function ResultDetail({ selection, apiBase, adminKey, onClose }) {
+function ResultDetail({ selection, apiBase, canManage, onClose }) {
   const dialogRef = useRef(null);
   const [attempt, setAttempt] = useState(null);
   const [error, setError] = useState("");
@@ -223,12 +225,12 @@ function ResultDetail({ selection, apiBase, adminKey, onClose }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchJson(`${apiBase}/api/admin/devices/ai-monitor/attempts/${encodeURIComponent(selection.attemptId)}`, adminKey, controller.signal)
+    fetchJson(`${apiBase}/api/admin/devices/ai-monitor/attempts/${encodeURIComponent(selection.attemptId)}`, canManage, controller.signal)
       .then((data) => { if (!controller.signal.aborted) setAttempt(data.attempt); })
       .catch((cause) => { if (!controller.signal.aborted) setError(cause.message || "無法讀取原始回傳資料"); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [apiBase, adminKey, selection.attemptId, retry]);
+  }, [apiBase, canManage, selection.attemptId, retry]);
 
   const rawText = attempt?.result?.rawText;
   const hasRawText = typeof rawText === "string" && rawText.length > 0;
@@ -257,9 +259,8 @@ function useDebounced(value, delay = 350) {
 }
 
 export default function AdminWorkerStatusPage({ apiBase }) {
-  const initialKey = localStorage.getItem("adminKey") || "";
-  const [adminKey, setAdminKey] = useState(initialKey);
-  const [connectedKey, setConnectedKey] = useState(initialKey);
+  const { canManage } = useAdminAccess();
+  const connectedAccess = canManage;
   const [windowRange, setWindowRange] = useState("24h");
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [refreshNonce, setRefreshNonce] = useState(0);
@@ -287,45 +288,45 @@ export default function AdminWorkerStatusPage({ apiBase }) {
   const setSectionError = useCallback((section, message = "") => setErrors((current) => ({ ...current, [section]: message })), []);
 
   const loadFleet = useCallback(async () => {
-    if (!connectedKey) return;
+    if (!connectedAccess) return;
     fleetAbort.current?.abort();
     const controller = new AbortController(); fleetAbort.current = controller;
     setSectionError("fleet");
     try {
-      const data = await fetchJson(`${apiBase}/api/admin/devices/ai-monitor/workers`, connectedKey, controller.signal);
+      const data = await fetchJson(`${apiBase}/api/admin/devices/ai-monitor/workers`, connectedAccess, controller.signal);
       if (controller.signal.aborted) return;
       setFleet(data); setLastFetchAt(Date.now());
     } catch (error) { if (error?.name !== "AbortError") setSectionError("fleet", error?.message || "無法讀取機器狀態"); }
     finally { if (fleetAbort.current === controller) fleetAbort.current = null; }
-  }, [apiBase, connectedKey, setSectionError]);
+  }, [apiBase, connectedAccess, setSectionError]);
 
   const loadOverview = useCallback(async () => {
-    if (!connectedKey) return;
+    if (!connectedAccess) return;
     overviewAbort.current?.abort(); const controller = new AbortController(); overviewAbort.current = controller;
     setOverviewLoading(true); setSectionError("overview");
     try {
       const query = new URLSearchParams({ window: windowRange });
-      const data = await fetchJson(`${apiBase}/api/admin/devices/ai-monitor/overview?${query}`, connectedKey, controller.signal);
+      const data = await fetchJson(`${apiBase}/api/admin/devices/ai-monitor/overview?${query}`, connectedAccess, controller.signal);
       if (controller.signal.aborted) return;
       setOverview(data); setLastFetchAt(Date.now());
     } catch (error) { if (error?.name !== "AbortError") setSectionError("overview", error?.message || "無法讀取 AI monitor"); }
     finally { if (overviewAbort.current === controller) { overviewAbort.current = null; setOverviewLoading(false); } }
-  }, [apiBase, connectedKey, setSectionError, windowRange]);
+  }, [apiBase, connectedAccess, setSectionError, windowRange]);
 
   const loadDevices = useCallback(async () => {
-    if (!connectedKey) return;
+    if (!connectedAccess) return;
     devicesAbort.current?.abort(); const controller = new AbortController(); devicesAbort.current = controller;
     setDevicesLoading(true); setSectionError("devices");
     try {
       const query = new URLSearchParams({ window: windowRange, group: deviceGroup, limit: "200" });
       if (debouncedDeviceQuery.trim()) query.set("query", debouncedDeviceQuery.trim());
-      setDevices(await fetchJson(`${apiBase}/api/admin/devices/ai-monitor/devices?${query}`, connectedKey, controller.signal));
+      setDevices(await fetchJson(`${apiBase}/api/admin/devices/ai-monitor/devices?${query}`, connectedAccess, controller.signal));
     } catch (error) { if (error?.name !== "AbortError") setSectionError("devices", error?.message || "無法讀取裝置品質"); }
     finally { if (devicesAbort.current === controller) { devicesAbort.current = null; setDevicesLoading(false); } }
-  }, [apiBase, connectedKey, debouncedDeviceQuery, deviceGroup, setSectionError, windowRange]);
+  }, [apiBase, connectedAccess, debouncedDeviceQuery, deviceGroup, setSectionError, windowRange]);
 
   const loadAttempts = useCallback(async ({ append = false, cursor = "" } = {}) => {
-    if (!connectedKey) return;
+    if (!connectedAccess) return;
     attemptsAbort.current?.abort(); const controller = new AbortController(); attemptsAbort.current = controller;
     if (append) setLoadingMore(true); else setAttemptsLoading(true); setSectionError("attempts");
     try {
@@ -335,19 +336,19 @@ export default function AdminWorkerStatusPage({ apiBase }) {
       if (debouncedWorkerId.trim()) query.set("workerId", debouncedWorkerId.trim());
       if (debouncedAttemptDeviceId.trim()) query.set("deviceId", debouncedAttemptDeviceId.trim());
       if (cursor) query.set("cursor", cursor);
-      const data = await fetchJson(`${apiBase}/api/admin/devices/ai-monitor/attempts?${query}`, connectedKey, controller.signal);
+      const data = await fetchJson(`${apiBase}/api/admin/devices/ai-monitor/attempts?${query}`, connectedAccess, controller.signal);
       setAttempts((current) => append ? { ...data, rows: [...(current?.rows || []), ...(data.rows || [])] } : data);
     } catch (error) { if (error?.name !== "AbortError") setSectionError("attempts", error?.message || "無法讀取處理紀錄"); }
     finally { if (attemptsAbort.current === controller) { attemptsAbort.current = null; setAttemptsLoading(false); setLoadingMore(false); } }
-  }, [apiBase, attemptFilters.stage, attemptFilters.status, connectedKey, debouncedAttemptDeviceId, debouncedWorkerId, setSectionError, windowRange]);
+  }, [apiBase, attemptFilters.stage, attemptFilters.status, connectedAccess, debouncedAttemptDeviceId, debouncedWorkerId, setSectionError, windowRange]);
 
-  useEffect(() => { setFleet(null); return () => fleetAbort.current?.abort(); }, [apiBase, connectedKey]);
+  useEffect(() => { setFleet(null); return () => fleetAbort.current?.abort(); }, [apiBase, connectedAccess]);
   useEffect(() => { loadFleet(); return () => fleetAbort.current?.abort(); }, [loadFleet, refreshNonce]);
   useEffect(() => { loadOverview(); return () => overviewAbort.current?.abort(); }, [loadOverview, refreshNonce]);
   useEffect(() => { loadDevices(); return () => devicesAbort.current?.abort(); }, [loadDevices, refreshNonce]);
   useEffect(() => { loadAttempts(); return () => attemptsAbort.current?.abort(); }, [loadAttempts, refreshNonce]);
   useEffect(() => {
-    if (!autoRefresh || !connectedKey) return undefined;
+    if (!autoRefresh || !connectedAccess) return undefined;
     const interval = setInterval(() => {
       // A slow request must finish; polling must not repeatedly cancel it.
       if (!fleetAbort.current) loadFleet();
@@ -356,14 +357,14 @@ export default function AdminWorkerStatusPage({ apiBase }) {
       if (!attemptsAbort.current) loadAttempts();
     }, 15_000);
     return () => clearInterval(interval);
-  }, [autoRefresh, connectedKey, loadFleet, loadOverview, loadDevices, loadAttempts]);
+  }, [autoRefresh, connectedAccess, loadFleet, loadOverview, loadDevices, loadAttempts]);
 
   const summary = useMemo(() => overview?.summary || {}, [overview?.summary]);
   const errorMessages = [...new Set(Object.values(errors).filter(Boolean))];
   const busy = overviewLoading || devicesLoading || attemptsLoading;
-  const connected = Boolean(connectedKey && (fleet || overview));
+  const connected = Boolean(connectedAccess && (fleet || overview));
   const fleetSummary = fleet?.summary || overview?.summary;
-  const headline = summary.activeAttemptCount > 0 ? `${summary.activeAttemptCount} 個工作正在跨機器處理` : connected && !overview ? "AI fleet 已連線，正在載入處理統計" : connected ? "AI fleet 已連線，等待新的圖片" : "輸入管理員密碼以連線 AI fleet";
+  const headline = summary.activeAttemptCount > 0 ? `${summary.activeAttemptCount} 個工作正在跨機器處理` : connected && !overview ? "AI fleet 已連線，正在載入處理統計" : connected ? "AI fleet 已連線，等待新的圖片" : "登入獲授權的帳號以連線 AI fleet";
   const metrics = useMemo(() => [
     { label: "每分鐘完成", value: formatNumber(summary.completionsLastMinute || 0), note: `所選期間共 ${formatNumber(summary.completedCount || 0)} 個完成`, tone: "live" },
     { label: "平均每張處理時間", value: formatDuration(summary.averageProcessingMs), note: `P50 ${formatDuration(summary.p50ProcessingMs)} · P95 ${formatDuration(summary.p95ProcessingMs)}` },
@@ -374,21 +375,21 @@ export default function AdminWorkerStatusPage({ apiBase }) {
   ], [summary]);
 
   function connectAndRefresh() {
-    const key = adminKey.trim();
-    if (!key) return toast.error("請先輸入管理員密碼");
-    localStorage.setItem("adminKey", key); setConnectedKey(key); setRefreshNonce((value) => value + 1); toast.success("正在更新 AI fleet 資料");
+    const key = canManage;
+    if (!key) return toast.error("請使用獲授權的 Google 帳號登入");
+    setRefreshNonce((value) => value + 1); toast.success("正在更新 AI fleet 資料");
   }
 
   return <div className="aws-page">
-    <header className="aws-header"><div className="aws-heading"><a className="aws-back-btn" href="/?admin=1" aria-label="回到管理選單"><MdOutlineArrowBackIos size={18} /></a><div><span className="aws-eyebrow">PARKING AI · FLEET MONITOR</span><h1>AI 辨識機器監控</h1><p>{headline}</p></div></div><div className="aws-header-status"><span className={`aws-connection ${connected ? "is-live" : ""}`}><i />{connected ? "LIVE" : connectedKey && !errors.fleet ? "CONNECTING" : "OFFLINE"}</span><time>{lastFetchAt ? `更新於 ${formatDateTime(lastFetchAt)}` : "尚未更新"}</time></div></header>
-    <div className="aws-toolbar"><label className="aws-key-field"><span>管理員密碼</span><input type="password" value={adminKey} onChange={(event) => setAdminKey(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") connectAndRefresh(); }} placeholder="admin key" /></label><label><span>統計範圍</span><select value={windowRange} onChange={(event) => setWindowRange(event.target.value)}>{WINDOWS.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label><button type="button" className="aws-refresh-btn" onClick={connectAndRefresh} disabled={busy}><MdOutlineRefresh size={19} className={busy ? "is-spinning" : ""} />{busy ? "更新中" : "更新資料"}</button><button type="button" className={`aws-auto-btn ${autoRefresh ? "active" : ""}`} onClick={() => setAutoRefresh((value) => !value)}><i />{autoRefresh ? "每 15 秒自動更新" : "自動更新已關閉"}</button></div>
+    <header className="aws-header"><div className="aws-heading"><a className="aws-back-btn" href="/?admin=1" aria-label="回到管理選單"><MdOutlineArrowBackIos size={18} /></a><div><span className="aws-eyebrow">PARKING AI · FLEET MONITOR</span><h1>AI 辨識機器監控</h1><p>{headline}</p></div></div><div className="aws-header-status"><span className={`aws-connection ${connected ? "is-live" : ""}`}><i />{connected ? "LIVE" : connectedAccess && !errors.fleet ? "CONNECTING" : "OFFLINE"}</span><time>{lastFetchAt ? `更新於 ${formatDateTime(lastFetchAt)}` : "尚未更新"}</time></div></header>
+    <div className="aws-toolbar"><label><span>統計範圍</span><select value={windowRange} onChange={(event) => setWindowRange(event.target.value)}>{WINDOWS.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label><button type="button" className="aws-refresh-btn" onClick={connectAndRefresh} disabled={busy}><MdOutlineRefresh size={19} className={busy ? "is-spinning" : ""} />{busy ? "更新中" : "更新資料"}</button><button type="button" className={`aws-auto-btn ${autoRefresh ? "active" : ""}`} onClick={() => setAutoRefresh((value) => !value)}><i />{autoRefresh ? "每 15 秒自動更新" : "自動更新已關閉"}</button></div>
     <main className="aws-content">{errorMessages.map((message) => <div className="aws-error-banner" key={message}>{message}</div>)}
       <section className="aws-overview-strip"><div className="aws-fleet-pulse"><div><strong>{fleetSummary?.aliveWorkerCount ?? "—"}</strong><span>ONLINE</span></div><p>{fleetSummary?.workerCount ?? "—"} workers<br /><b>{fleetSummary?.downWorkerCount ?? "—"} down</b></p></div><div className="aws-metrics-grid">{metrics.map((metric) => <MetricCard {...metric} key={metric.label} />)}</div></section>
-      <div className="aws-workbench"><Pipeline attempts={overview?.activeAttempts || []} serverNow={overview?.serverNow} loading={!overview && Boolean(connectedKey) && !errors.overview} /><WorkerFleet workers={fleet?.workers || overview?.workers || []} serverNow={fleet?.serverNow || overview?.serverNow} loading={!fleet && !overview && Boolean(connectedKey) && !errors.fleet} /></div>
+      <div className="aws-workbench"><Pipeline attempts={overview?.activeAttempts || []} serverNow={overview?.serverNow} loading={!overview && Boolean(connectedAccess) && !errors.overview} /><WorkerFleet workers={fleet?.workers || overview?.workers || []} serverNow={fleet?.serverNow || overview?.serverNow} loading={!fleet && !overview && Boolean(connectedAccess) && !errors.fleet} /></div>
       <DevicesPanel data={devices} group={deviceGroup} setGroup={setDeviceGroup} query={deviceQuery} setQuery={setDeviceQuery} loading={devicesLoading} onSelectResult={setSelectedResult} />
       <FailuresPanel failures={overview?.recentFailures || []} serverNow={overview?.serverNow} />
       <AttemptsPanel data={attempts} filters={attemptFilters} setFilters={setAttemptFilters} loading={attemptsLoading} loadingMore={loadingMore} onLoadMore={() => loadAttempts({ append: true, cursor: attempts?.nextCursor })} serverNow={attempts?.serverNow} />
     </main>
-    {selectedResult && <ResultDetail key={`${apiBase}:${connectedKey}:${selectedResult.attemptId}`} selection={selectedResult} apiBase={apiBase} adminKey={connectedKey} onClose={() => setSelectedResult(null)} />}
+    {selectedResult && <ResultDetail key={`${apiBase}:${connectedAccess}:${selectedResult.attemptId}`} selection={selectedResult} apiBase={apiBase} canManage={connectedAccess} onClose={() => setSelectedResult(null)} />}
   </div>;
 }

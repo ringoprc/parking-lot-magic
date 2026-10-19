@@ -29,7 +29,7 @@ function loadGoogleIdentity() {
   return googleScript;
 }
 
-export default function GoogleAccount({ apiBase, onUserChange, beforeLogoutRef }) {
+export default function GoogleAccount({ apiBase, onUserChange, onBusyChange, beforeLogoutRef }) {
   const [user, setUser] = useState(null);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
@@ -46,6 +46,8 @@ export default function GoogleAccount({ apiBase, onUserChange, beforeLogoutRef }
   useEffect(() => {
     onUserChange?.(user);
   }, [user, onUserChange]);
+
+  useEffect(() => { onBusyChange?.(busy); }, [busy, onBusyChange]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -179,7 +181,7 @@ export default function GoogleAccount({ apiBase, onUserChange, beforeLogoutRef }
       <div id="account-panel" className={`account-panel${menuOpen ? " is-open" : ""}`} aria-busy={busy}>
       <div className="account-panel-heading">
         <strong>{user ? "我的帳號" : "歡迎來到 ParkingJi"}</strong>
-        <span>{user ? "管理你的登入狀態" : "登入帳號以使用個人化功能"}</span>
+        <span>{user ? "管理個人資料與登入狀態" : "登入帳號以使用個人化功能"}</span>
       </div>
       <div ref={buttonRef} className="google-account-button" hidden={!!user || !!error || busy} />
       {busy && !user && <div className="google-account-loading" role="status">正在連接 Google…</div>}
@@ -197,6 +199,7 @@ export default function GoogleAccount({ apiBase, onUserChange, beforeLogoutRef }
         </div>
       )}
       <a className="account-privacy-link" href="/privacy.html">隱私權政策</a>
+      {user && <a className="account-profile-link" href="?profile=1"><span><FiUser size={16} />帳號與車輛資料管理</span><FiArrowUpRight size={16} /></a>}
       <a className="account-admin-link" href="?admin=1"><span>管理後台</span><FiArrowUpRight size={16} /></a>
       </div>
     </div>

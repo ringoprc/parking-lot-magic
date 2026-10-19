@@ -1,0 +1,176 @@
+.user-profile-page { min-height: 100dvh; color: #253a30; color-scheme: light; background: radial-gradient(ellipse at 8% 15%, #f6eddc 0, transparent 38%), #f6f7f3; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.profile-header { position: relative; z-index: 20; border-bottom: 1px solid #e5e8df; background: #fffef9; }
+.profile-topbar { width: min(1160px, calc(100% - 64px)); min-height: 80px; margin: auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.profile-brand { display: flex; align-items: center; gap: 10px; color: #233e2f; text-decoration: none; }
+.profile-brand:hover { color: #233e2f; }
+.profile-brand img { width: 32px; height: 40px; object-fit: contain; }
+.profile-brand > span { font-size: 23px; font-weight: 750; line-height: 1.1; letter-spacing: -.7px; }
+.profile-brand b { color: #31815d; }
+.profile-brand small { display: block; margin-top: 5px; color: #7b857b; font-size: 10px; font-weight: 500; letter-spacing: 2px; }
+.profile-header-actions { display: flex; align-items: center; gap: 24px; }
+.profile-back { display: flex; align-items: center; gap: 7px; font-size: 13px; color: #617466; text-decoration: none; }
+.profile-back:hover { color: #285f49; }
+.user-profile-page .google-account { position: relative; }
+.user-profile-page .account-panel { right: 0; top: calc(100% + 12px); }
+.profile-shell { width: min(1160px, calc(100% - 64px)); margin: auto; padding: 40px 0 48px; }
+.profile-intro { margin-bottom: 28px; }
+.profile-step { display: block; color: #7b896f; font-size: 10px; font-weight: 700; letter-spacing: 1.8px; }
+.profile-intro h1 { margin: 12px 0; font-size: 36px; font-weight: 750; letter-spacing: -1px; }
+.profile-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); align-items: start; gap: 28px; }
+.profile-sidebar { display: grid; gap: 24px; }
+.profile-identity { padding: 30px 20px 24px; text-align: center; border-radius: 20px; background: #234d3a; color: #fff; box-shadow: 0 10px 22px #224a3610; overflow-wrap: anywhere; }
+.profile-avatar { display: grid; place-items: center; width: 62px; height: 62px; margin: 0 auto 16px; border: 1px solid #ffffff26; border-radius: 20px; background: #ffffff10; color: #efddb1; font-size: 25px; font-weight: 650; }
+.profile-identity h2 { font-size: 18px; font-weight: 650; margin: 0 0 8px; }
+.profile-identity p { font-size: 12px; color: #c5d8cc; margin: 0; line-height: 1.7; }
+.profile-identity-label { display: flex; align-items: center; justify-content: center; gap: 6px; border-top: 1px solid #ffffff1c; padding-top: 20px; margin-top: 24px; color: #d5e4d8; font-size: 11px; }
+.profile-privacy { padding: 0 16px; color: #7b867a; }
+.profile-privacy > svg { color: #85987e; font-size: 20px; margin-bottom: 12px; }
+.profile-privacy h2 { font-size: 13px; font-weight: 650; color: #50664f; margin-bottom: 10px; }
+.profile-privacy p { font-size: 12px; line-height: 1.9; }
+.profile-privacy a { display: inline-flex; align-items: center; gap: 6px; color: #55734f; font-size: 11px; text-decoration: none; }
+.vehicle-form { min-width: 0; }
+.vehicle-form fieldset { display: grid; gap: 20px; min-width: 0; }
+.profile-card { min-width: 0; padding: 28px; background: #fff; border: 1px solid #e6eae1; border-radius: 20px; box-shadow: 0 3px 8px #20392503; }
+.profile-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; }
+.profile-section-heading h2 { margin: 9px 0 0; font-size: 20px; font-weight: 700; letter-spacing: -.4px; }
+.profile-badge { display: inline-flex; flex-shrink: 0; padding: 6px 10px; border: 1px solid #eee8d5; border-radius: 7px; background: #faf7ec; color: #918158; font-size: 11px; }
+.profile-badge.is-confirmed { color: #39754f; background: #edf5ed; border-color: #dfeadd; }
+.vehicle-details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.profile-field { min-width: 0; }
+.profile-field label { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+.profile-field label span { display: inline-flex; align-items: center; gap: 4px; color: #87917f; font-size: 10px; font-weight: 400; }
+.profile-field input { width: 100%; height: 48px; padding: 10px 14px; background: #fff; border: 1px solid #d9e1d5; border-radius: 10px; color: #284732; font-size: 17px; font-weight: 500; }
+.profile-field input::placeholder { color: #9da795; font-size: 14px; font-weight: 400; }
+.profile-field input[readonly] { background: #f7f8f4; color: #7b8674; border-color: #eaede4; font-size: 14px; }
+.profile-field p { margin: 8px 0 0; font-size: 11px; line-height: 1.7; color: #87917e; }
+.profile-description { margin: -6px 0 20px; color: #7a8473; font-size: 12px; line-height: 1.8; }
+.profile-optional { margin-left: 6px; color: #929a89; font-size: 11px; font-weight: 400; letter-spacing: 0; }
+.vehicle-ownership-photos { border-top: 1px solid #e6eae1; margin-top: 26px; padding-top: 26px; }
+.vehicle-ownership-photos h3 { margin: 0; font-size: 17px; font-weight: 650; }
+.vehicle-photo-plate { display: block; margin-top: 8px; color: #647c58; font-size: 12px; overflow-wrap: anywhere; }
+.vehicle-ownership-purpose { display: flex; align-items: flex-start; gap: 10px; padding: 14px; margin: 0 0 20px; border-radius: 10px; background: #edf4e9; color: #607454; font-size: 12px; line-height: 1.9; }
+.vehicle-ownership-purpose > svg { flex: 0 0 18px; height: 18px; margin-top: 3px; color: #64875c; }
+.vehicle-ownership-purpose strong { display: block; color: #3e6236; font-weight: 600; }
+.vehicle-model-report-link { display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; padding: 6px 0; border: 0; border-radius: 3px; background: transparent; color: #7d6840; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
+.vehicle-model-report-link:hover { color: #564521; }
+.vehicle-model-report-editor { margin-top: 20px; padding: 20px; border: 1px solid #e5e1d2; border-radius: 12px; background: #fbfaf5; }
+.vehicle-model-report-editor h3 { font-size: 15px; font-weight: 650; margin: 0 0 10px; }
+.vehicle-model-report-editor > p { color: #77806e; font-size: 12px; line-height: 1.8; overflow-wrap: anywhere; }
+.vehicle-model-report-editor label { display: flex; align-items: center; gap: 8px; font-size: 12px; margin: 16px 0 8px; }
+.vehicle-model-report-editor label span { color: #87917f; font-size: 11px; }
+.vehicle-model-report-editor textarea { display: block; width: 100%; min-height: 100px; max-height: 300px; resize: vertical; padding: 12px; border: 1px solid #d9e1d5; border-radius: 8px; background: #fff; color: #284732; font: inherit; font-size: 16px; line-height: 1.6; }
+.vehicle-model-report-editor textarea::placeholder { font-size: 13px; color: #8d9783; }
+.vehicle-model-report-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.vehicle-model-report-actions small { margin-right: auto; color: #87917f; font-size: 11px; }
+.vehicle-model-report-status { display: flex; align-items: flex-start; gap: 10px; padding: 16px; margin-top: 20px; border: 1px solid #eee3c6; border-radius: 10px; background: #fcf8ec; color: #806a38; font-size: 12px; line-height: 1.8; }
+.vehicle-model-report-status > svg { flex: 0 0 15px; height: 15px; margin-top: 4px; }
+.vehicle-model-report-status > div { min-width: 0; }
+.vehicle-model-report-status strong { font-weight: 650; }
+.vehicle-model-report-status p { margin: 5px 0; overflow-wrap: anywhere; }
+.vehicle-model-report-status small { color: #8b8267; font-size: 11px; }
+.vehicle-report-note { white-space: pre-wrap; }
+.profile-photo-count { color: #4e704b; font-size: 22px; font-weight: 600; white-space: nowrap; }
+.profile-photo-count > span { color: #929b88; font-size: 12px; font-weight: 400; }
+.vehicle-photo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.vehicle-photo-card { min-width: 0; padding: 14px; background: #fdfefb; border: 1px solid #e4e9dd; border-radius: 12px; }
+.vehicle-photo-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.vehicle-photo-heading strong { font-size: 13px; font-weight: 600; }
+.vehicle-photo-heading strong > span { color: #a0ab93; font-size: 10px; margin-right: 8px; font-variant-numeric: tabular-nums; }
+.vehicle-photo-state { display: flex; align-items: center; gap: 3px; color: #6b895e; font-size: 10px; }
+.vehicle-photo-preview { display: grid; place-items: center; aspect-ratio: 16 / 10; overflow: hidden; border: 1px dashed #d8e0cf; border-radius: 8px; background: #f4f7ef; color: #89967b; font-size: 12px; }
+.has-photo .vehicle-photo-preview { border-style: solid; background: #eef1e9; }
+.vehicle-photo-preview img { width: 100%; height: 100%; object-fit: contain; min-height: 0; }
+.vehicle-photo-placeholder { display: flex; align-items: center; flex-direction: column; gap: 8px; padding: 10px; text-align: center; }
+.vehicle-photo-placeholder > svg { color: #97aa85; margin-bottom: 3px; }
+.vehicle-photo-placeholder > span { font-size: 12px; color: #728264; }
+.vehicle-photo-placeholder > small { font-size: 10px; color: #a0ab94; }
+.vehicle-photo-actions { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.vehicle-photo-upload { position: relative; flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px; min-height: 36px; background: #fff; border: 1px solid #dfe6d6; border-radius: 7px; color: #58734d; font-size: 11px; cursor: pointer; }
+.vehicle-photo-upload input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.vehicle-photo-upload:hover { border-color: #8aa57b; background: #f3f7ee; }
+.vehicle-photo-actions > button { display: flex; align-items: center; gap: 3px; min-height: 36px; padding: 4px 6px; border: 0; background: transparent; color: #8b7161; font-size: 11px; }
+.vehicle-photo-error { margin: 10px 0 0; color: #a44532; font-size: 11px; line-height: 1.6; }
+.profile-photo-hint { display: flex; align-items: flex-start; gap: 6px; margin: 16px 0 0; font-size: 11px; color: #919a85; line-height: 1.8; }
+.profile-photo-hint > svg { flex: 0 0 12px; margin-top: 4px; }
+.profile-sharing { display: flex; align-items: center; gap: 14px; cursor: pointer; position: relative; }
+.profile-sharing-icon { flex-shrink: 0; display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid #e4ebdd; border-radius: 12px; background: #f3f6ef; color: #6f8960; font-size: 18px; }
+.profile-sharing-copy { flex: 1; }
+.profile-sharing-copy strong { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+.profile-sharing-copy > span { display: block; color: #87917c; font-size: 11px; line-height: 1.8; }
+.profile-sharing > input { position: absolute; right: 0; width: 44px; height: 28px; opacity: 0; cursor: pointer; }
+.profile-switch { display: inline-flex; align-items: center; width: 44px; height: 26px; padding: 3px; flex-shrink: 0; border-radius: 999px; background: #dce2d5; pointer-events: none; transition: background .15s; }
+.profile-switch::after { content: ''; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px #0002; transition: transform .15s; }
+.profile-sharing input:checked + .profile-switch { background: #397a53; }
+.profile-sharing input:checked + .profile-switch::after { transform: translateX(18px); }
+.profile-notice { margin: 18px 0 0; padding: 12px 14px; border-radius: 8px; background: #f7f8f3; color: #889079; font-size: 11px; line-height: 1.9; }
+.profile-save-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 0 0; font-size: 12px; color: #869078; }
+.profile-save-actions { display: flex; gap: 10px; }
+.user-profile-page .profile-primary, .user-profile-page .profile-secondary { display: inline-flex; justify-content: center; align-items: center; gap: 7px; min-height: 44px; padding: 10px 20px; border-radius: 10px; font-size: 13px; white-space: nowrap; }
+.user-profile-page .profile-primary { color: #fff; border: 1px solid #285f43; background: #285f43; font-weight: 600; }
+.user-profile-page .profile-primary:hover:not(:disabled) { background: #1e4d35; }
+.user-profile-page .profile-secondary { border: 1px solid #dfe4d7; background: transparent; color: #738267; }
+.profile-success { display: inline-flex; align-items: center; gap: 6px; color: #397a53; }
+.profile-error { margin-top: 16px; padding: 14px; border: 1px solid #f1d9d0; border-radius: 10px; background: #fff2ed; color: #9a4c39; font-size: 13px; line-height: 1.8; }
+.profile-state { padding: 60px 24px; text-align: center; }
+.profile-state > svg { font-size: 28px; color: #6f8960; margin-bottom: 18px; }
+.profile-state h2 { font-size: 19px; font-weight: 650; margin-bottom: 16px; }
+.profile-state p { color: #7b8971; font-size: 13px; line-height: 1.8; }
+.profile-state button, .vehicle-photo-placeholder button { background: #edf3e7; color: #4b703f; border-color: #dfe7d6; font-size: 12px; }
+.user-profile-page :is(button,input,textarea):disabled { opacity: .5; cursor: not-allowed; }
+.user-profile-page fieldset:disabled .vehicle-photo-upload { opacity: .6; cursor: wait; }
+.user-profile-page :is(input,textarea,button,a):focus-visible, .vehicle-photo-upload:has(input:focus-visible), .profile-sharing input:focus-visible + .profile-switch { outline: 3px solid #94b784 !important; outline-offset: 3px; }
+@media (max-width: 1000px) {
+  .profile-layout { grid-template-columns: 210px minmax(0, 1fr); gap: 20px; }
+  .profile-card { padding: 22px; }
+  .profile-topbar, .profile-shell { width: calc(100% - 40px); }
+  .vehicle-details-grid { grid-template-columns: 1fr; gap: 20px; }
+  .profile-save-bar { flex-wrap: wrap; }
+  .profile-save-actions { margin-left: auto; }
+}
+@media (max-width: 720px) {
+  .profile-topbar { min-height: 72px; }
+  .profile-header-actions { gap: 14px; }
+  .profile-brand > span { font-size: 20px; }
+  .profile-brand img { width: 27px; height: 34px; }
+  .profile-back { font-size: 11px; gap: 4px; }
+  .profile-shell { padding: 28px 0 32px; }
+  .profile-intro { margin-bottom: 22px; }
+  .profile-intro h1 { font-size: 30px; }
+  .profile-layout { grid-template-columns: 1fr; gap: 20px; }
+  .profile-sidebar { gap: 16px; }
+  .profile-identity { display: grid; grid-template-columns: 44px minmax(0, 1fr); column-gap: 14px; align-items: center; text-align: left; padding: 20px; border-radius: 16px; }
+  .profile-avatar { grid-row: span 2; width: 44px; height: 44px; border-radius: 14px; font-size: 21px; margin: 0; }
+  .profile-identity h2 { margin: 0 0 4px; font-size: 16px; }
+  .profile-identity p { font-size: 11px; }
+  .profile-identity-label { grid-column: span 2; justify-content: flex-start; margin-top: 16px; padding-top: 14px; }
+  .profile-privacy { display: none; }
+  .vehicle-details-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+  .profile-save-bar { gap: 16px; }
+  .profile-save-actions { width: 100%; }
+  .profile-save-actions > button { flex: 1; }
+}
+@media (max-width: 440px) {
+  .profile-topbar, .profile-shell { width: calc(100% - 32px); }
+  .profile-card { padding: 20px 16px; border-radius: 16px; }
+  .profile-section-heading h2 { font-size: 18px; }
+  .profile-badge { padding: 5px 7px; font-size: 10px; }
+  .vehicle-details-grid { grid-template-columns: 1fr; }
+  .vehicle-photo-grid { gap: 10px; }
+  .vehicle-photo-card { padding: 10px; }
+  .vehicle-photo-heading { flex-wrap: wrap; gap: 4px; }
+  .vehicle-photo-preview { aspect-ratio: 1; }
+  .vehicle-photo-placeholder { padding: 6px; gap: 6px; }
+  .vehicle-photo-placeholder > span { font-size: 10px; }
+  .vehicle-photo-placeholder > small { font-size: 9px; }
+  .vehicle-photo-actions { flex-wrap: wrap; gap: 4px; }
+  .vehicle-photo-upload { flex-basis: 100%; min-height: 40px; }
+  .vehicle-photo-actions > button { margin-left: auto; }
+  .profile-sharing { gap: 10px; }
+  .profile-sharing-icon { display: none; }
+  .profile-brand { gap: 6px; }
+  .profile-header-actions { gap: 10px; }
+  .profile-back > svg { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .profile-switch, .profile-switch::after { transition: none; }
+}

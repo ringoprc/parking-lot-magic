@@ -55,7 +55,7 @@ export default function AdminAccountsPage({ apiBase }) {
       <section className="accounts-hero">
         <span className="accounts-kicker">後台管理中心 / ACCOUNTS</span>
         <h1>帳號管理</h1>
-        <p>管理團隊成員的後台存取權限。</p>
+        <p>管理帳號的後台存取權限，並查看用戶的車型回報。</p>
         <div className="accounts-role-notes"><span>管理員 · 可設定帳號權限</span><span>內勤 · 可查看帳號列表</span></div>
       </section>
       <section className="accounts-panel" aria-labelledby="accounts-list-title">
@@ -68,13 +68,14 @@ export default function AdminAccountsPage({ apiBase }) {
         </form>
         {error && <div className="accounts-error" role="alert">{error} <button onClick={() => setRevision(value => value + 1)}>重試</button></div>}
         <div className="account-table"><table aria-busy={busy}>
-          <thead><tr><th>帳號</th><th>角色與權限</th><th>最近登入（台北時間）</th></tr></thead>
+          <thead><tr><th>帳號</th><th>角色與權限</th><th>車型回報</th><th>最近登入（台北時間）</th></tr></thead>
           <tbody>{accounts.map(account => <tr key={account._id}>
             <td><div className="accounts-person"><span className="accounts-avatar" aria-hidden="true">{(account.name || account.email || '?').slice(0, 1).toUpperCase()}</span><div><strong>{account.name || '—'}</strong>{account._id === user?.id && <span className="accounts-self">你</span>}<small>{account.email}</small></div></div></td>
             <td>{canEditRoles ? <AccountRoleDropdown label={`${account.email} 的角色`} value={account.role || 'none'} disabled={!!saving || busy || account._id === user?.id}
               onChange={role => changeRole(account, role)} /> : <span className={`accounts-role accounts-role-${account.role || 'none'}`}>{roleLabels[account.role] || '未授權'}</span>}{saving === account._id && <small role="status">儲存中…</small>}</td>
+            <td className="accounts-model-report">{account.modelReport ? <><span className="accounts-report-pending">待重新確認</span><strong>{account.modelReport.plate} · {account.modelReport.vehicleModel}</strong><p>{account.modelReport.note || '用戶未補充說明'}</p><small>{new Date(account.modelReport.reportedAt).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}</small></> : <span className="accounts-report-empty">無待處理回報</span>}</td>
             <td className="accounts-date">{account.lastLoginAt ? new Date(account.lastLoginAt).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }) : '—'}</td>
-          </tr>)}{!accounts.length && <tr><td colSpan="3" className="accounts-empty"><span aria-hidden="true">◎</span><strong>{busy ? '載入中…' : canManage ? '沒有符合條件的帳號' : '尚未取得後台權限'}</strong><p>{canManage ? '請確認搜尋條件，或請新成員先完成 Google 登入。' : '登入獲授權的 Google 帳號後，即可查看團隊帳號資訊。'}</p></td></tr>}</tbody>
+          </tr>)}{!accounts.length && <tr><td colSpan="4" className="accounts-empty"><span aria-hidden="true">◎</span><strong>{busy ? '載入中…' : canManage ? '沒有符合條件的帳號' : '尚未取得後台權限'}</strong><p>{canManage ? '請確認搜尋條件，或請新成員先完成 Google 登入。' : '登入獲授權的 Google 帳號後，即可查看團隊帳號資訊。'}</p></td></tr>}</tbody>
         </table></div>
         <footer><span>第 {page} 頁</span><div><button disabled={busy || page <= 1} onClick={() => setPage(value => value - 1)}>‹ 上一頁</button><button disabled={busy || page * 50 >= total} onClick={() => setPage(value => value + 1)}>下一頁 ›</button></div></footer>
       </section>

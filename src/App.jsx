@@ -1,5 +1,6 @@
 import AdminAccess from "./components/AdminAccess";
 import AdminAccountsPage from "./pages/AdminAccountsPage";
+import UserProfilePage from "./pages/UserProfilePage";
 // frontend/src/App.jsx
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLots } from "./hooks/useLots";
@@ -184,6 +185,7 @@ export default function App() {
   const [showNumberedPinsOnly, setShowNumberedPinsOnly] = useState(true);
 
   const [myPos, setMyPos] = useState(null); // {lat,lng}
+  const [locateRequest, setLocateRequest] = useState(0);
   const [myAcc, setMyAcc] = useState(null); // meters
   const afterLocateRef = useRef(null);
 
@@ -348,6 +350,7 @@ export default function App() {
   const { locating: locatingMe, requestMyLocation } = useMyLocationAction({
     onSuccess: ({ lat, lng, accuracy }) => {
       setMyPos({ lat, lng });
+      setLocateRequest(value => value + 1);
       setMyAcc(accuracy);
 
       // run one-shot post-locate action (if any)
@@ -597,6 +600,7 @@ export default function App() {
   else if (showWorkers) page = <AdminWorkerStatusPage apiBase={import.meta.env.DEV ? apiBase : ""} />;
   else if (showAnalytics) page = <AdminAnalyticsPage apiBase={import.meta.env.DEV ? apiBase : ""} />;
   else if (showAdminMenu) page = <AdminMenuPage apiBase={import.meta.env.DEV ? apiBase : ""} />;
+  else if (searchParams.get("profile") === "1") page = <UserProfilePage apiBase={apiBase} />;
   else page = (
     <APIProvider
       apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
@@ -819,6 +823,7 @@ export default function App() {
               triggerLotPulse={triggerLotPulse}
               locatingMe={locatingMe}
               requestMyLocation={requestMyLocationForMapFly}
+              locateRequest={locateRequest}
               myPos={myPos}
               myAcc={myAcc}
             />

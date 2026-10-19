@@ -51,6 +51,9 @@
 .google-account-error { display: flex; align-items: center; gap: 4px; max-width: 280px; color: #a83228; font-size: 12px; }
 .account-privacy-link { display: inline-block; color: #737d77; font-size: 11px; font-weight: 400; text-decoration: none; text-underline-offset: 3px; }
 .account-privacy-link:hover { color: #526c5e; text-decoration: underline; }
+.account-profile-link { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px; margin-top: 14px; background: #edf4ed; border: 1px solid #dde8dc; border-radius: 10px; color: #356346; font-size: 13px; text-decoration: none; }
+.account-profile-link > span { display: inline-flex; align-items: center; gap: 8px; }
+.account-profile-link:hover { background: #e2eddf; color: #285336; }
 .account-privacy-link:focus-visible { outline: 2px solid #4285f4; outline-offset: 3px; }
 .account-panel-heading strong { padding-right: 88px; }
 .account-privacy-link {

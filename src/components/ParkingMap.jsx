@@ -11,6 +11,8 @@ import { FaCircle } from "react-icons/fa";
 import { TiLocationArrow } from "react-icons/ti";
 
 import MapViewPreference from "./MapViewPreference";
+import MapSharingToggle from "./MapSharingToggle";
+import SharedVehicleMarkers from "./SharedVehicleMarkers";
 import ParkingLotInfoWindow from "./ParkingLotInfoWindow";
 import LotBottomSheet from "./LotBottomSheet";
 import {
@@ -558,6 +560,7 @@ export default function ParkingMap({
   pulseLotId,
   triggerLotPulse,
   locatingMe,              // boolean from parent
+  locateRequest,
   requestMyLocation,       // function from parent (does geolocation)
   myPos,
   myAcc,
@@ -567,7 +570,18 @@ export default function ParkingMap({
   const map = useMap();
   const adjustedForIdRef = useRef(null);
   const [mapReady, setMapReady] = useState(false);
+  const [showOtherUsers, setShowOtherUsers] = useState(() => {
+    try { return localStorage.getItem('parkingji.showOtherUsers') !== 'false'; }
+    catch { return true; }
+  });
   const didSetReadyRef = useRef(false);
+
+  function toggleOtherUsers() {
+    const next = !showOtherUsers;
+    setShowOtherUsers(next);
+    try { localStorage.setItem('parkingji.showOtherUsers', String(next)); }
+    catch { /* Keep the control usable when browser storage is unavailable. */ }
+  }
 
   const isMobile = window.matchMedia?.("(max-width: 900px)")?.matches ?? false;
   const flyToOffset = isMobile ? -0.002 : 0.002;
@@ -617,6 +631,7 @@ export default function ParkingMap({
         )}
 
         <MapViewPreference user={accountUser} apiBase={apiBase} saveRef={saveMapViewRef} />
+        {showOtherUsers && accountUser?.id && <SharedVehicleMarkers key={accountUser.id} user={accountUser} apiBase={apiBase} />}
 
         <VisibleParkingMarkers
           lots={lots}
@@ -640,6 +655,7 @@ export default function ParkingMap({
 
       </Map>
 
+      <div className="map-top-left-controls">
       <button
         type="button"
         className={`map-number-filter${showNumberedOnly ? " is-active" : ""}`}
@@ -660,6 +676,22 @@ export default function ParkingMap({
         </strong>
       </button>
 
+      </div>
+      <div className="map-bottom-left-controls" role="group" aria-label="位置顯示設定">
+        <MapSharingToggle key={accountUser?.id || 'guest'} user={accountUser} apiBase={apiBase} locateRequest={locateRequest} />
+        <div className="map-sharing-control">
+          <button type="button"
+            className={`map-number-filter map-sharing-toggle${showOtherUsers && accountUser?.id ? ' is-active' : ''}`}
+            role="switch" aria-checked={!!accountUser?.id && showOtherUsers}
+            aria-label="顯示其他用戶的位置" aria-describedby={!accountUser?.id ? 'map-other-users-hint' : undefined}
+            disabled={!accountUser?.id} onClick={toggleOtherUsers}>
+            <span className="map-number-filter-dot" aria-hidden="true" />
+            <span className="map-number-filter-label">顯示其他用戶的位置</span>
+            <span className="map-sharing-switch" aria-hidden="true" />
+          </button>
+          {!accountUser?.id && <span className="map-sharing-hint" id="map-other-users-hint">登入後可查看其他用戶的位置</span>}
+        </div>
+      </div>
       {/* Locate control (bottom-right) */}
       <button
         type="button"

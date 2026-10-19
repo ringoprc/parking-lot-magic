@@ -92,19 +92,7 @@
 .vehicle-photo-error { margin: 10px 0 0; color: #a44532; font-size: 11px; line-height: 1.6; }
 .profile-photo-hint { display: flex; align-items: flex-start; gap: 6px; margin: 16px 0 0; font-size: 11px; color: #919a85; line-height: 1.8; }
 .profile-photo-hint > svg { flex: 0 0 12px; margin-top: 4px; }
-.profile-sharing { display: flex; align-items: center; gap: 14px; cursor: pointer; position: relative; }
-.profile-sharing-icon { flex-shrink: 0; display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid #e4ebdd; border-radius: 12px; background: #f3f6ef; color: #6f8960; font-size: 18px; }
-.profile-sharing-copy { flex: 1; }
-.profile-sharing-copy strong { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; }
-.profile-sharing-copy > span { display: block; color: #87917c; font-size: 11px; line-height: 1.8; }
-.profile-sharing > input { position: absolute; right: 0; width: 44px; height: 28px; opacity: 0; cursor: pointer; }
-.profile-switch { display: inline-flex; align-items: center; width: 44px; height: 26px; padding: 3px; flex-shrink: 0; border-radius: 999px; background: #dce2d5; pointer-events: none; transition: background .15s; }
-.profile-switch::after { content: ''; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px #0002; transition: transform .15s; }
-.profile-sharing input:checked + .profile-switch { background: #397a53; }
-.profile-sharing input:checked + .profile-switch::after { transform: translateX(18px); }
 .profile-notice { margin: 18px 0 0; padding: 12px 14px; border-radius: 8px; background: #f7f8f3; color: #889079; font-size: 11px; line-height: 1.9; }
-.profile-save-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 0 0; font-size: 12px; color: #869078; }
-.profile-save-actions { display: flex; gap: 10px; }
 .user-profile-page .profile-primary, .user-profile-page .profile-secondary { display: inline-flex; justify-content: center; align-items: center; gap: 7px; min-height: 44px; padding: 10px 20px; border-radius: 10px; font-size: 13px; white-space: nowrap; }
 .user-profile-page .profile-primary { color: #fff; border: 1px solid #285f43; background: #285f43; font-weight: 600; }
 .user-profile-page .profile-primary:hover:not(:disabled) { background: #1e4d35; }
@@ -118,14 +106,12 @@
 .profile-state button, .vehicle-photo-placeholder button { background: #edf3e7; color: #4b703f; border-color: #dfe7d6; font-size: 12px; }
 .user-profile-page :is(button,input,textarea):disabled { opacity: .5; cursor: not-allowed; }
 .user-profile-page fieldset:disabled .vehicle-photo-upload { opacity: .6; cursor: wait; }
-.user-profile-page :is(input,textarea,button,a):focus-visible, .vehicle-photo-upload:has(input:focus-visible), .profile-sharing input:focus-visible + .profile-switch { outline: 3px solid #94b784 !important; outline-offset: 3px; }
+.user-profile-page :is(input,textarea,button,a):focus-visible, .vehicle-photo-upload:has(input:focus-visible) { outline: 3px solid #94b784 !important; outline-offset: 3px; }
 @media (max-width: 1000px) {
   .profile-layout { grid-template-columns: 210px minmax(0, 1fr); gap: 20px; }
   .profile-card { padding: 22px; }
   .profile-topbar, .profile-shell { width: calc(100% - 40px); }
   .vehicle-details-grid { grid-template-columns: 1fr; gap: 20px; }
-  .profile-save-bar { flex-wrap: wrap; }
-  .profile-save-actions { margin-left: auto; }
 }
 @media (max-width: 720px) {
   .profile-topbar { min-height: 72px; }
@@ -145,9 +131,6 @@
   .profile-identity-label { grid-column: span 2; justify-content: flex-start; margin-top: 16px; padding-top: 14px; }
   .profile-privacy { display: none; }
   .vehicle-details-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
-  .profile-save-bar { gap: 16px; }
-  .profile-save-actions { width: 100%; }
-  .profile-save-actions > button { flex: 1; }
 }
 @media (max-width: 440px) {
   .profile-topbar, .profile-shell { width: calc(100% - 32px); }
@@ -165,12 +148,16 @@
   .vehicle-photo-actions { flex-wrap: wrap; gap: 4px; }
   .vehicle-photo-upload { flex-basis: 100%; min-height: 40px; }
   .vehicle-photo-actions > button { margin-left: auto; }
-  .profile-sharing { gap: 10px; }
-  .profile-sharing-icon { display: none; }
   .profile-brand { gap: 6px; }
   .profile-header-actions { gap: 10px; }
   .profile-back > svg { display: none; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .profile-switch, .profile-switch::after { transition: none; }
-}
+
+.vehicle-plate-submit { margin-top: 14px; }
+.vehicle-plate-submit .profile-primary { width: 100%; }
+.profile-field .profile-success { color: #397a53; }
+.vehicle-photo-status { margin: 10px 0 0; color: #397a53; font-size: 11px; line-height: 1.6; }
+.vehicle-photo-notice { margin: -6px 0 18px; }
+.vehicle-photo-upload:has(input:disabled) { opacity: .6; cursor: not-allowed; }
+.user-profile-page .vehicle-photo-upload input:disabled { opacity: 0; }
+.user-profile-page .profile-inline-reload { display: inline; padding: 0; margin-left: 8px; border: 0; border-radius: 0; background: transparent; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 3px; }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { FiArrowLeft, FiArrowUpRight, FiCamera, FiCheck, FiFlag, FiLock, FiMapPin, FiRefreshCw, FiShield, FiUser, FiX } from 'react-icons/fi';
+import { FiArrowLeft, FiArrowUpRight, FiCamera, FiCheck, FiFlag, FiLock, FiRefreshCw, FiShield, FiUser, FiX } from 'react-icons/fi';
 import GoogleAccount from '../components/GoogleAccount';
 import { normalizePlate, prepareVehiclePhoto, VEHICLE_PHOTO_SLOTS } from '../utils/vehiclePhoto';
 import logo from '../assets/logo4.png';
@@ -17,7 +17,7 @@ async function profileRequest(url, options = {}) {
   return result.profile;
 }
 
-function PhotoPreview({ file, url, label }) {
+function PhotoPreview({ url, label }) {
   const [source, setSource] = useState('');
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -26,12 +26,9 @@ function PhotoPreview({ file, url, label }) {
     let objectUrl;
     async function load() {
       try {
-        let blob = file;
-        if (!blob) {
-          const response = await fetch(url, { credentials: 'include', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]) });
-          if (!response.ok) throw new Error('photo');
-          blob = await response.blob();
-        }
+        const response = await fetch(url, { credentials: 'include', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]) });
+        if (!response.ok) throw new Error('photo');
+        const blob = await response.blob();
         if (controller.signal.aborted) return;
         objectUrl = URL.createObjectURL(blob);
         setSource(objectUrl); setError(false);
@@ -39,7 +36,7 @@ function PhotoPreview({ file, url, label }) {
     }
     load();
     return () => { controller.abort(); if (objectUrl) URL.revokeObjectURL(objectUrl); };
-  }, [file, url, attempt]);
+  }, [url, attempt]);
   if (error) return <div className="vehicle-photo-placeholder"><span>照片載入失敗</span><button type="button" onClick={() => setAttempt(value => value + 1)}>重試</button></div>;
   return source ? <img src={source} alt={`${label}車輛照片`} onError={() => setError(true)} /> : <span role="status">載入照片中…</span>;
 }
@@ -47,9 +44,6 @@ function PhotoPreview({ file, url, label }) {
 function VehicleForm({ user, base, beforeLogoutRef }) {
   const [saved, setSaved] = useState(null);
   const [plate, setPlate] = useState('');
-  const [shareOnMap, setShareOnMap] = useState(false);
-  const [files, setFiles] = useState({});
-  const [removed, setRemoved] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [error, setError] = useState('');
@@ -61,15 +55,17 @@ function VehicleForm({ user, base, beforeLogoutRef }) {
   const [reportError, setReportError] = useState('');
   const [reporting, setReporting] = useState(false);
   const [photoError, setPhotoError] = useState({});
+  const [photoSuccess, setPhotoSuccess] = useState({});
   const [attempt, setAttempt] = useState(0);
   const active = useRef(true);
   const working = useRef(false);
   const endpoint = `${base}/api/profile`;
-  const dirty = !!saved && (normalizePlate(plate) !== saved.plate || shareOnMap !== saved.shareOnMap || Object.keys(files).length > 0 || removed.length > 0);
+  const dirty = !!saved && normalizePlate(plate) !== saved.plate;
   const busy = saving || !!preparing || reporting;
   const unsaved = dirty || !!reportNote.trim();
   const plateChanged = !!saved?.plate && normalizePlate(plate) !== saved.plate;
-  const photoCount = VEHICLE_PHOTO_SLOTS.filter(({ key }) => files[key] || (saved?.photos[key] && !removed.includes(key))).length;
+  const photoCount = VEHICLE_PHOTO_SLOTS.filter(({ key }) => saved?.photos[key]).length;
+  const photosLocked = !saved?.plate || dirty;
 
   useEffect(() => {
     active.current = true;
@@ -85,8 +81,8 @@ function VehicleForm({ user, base, beforeLogoutRef }) {
           signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]),
         });
         if (controller.signal.aborted) return;
-        setSaved(profile); setPlate(profile.plate); setShareOnMap(profile.shareOnMap);
-        setFiles({}); setRemoved([]); setError(''); setSuccess(''); setPhotoError({});
+        setSaved(profile); setPlate(profile.plate);
+        setError(''); setSuccess(''); setPhotoError({}); setPhotoSuccess({});
         setReportOpen(false); setReportNote(''); setReportError('');
       } catch (err) { if (!controller.signal.aborted) setLoadError(err.message); }
       finally { if (!controller.signal.aborted) setLoading(false); }
@@ -118,23 +114,34 @@ function VehicleForm({ user, base, beforeLogoutRef }) {
     };
   }, [unsaved, busy, beforeLogoutRef]);
 
-  async function choosePhoto(key, file) {
-    if (!file || working.current) return;
-    working.current = true;
-    setPreparing(key); setSuccess(''); setError(''); setPhotoError(previous => ({ ...previous, [key]: '' }));
-    try {
-      const photo = await prepareVehiclePhoto(file);
-      if (!active.current) return;
-      setFiles(previous => ({ ...previous, [key]: photo }));
-      setRemoved(previous => previous.filter(slot => slot !== key));
-    } catch (err) { if (active.current) setPhotoError(previous => ({ ...previous, [key]: err.message })); }
-    finally { working.current = false; if (active.current) setPreparing(''); }
+  function updateBody(submittedPlate = saved.plate) {
+    const body = new FormData();
+    body.set('userId', user.id); body.set('plate', submittedPlate);
+    // The profile API requires the stored preference and revision. This form never edits it.
+    body.set('shareOnMap', String(saved.shareOnMap)); body.set('revision', String(saved.revision));
+    body.set('removePhotos', '[]');
+    return body;
   }
 
-  function removePhoto(key) {
-    setFiles(previous => { const next = { ...previous }; delete next[key]; return next; });
-    if (saved.photos[key]) setRemoved(previous => [...new Set([...previous, key])]);
-    setPhotoError(previous => ({ ...previous, [key]: '' })); setSuccess(''); setError('');
+  async function updatePhoto(key, file) {
+    if (working.current || photosLocked) return;
+    working.current = true;
+    setPreparing(key);
+    setPhotoError(previous => ({ ...previous, [key]: '' }));
+    setPhotoSuccess(previous => ({ ...previous, [key]: '' }));
+    try {
+      const body = updateBody();
+      if (file) {
+        const photo = await prepareVehiclePhoto(file);
+        if (!active.current) return;
+        body.set(key, photo);
+      } else body.set('removePhotos', JSON.stringify([key]));
+      const profile = await profileRequest(endpoint, { method: 'POST', headers: { 'X-Requested-With': 'ParkingJi' }, body, signal: AbortSignal.timeout(60000) });
+      if (!active.current) return;
+      setSaved(profile);
+      setPhotoSuccess(previous => ({ ...previous, [key]: file ? '照片已儲存。' : '照片已移除。' }));
+    } catch (err) { if (active.current) setPhotoError(previous => ({ ...previous, [key]: err.message })); }
+    finally { working.current = false; if (active.current) setPreparing(''); }
   }
 
   async function save(event) {
@@ -145,19 +152,15 @@ function VehicleForm({ user, base, beforeLogoutRef }) {
       setError('請輸入 2–12 個英文字母、數字或連字號的車牌。'); return;
     }
     working.current = true; setSaving(true); setError(''); setSuccess('');
-    const body = new FormData();
-    body.set('userId', user.id); body.set('plate', normalized);
-    body.set('shareOnMap', String(shareOnMap)); body.set('revision', String(saved.revision));
-    body.set('removePhotos', JSON.stringify(removed));
-    for (const [key, file] of Object.entries(files)) body.set(key, file);
+    const body = updateBody(normalized);
     try {
       const profile = await profileRequest(endpoint, { method: 'POST', headers: { 'X-Requested-With': 'ParkingJi' }, body, signal: AbortSignal.timeout(60000) });
       if (!active.current) return;
-      setSaved(profile); setPlate(profile.plate); setShareOnMap(profile.shareOnMap); setFiles({}); setRemoved([]);
+      setSaved(profile); setPlate(profile.plate); setPhotoSuccess({});
       if (profile.plate !== saved.plate || profile.vehicleModel !== saved.vehicleModel) {
         setReportOpen(false); setReportNote(''); setReportError('');
       }
-      setSuccess('用戶資料已儲存。');
+      setSuccess('車牌號碼已送出。');
     } catch (err) { if (active.current) setError(err.name === 'TimeoutError' ? '儲存逾時，請重新載入確認資料後再試。' : err.message); }
     finally { working.current = false; if (active.current) setSaving(false); }
   }
@@ -188,11 +191,13 @@ function VehicleForm({ user, base, beforeLogoutRef }) {
     <fieldset disabled={busy}>
       <section className="profile-card" aria-labelledby="vehicle-details-title">
         <div className="profile-section-heading"><div><span className="profile-step">01 / MY VEHICLE</span><h2 id="vehicle-details-title">我的車輛</h2></div><span className={`profile-badge${saved.vehicleModel && !plateChanged && !saved.modelReport ? ' is-confirmed' : ''}`}>{plateChanged ? '車型待重新確認' : saved.modelReport ? '車型回報待確認' : saved.vehicleModel ? '車型已設定' : saved.plate ? '待內勤確認車型' : '尚未建立車輛資料'}</span></div>
-        <p className="profile-description">填寫你的車牌，並提供這輛車的照片，協助我們確認車輛確實屬於你。</p>
         <div className="vehicle-details-grid">
-          <div className="profile-field"><label htmlFor="vehicle-plate">車牌號碼 <span>必填</span></label><input id="vehicle-plate" name="plate" type="text" required maxLength={20} placeholder="例如 ABC-1234" autoComplete="off" autoCapitalize="characters" spellCheck={false} aria-describedby="plate-hint"
-            value={plate} onChange={event => { setPlate(event.target.value); setSuccess(''); }} onBlur={() => setPlate(normalizePlate(plate))} /><p id="plate-hint">英文、數字及連字號，英文會自動轉為大寫。</p></div>
-          <div className="profile-field"><label htmlFor="vehicle-model">車子型號 <span><FiLock /> 由內勤設定</span></label><input id="vehicle-model" value={plateChanged ? '' : saved.vehicleModel} placeholder="等待內勤確認" readOnly aria-describedby="model-hint" /><p id="model-hint">由內勤依車牌查詢並設定；若型號不對，可以回報。</p>
+          <div className="profile-field"><label htmlFor="vehicle-plate">車牌號碼 <span>必填</span></label><input id="vehicle-plate" name="plate" type="text" required maxLength={20} placeholder="例如 ABC-1234" autoComplete="off" autoCapitalize="characters" spellCheck={false}
+            value={plate} onChange={event => { setPlate(event.target.value); setSuccess(''); }} onBlur={() => setPlate(normalizePlate(plate))} /></div>
+          <div className="profile-field"><label htmlFor="vehicle-model">車子型號 <span><FiLock /> 由我們設定</span></label><input id="vehicle-model" value={plateChanged ? '' : saved.vehicleModel} placeholder="等待內勤確認" readOnly aria-describedby="model-hint" /><p id="model-hint">我們會依車牌查詢並設定你的車子型號。</p>
+            <div className="vehicle-plate-submit"><button type="submit" className="profile-primary" disabled={busy || !dirty}><FiCheck />{saving ? '送出中…' : '送出車牌號碼'}</button></div>
+            {success && <p className="profile-success" role="status"><FiCheck />{success}</p>}
+            {error && <div className="profile-error" role="alert">{error}<button type="button" className="profile-inline-reload" onClick={reload}>重新載入</button></div>}
             {saved.vehicleModel && !plateChanged && !saved.modelReport && <button type="button" className="vehicle-model-report-link" aria-expanded={reportOpen} aria-controls="vehicle-model-report" onClick={() => { setReportOpen(value => !value); setReportError(''); }}><FiFlag />{reportOpen ? '收合回報' : '回報車型有誤'}</button>}
           </div>
         </div>
@@ -201,26 +206,29 @@ function VehicleForm({ user, base, beforeLogoutRef }) {
           <h3 id="model-report-title">回報車型有誤</h3><p>回報車牌 <strong>{saved.plate}</strong> 的車型「{saved.vehicleModel}」。送出後由內勤重新確認，你的車型不會立即變更。</p>
           <label htmlFor="model-report-note">補充說明 <span>選填</span></label><textarea id="model-report-note" maxLength={500} rows={3} placeholder="例如：我的車是 Toyota Yaris，不是 Corolla。也可以補充年份或其他資訊。" value={reportNote} onChange={event => { setReportNote(event.target.value); setReportError(''); }} />
           <div className="vehicle-model-report-actions"><small>{reportNote.length} / 500 字</small><button type="button" className="profile-secondary" onClick={() => { setReportOpen(false); setReportNote(''); setReportError(''); }}>取消</button><button type="button" className="profile-primary" disabled={dirty} onClick={submitModelReport}>{reporting ? '送出中…' : '送出回報'}</button></div>
-          {dirty && <p className="profile-notice">請先儲存目前的車輛資料變更，再送出回報。</p>}
+          {dirty && <p className="profile-notice">請先送出目前的車牌號碼，再送出回報。</p>}
           {reportError && <p className="profile-error" role="alert">{reportError}</p>}
         </div>}
         {plateChanged && <p className="profile-notice">更換車牌後，車型需重新確認。請一併確認下方照片是否為這輛車。</p>}
 
       <div className="vehicle-ownership-photos" role="group" aria-labelledby="vehicle-photos-title">
-        <div className="profile-section-heading"><div><h3 id="vehicle-photos-title">這輛車的照片 <span className="profile-optional">選填</span></h3><span className="vehicle-photo-plate">{normalizePlate(plate) ? `對應車牌：${normalizePlate(plate)}` : '對應上方填寫的車牌'}</span></div><span className="profile-photo-count">{photoCount} <span>/ 4 張</span></span></div>
+        <div className="profile-section-heading"><div><h3 id="vehicle-photos-title">這輛車的照片 <span className="profile-optional">選填</span></h3><span className="vehicle-photo-plate">{saved.plate ? `對應車牌：${saved.plate}` : '請先送出車牌號碼'}</span></div><span className="profile-photo-count">{photoCount} <span>/ 4 張</span></span></div>
         <p className="vehicle-ownership-purpose"><FiShield /><span>為什麼需要照片？<strong>協助確認這個車牌的車輛確實屬於你。</strong>照片僅供我們確認，不會公開給其他用戶。照片提供不完整時，我們可能無法確認並登錄你的車輛型號。</span></p>
-        <p className="profile-description">請拍攝你的車輛左前、右前、左後、右後四個角度，讓車牌號碼與車身清楚入鏡。照片為選填，可先儲存車牌，之後再補上。</p>
+        <p className="profile-description">請拍攝你的車輛左前、右前、左後、右後四個角度，讓車牌號碼與車身清楚入鏡。照片為選填，請先送出車牌號碼，之後可隨時補上。選取或移除照片後會立即儲存。</p>
+        {photosLocked && <p className="profile-notice vehicle-photo-notice">請先送出車牌號碼，再上傳或移除照片。</p>}
         <div className="vehicle-photo-grid">
           {VEHICLE_PHOTO_SLOTS.map(({ key, label, hint }, index) => {
-            const hasPhoto = files[key] || (saved.photos[key] && !removed.includes(key));
+            const hasPhoto = !!saved.photos[key];
             const url = `${endpoint}/photos/${key}?${new URLSearchParams({ userId: user.id, v: saved.photos[key] || '' })}`;
             return <div key={key} className={`vehicle-photo-card${hasPhoto ? ' has-photo' : ''}`}>
-              <div className="vehicle-photo-heading"><strong><span>0{index + 1}</span>{label}</strong>{hasPhoto && <span className="vehicle-photo-state">{files[key] ? '待儲存' : <><FiCheck /> 已上傳</>}</span>}</div>
+              <div className="vehicle-photo-heading"><strong><span>0{index + 1}</span>{label}</strong>{hasPhoto && <span className="vehicle-photo-state"><FiCheck /> 已上傳</span>}</div>
               <div className="vehicle-photo-preview">
-                {hasPhoto ? <PhotoPreview key={files[key] ? `${key}-draft` : `${key}-${saved.photos[key]}`} file={files[key]} url={url} label={label} /> : <div className="vehicle-photo-placeholder"><FiCamera size={27} /><span>{hint}</span><small>約 45° 拍攝，車牌需清楚入鏡</small></div>}
+                {hasPhoto ? <PhotoPreview key={`${key}-${saved.photos[key]}`} url={url} label={label} /> : <div className="vehicle-photo-placeholder"><FiCamera size={27} /><span>{hint}</span><small>約 45° 拍攝，車牌需清楚入鏡</small></div>}
               </div>
-              <div className="vehicle-photo-actions"><label className="vehicle-photo-upload"><input type="file" accept="image/jpeg,image/png,image/webp" aria-label={`${hasPhoto ? '更換' : '上傳'}${label}照片`} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; choosePhoto(key, file); }} /><FiCamera />{preparing === key ? '處理中…' : hasPhoto ? '更換照片' : '選擇照片'}</label>{hasPhoto && <button type="button" aria-label={`移除${label}照片`} onClick={() => removePhoto(key)}><FiX />移除</button>}</div>
-              {photoError[key] && <p className="vehicle-photo-error" role="alert">{photoError[key]}</p>}
+              <div className="vehicle-photo-actions"><label className="vehicle-photo-upload"><input type="file" accept="image/jpeg,image/png,image/webp" disabled={photosLocked} aria-label={`${hasPhoto ? '更換' : '上傳'}${label}照片`} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) updatePhoto(key, file); }} /><FiCamera />{preparing === key ? '儲存中…' : hasPhoto ? '更換照片' : '選擇照片'}</label>{hasPhoto && <button type="button" aria-label={`移除${label}照片`} disabled={photosLocked} onClick={() => updatePhoto(key, null)}><FiX />移除</button>}</div>
+              {preparing === key && <p className="vehicle-photo-status" role="status">正在儲存照片…</p>}
+              {photoSuccess[key] && <p className="vehicle-photo-status" role="status">{photoSuccess[key]}</p>}
+              {photoError[key] && <p className="vehicle-photo-error" role="alert">{photoError[key]}<button type="button" className="profile-inline-reload" onClick={reload}>重新載入</button></p>}
             </div>;
           })}
         </div>
@@ -228,17 +236,7 @@ function VehicleForm({ user, base, beforeLogoutRef }) {
       </div>
       </section>
 
-      <section className="profile-card" aria-labelledby="map-sharing-title">
-        <div className="profile-section-heading"><div><span className="profile-step">02 / PRIVACY</span><h2 id="map-sharing-title">地圖分享偏好</h2></div><span className="profile-badge">自由選擇</span></div>
-        <label className="profile-sharing"><span className="profile-sharing-icon"><FiMapPin /></span><span className="profile-sharing-copy"><strong>在地圖上分享位置與車型</strong><span>使用網頁地圖定位時，允許其他用戶看見我的位置與車型。</span></span><input type="checkbox" role="switch" checked={shareOnMap} aria-describedby="sharing-hint" onChange={event => { setShareOnMap(event.target.checked); setSuccess(''); }} /><span className="profile-switch" aria-hidden="true" /></label>
-        <p className="profile-notice" id="sharing-hint">預設關閉。儲存開啟後，回到地圖按定位並允許存取位置，即可向其他已登入用戶分享位置與車型。切到背景或離開地圖會停止分享；未更新的位置會在 60 秒內失效。車牌、照片與帳號資訊不會公開。</p>
-      </section>
     </fieldset>
-    <div className="profile-save-bar">
-      <div aria-live="polite">{success ? <span className="profile-success"><FiCheck />{success}</span> : <span>{preparing ? '正在處理照片…' : saving ? '正在儲存資料…' : dirty ? '有尚未儲存的變更' : '你的資料僅供帳號資料管理使用'}</span>}</div>
-      <div className="profile-save-actions"><button type="button" className="profile-secondary" disabled={busy} onClick={reload}>重新載入</button><button type="submit" className="profile-primary" disabled={busy || !dirty}><FiCheck />{saving ? '儲存中…' : '儲存資料'}</button></div>
-    </div>
-    {error && <div className="profile-error" role="alert">{error}</div>}
   </form>;
 }
 

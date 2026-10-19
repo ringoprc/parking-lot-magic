@@ -16,7 +16,7 @@ export default function ImageCropDialog({ file, slot, onCancel, onConfirm }) {
   const [center, setCenter] = useState({ x: 0.5, y: 0.5 });
   const [preview, setPreview] = useState("");
   const [device, setDevice] = useState("mobile");
-  const ratios = { original: image ? image.naturalWidth / image.naturalHeight : 1, banner: 240 / 95, landscape: 16 / 9, square: 1, portrait: 3 / 4 };
+  const ratios = { original: image ? image.naturalWidth / image.naturalHeight : 1, banner: 200 / 112, landscape: 16 / 9, square: 1, portrait: 3 / 4 };
   const ratio = ratios[ratioChoice];
   const crop = image ? getImageCrop(image.naturalWidth, image.naturalHeight, ratio, zoom, center) : null;
 
@@ -92,7 +92,7 @@ export default function ImageCropDialog({ file, slot, onCancel, onConfirm }) {
           <div className="image-crop-controls">
             <label>裁切比例 <select value={ratioChoice} disabled={busy || !image} onChange={(e) => { setRatioChoice(e.target.value); reset(); }}>
               <option value="original">原圖比例</option>
-              <option value="banner">資訊卡橫幅</option>
+              <option value="banner">資訊卡橫幅（200 × 112）</option>
               <option value="landscape">橫式 16:9</option>
               <option value="square">正方形 1:1</option>
               <option value="portrait">直式 3:4</option>

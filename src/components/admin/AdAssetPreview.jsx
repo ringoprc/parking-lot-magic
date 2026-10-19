@@ -22,7 +22,7 @@ export default function AdAssetPreview({ src, slot, title, device: controlledDev
     let content;
     if (slot === "bottomSheetExample" || slot === "entrancePhoto") {
       const entrance = slot === "entrancePhoto" ? image : '<div style="width:100%;height:116px;background:#eee"></div>';
-      const sponsor = slot === "bottomSheetExample" ? image : '<div style="width:100%;height:95px;background:#eee"></div>';
+      const sponsor = slot === "bottomSheetExample" ? image : '<div style="width:100%;height:112px;background:#eee"></div>';
       content = `<div style="${device === "desktop" ? "width:350px;padding:1px 20px 20px;" : "width:100%;"}"><div class="${prefix}-sheet-hero"><div class="${prefix}-sheet-hero-img-div">${entrance}</div><div class="${prefix}-sheet-sponsor-img-div">${sponsor}</div></div></div>`;
     } else {
       const coupon = slot === "coupon";

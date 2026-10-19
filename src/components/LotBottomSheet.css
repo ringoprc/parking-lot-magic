@@ -136,7 +136,10 @@
 
 @media (max-width: 900px) {
   .vl-sheet-sponsor-img-div {
-    height: 110px;
+    width: min(200px, calc(100vw - 132px));
+    max-width: 200px;
+    flex-shrink: 0;
+    height: auto;
   }
 }
 
@@ -151,7 +154,9 @@
 @media (max-width: 900px) {
   .vl-sheet-sponsor-img {
     cursor: pointer;
-    height: 95px;
+    height: auto;
+    aspect-ratio: 200 / 112;
+    box-sizing: border-box;
     border-radius: 10px;
     border: 1px solid #ddd;
   }

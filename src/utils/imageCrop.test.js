@@ -7,15 +7,15 @@ test("original-ratio coupons retain the entire source", () => {
 });
 
 test("portrait source can be framed as a banner without stretching", () => {
-  const crop = getImageCrop(1200, 1600, 2.5);
-  assert.deepEqual(crop, { x: 0, y: 560, width: 1200, height: 480 });
+  const crop = getImageCrop(1200, 1600, 200 / 112);
+  assert.deepEqual(crop, { x: 0, y: 464, width: 1200, height: 672 });
   const center = moveImageCrop(1200, 1600, crop, 0, -10000);
-  assert.equal(getImageCrop(1200, 1600, 2.5, 1, center).y, 0);
+  assert.equal(getImageCrop(1200, 1600, 200 / 112, 1, center).y, 0);
 });
 
 test("dragging and zooming never expose pixels outside the source", () => {
   for (const [w, h] of [[1200, 1600], [2400, 600], [300, 300]]) {
-    for (const ratio of [0.75, 1, 16 / 9, 240 / 95]) {
+    for (const ratio of [0.75, 1, 16 / 9, 200 / 112]) {
       for (const zoom of [1, 1.3, 4]) {
         const crop = getImageCrop(w, h, ratio, zoom);
         for (const dx of [-10000, 10000]) {

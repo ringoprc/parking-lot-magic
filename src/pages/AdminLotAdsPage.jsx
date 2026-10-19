@@ -4,6 +4,8 @@ import { Fragment, memo, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Spinner } from "reactstrap";
 import "./AdminLotAdsPage.css";
+import AdAssetPreview from "../components/admin/AdAssetPreview";
+import ImageCropDialog from "../components/admin/ImageCropDialog";
 
 import { MdOutlineArrowBackIos } from "react-icons/md";
 
@@ -129,8 +131,7 @@ export default function AdminLotAdsPage({ apiBase }) {
   });
   const [savingAdSponsor, setSavingAdSponsor] = useState(false);
 
-  const [localFiles, setLocalFiles] = useState({});
-  const [localPreviewUrls, setLocalPreviewUrls] = useState({});
+  const [cropRequest, setCropRequest] = useState(null);
   const [uploadingSlot, setUploadingSlot] = useState("");
 
 
@@ -233,8 +234,7 @@ export default function AdminLotAdsPage({ apiBase }) {
     setSelectedLot(lot);
     setAdSponsorForm(normalizeAdSponsor(lot));
     setAssets({});
-    setLocalFiles({});
-    setLocalPreviewUrls({});
+    setCropRequest(null);
     setLoadingAssets(true);
     if (deferAssets) {
       selectionTimerRef.current = setTimeout(() => fetchAssets(lot), 200);
@@ -244,34 +244,21 @@ export default function AdminLotAdsPage({ apiBase }) {
   }
 
   function onSelectFile(slotKey, file) {
-    if (!file) return;
-
+    if (!file || !selectedLot) return;
     if (!file.type?.startsWith("image/")) {
       toast.error("請選擇圖片檔");
       return;
     }
-
-    setLocalFiles((prev) => ({
-      ...prev,
-      [slotKey]: file,
-    }));
-
-    setLocalPreviewUrls((prev) => {
-      if (prev[slotKey]) URL.revokeObjectURL(prev[slotKey]);
-
-      return {
-        ...prev,
-        [slotKey]: URL.createObjectURL(file),
-      };
-    });
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error("原始圖片請勿超過 25 MB");
+      return;
+    }
+    setCropRequest({ slot: ASSET_SLOTS.find((slot) => slot.key === slotKey), file, lot: selectedLot });
   }
 
-  async function uploadSlot(slotKey) {
-    if (!canManage) return toast.error("請使用獲授權的 Google 帳號登入");
-    if (!selectedLot?._id) return toast.error("請先選擇停車場");
-
-    const file = localFiles[slotKey];
-    if (!file) return toast.error("請先選擇圖片");
+  async function uploadSlot(slotKey, file, lot) {
+    if (!canManage) throw new Error("請使用獲授權的 Google 帳號登入");
+    if (!lot?._id) throw new Error("請先選擇停車場");
 
     setUploadingSlot(slotKey);
 
@@ -279,7 +266,7 @@ export default function AdminLotAdsPage({ apiBase }) {
       const formData = new FormData();
       formData.append("image", file);
 
-      const res = await adminFetch(`${apiBase}/api/admin/lots/${selectedLot._id}/ad-assets/${slotKey}`, {
+      const res = await adminFetch(`${apiBase}/api/admin/lots/${lot._id}/ad-assets/${slotKey}`, {
         method: "POST",
         headers: headersAuth(),
         body: formData,
@@ -290,22 +277,7 @@ export default function AdminLotAdsPage({ apiBase }) {
 
       toast.success("已上傳圖片");
 
-      setLocalFiles((prev) => {
-        const next = { ...prev };
-        delete next[slotKey];
-        return next;
-      });
-
-      setLocalPreviewUrls((prev) => {
-        if (prev[slotKey]) URL.revokeObjectURL(prev[slotKey]);
-        const next = { ...prev };
-        delete next[slotKey];
-        return next;
-      });
-
-      await fetchAssets(selectedLot);
-    } catch (e) {
-      toast.error(String(e?.message || e));
+      await fetchAssets(lot);
     } finally {
       setUploadingSlot("");
     }
@@ -438,12 +410,6 @@ export default function AdminLotAdsPage({ apiBase }) {
     fetchAllLots();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canManage]);
-
-  useEffect(() => {
-    return () => {
-      Object.values(localPreviewUrls).forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [localPreviewUrls]);
 
   const visibleLots = useMemo(() => {
     const q = lotSearch.trim().toLowerCase();
@@ -733,8 +699,7 @@ export default function AdminLotAdsPage({ apiBase }) {
               <div className="ala-asset-grid">
                 {ASSET_SLOTS.map((slot) => {
                   const asset = assets?.[slot.key] || null;
-                  const previewUrl = localPreviewUrls[slot.key] || asset?.url || "";
-                  const hasLocalFile = !!localFiles[slot.key];
+                  const previewUrl = asset?.url || "";
                   const isUploading = uploadingSlot === slot.key;
 
                   return (
@@ -750,20 +715,8 @@ export default function AdminLotAdsPage({ apiBase }) {
                         </div>
                       </div>
 
-                      <div style={{ 
-                          height: "calc(100% - 55px)",
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "space-between"
-                        }}
-                      >
-                        <div className={`ala-preview ${slot.key === "navigationSquare" ? "square" : "wide"}`}>
-                          {previewUrl ? (
-                            <img src={previewUrl} alt={slot.title} />
-                          ) : (
-                            <div className="ala-preview-empty">尚未上傳</div>
-                          )}
-                        </div>
+                      <div className="ala-asset-body">
+                        <AdAssetPreview src={previewUrl} slot={slot.key} title={slot.title} />
 
                         <div>
                           <div className="ala-asset-hint">{slot.hint}</div>
@@ -776,25 +729,23 @@ export default function AdminLotAdsPage({ apiBase }) {
 
                           <div className="ala-actions">
                             <label className="ala-filebtn">
-                              選擇圖片
+                              選擇圖片並調整
                               <input
                                 type="file"
                                 accept="image/*"
-                                onChange={(e) => onSelectFile(slot.key, e.target.files?.[0])}
+                                disabled={!!uploadingSlot}
+                                onChange={(e) => {
+                                  onSelectFile(slot.key, e.target.files?.[0]);
+                                  e.target.value = "";
+                                }}
                               />
                             </label>
 
-                            <button
-                              className="ala-btn primary"
-                              disabled={!hasLocalFile || isUploading}
-                              onClick={() => uploadSlot(slot.key)}
-                            >
-                              {isUploading ? "上傳中..." : "上傳"}
-                            </button>
+                            {isUploading && <span role="status">上傳中…</span>}
 
                             <button
                               className="ala-btn danger"
-                              disabled={!asset?.url && !asset?.object}
+                              disabled={!!uploadingSlot || (!asset?.url && !asset?.object)}
                               onClick={() => deleteSlot(slot.key)}
                             >
                               刪除
@@ -812,6 +763,12 @@ export default function AdminLotAdsPage({ apiBase }) {
           </div>
         </div>
       </div>
+      {cropRequest && <ImageCropDialog file={cropRequest.file} slot={cropRequest.slot}
+        onCancel={() => setCropRequest(null)}
+        onConfirm={async (file) => {
+          await uploadSlot(cropRequest.slot.key, file, cropRequest.lot);
+          setCropRequest(null);
+        }} />}
     </div>
   );
 }

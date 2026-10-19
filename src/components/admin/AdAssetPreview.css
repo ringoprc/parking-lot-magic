@@ -1,0 +1,7 @@
+.ad-asset-preview { min-width: 0; width: 100%; }
+.ad-asset-preview-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; font-size: 12px; color: #54655d; }
+.ad-asset-preview-toolbar select { border: 1px solid #cdd9d2; padding: 5px; border-radius: 6px; background: white; color: #34483c; max-width: 100%; }
+.ad-asset-preview-window { position: relative; overflow: hidden; margin: 0 auto; background: #f3f5f4; outline: 1px solid #e1e7e3; border-radius: 4px; }
+.ad-asset-preview-window iframe { position: absolute; border: 0; max-width: none; transform-origin: top left; pointer-events: none; }
+.ad-asset-preview-caption { text-align: center; margin-top: 10px; font-size: 11px; color: #738077; }
+.ad-asset-preview-empty { display: grid; place-items: center; height: 130px; background: #f5f7f6; border-radius: 10px; color: #87918a; font-size: 13px; }

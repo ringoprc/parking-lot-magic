@@ -176,6 +176,8 @@ export default function ParkingLotInfoWindow({
     active?.adAssets?.bottomSheetExample?.url ||
     sponsorImage;
 
+  const sponsorPreviewUrl = active?.adAssets?.coupon?.url || navigationAdUrl;
+
   const adSponsorMetaText = getAdSponsorMetaText(active);
 
   //------------------
@@ -215,10 +217,11 @@ export default function ParkingLotInfoWindow({
       active?.adAssets?.navigationSquare?.url ||
       active?.adAssets?.bottomSheetExample?.url;
 
-    if (!realNavigationAdUrl) return;
-
-    const img = new Image();
-    img.src = realNavigationAdUrl;
+    for (const url of new Set([realNavigationAdUrl, active?.adAssets?.coupon?.url])) {
+      if (!url) continue;
+      const img = new Image();
+      img.src = url;
+    }
   }, [active]);
 
 
@@ -484,8 +487,8 @@ export default function ParkingLotInfoWindow({
 
               <img
                 className="iw-nav-ad-img"
-                src={navAdMode === "sponsorPreview" ? bottomSheetSponsorUrl : navigationAdUrl}
-                alt="advertisement"
+                src={navAdMode === "sponsorPreview" ? sponsorPreviewUrl : navigationAdUrl}
+                alt={navAdMode === "sponsorPreview" && active?.adAssets?.coupon?.url ? "店家優惠券" : "商家廣告"}
               />
 
               {navAdMode === "navigation" && navCountdown > 0 ? (

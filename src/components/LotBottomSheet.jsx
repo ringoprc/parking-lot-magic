@@ -173,6 +173,8 @@ export default function LotBottomSheet({
     active?.adAssets?.bottomSheetExample?.url ||
     sponsorImage;
 
+  const sponsorPreviewUrl = active?.adAssets?.coupon?.url || navigationAdUrl;
+
   const adSponsorMetaText = getAdSponsorMetaText(active);
 
   //---------------------------
@@ -218,10 +220,11 @@ export default function LotBottomSheet({
       active?.adAssets?.navigationSquare?.url ||
       active?.adAssets?.bottomSheetExample?.url;
 
-    if (!realNavigationAdUrl) return;
-
-    const img = new Image();
-    img.src = realNavigationAdUrl;
+    for (const url of new Set([realNavigationAdUrl, active?.adAssets?.coupon?.url])) {
+      if (!url) continue;
+      const img = new Image();
+      img.src = url;
+    }
   }, [active, open]);
 
 
@@ -480,8 +483,8 @@ export default function LotBottomSheet({
 
             <img
               className="vl-nav-ad-img"
-              src={navAdMode === "sponsorPreview" ? bottomSheetSponsorUrl : navigationAdUrl}
-              alt="advertisement"
+              src={navAdMode === "sponsorPreview" ? sponsorPreviewUrl : navigationAdUrl}
+              alt={navAdMode === "sponsorPreview" && active?.adAssets?.coupon?.url ? "店家優惠券" : "商家廣告"}
             />
 
             {navAdMode === "navigation" && navCountdown > 0 ? (

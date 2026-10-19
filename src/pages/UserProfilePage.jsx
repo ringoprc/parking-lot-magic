@@ -44,6 +44,7 @@ function PhotoPreview({ url, label }) {
 function VehicleForm({ user, base, beforeLogoutRef }) {
   const [saved, setSaved] = useState(null);
   const [plate, setPlate] = useState('');
+  const [editingPlate, setEditingPlate] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [error, setError] = useState('');
@@ -82,7 +83,8 @@ function VehicleForm({ user, base, beforeLogoutRef }) {
         });
         if (controller.signal.aborted) return;
         setSaved(profile); setPlate(profile.plate);
-        setError(''); setSuccess(''); setPhotoError({}); setPhotoSuccess({});
+        setEditingPlate(false);
+        setError(''); setSuccess(profile.plate ? '車牌號碼已送出。' : ''); setPhotoError({}); setPhotoSuccess({});
         setReportOpen(false); setReportNote(''); setReportError('');
       } catch (err) { if (!controller.signal.aborted) setLoadError(err.message); }
       finally { if (!controller.signal.aborted) setLoading(false); }
@@ -156,7 +158,7 @@ function VehicleForm({ user, base, beforeLogoutRef }) {
     try {
       const profile = await profileRequest(endpoint, { method: 'POST', headers: { 'X-Requested-With': 'ParkingJi' }, body, signal: AbortSignal.timeout(60000) });
       if (!active.current) return;
-      setSaved(profile); setPlate(profile.plate); setPhotoSuccess({});
+      setSaved(profile); setPlate(profile.plate); setEditingPlate(false); setPhotoSuccess({});
       if (profile.plate !== saved.plate || profile.vehicleModel !== saved.vehicleModel) {
         setReportOpen(false); setReportNote(''); setReportError('');
       }
@@ -190,13 +192,14 @@ function VehicleForm({ user, base, beforeLogoutRef }) {
   return <form onSubmit={save} className="vehicle-form" aria-busy={busy}>
     <fieldset disabled={busy}>
       <section className="profile-card" aria-labelledby="vehicle-details-title">
-        <div className="profile-section-heading"><div><span className="profile-step">01 / MY VEHICLE</span><h2 id="vehicle-details-title">我的車輛</h2></div><span className={`profile-badge${saved.vehicleModel && !plateChanged && !saved.modelReport ? ' is-confirmed' : ''}`}>{plateChanged ? '車型待重新確認' : saved.modelReport ? '車型回報待確認' : saved.vehicleModel ? '車型已設定' : saved.plate ? '待內勤確認車型' : '尚未建立車輛資料'}</span></div>
+        <div className="profile-section-heading"><div><span className="profile-step">01 / MY VEHICLE</span><h2 id="vehicle-details-title">我的車輛</h2></div><span className={`profile-badge${saved.vehicleModel && !plateChanged && !saved.modelReport ? ' is-confirmed' : ''}`}>{plateChanged ? '車型待重新確認' : saved.modelReport ? '車型回報待確認' : saved.vehicleModel ? '車型已設定' : saved.plate ? '待確認車型' : '尚未建立車輛資料'}</span></div>
         <div className="vehicle-details-grid">
-          <div className="profile-field"><label htmlFor="vehicle-plate">車牌號碼 <span>必填</span></label><input id="vehicle-plate" name="plate" type="text" required maxLength={20} placeholder="例如 ABC-1234" autoComplete="off" autoCapitalize="characters" spellCheck={false}
-            value={plate} onChange={event => { setPlate(event.target.value); setSuccess(''); }} onBlur={() => setPlate(normalizePlate(plate))} /></div>
+          <div className="profile-field"><label htmlFor="vehicle-plate">車牌號碼 <span>必填</span></label><input id="vehicle-plate" name="plate" type="text" required maxLength={20} placeholder="例如 ABC-1234" autoComplete="off" autoCapitalize="characters" spellCheck={false} className={saved.plate && !dirty && !editingPlate ? 'is-submitted' : undefined}
+            onFocus={() => setEditingPlate(true)} value={plate} onChange={event => { setPlate(event.target.value); setSuccess(''); }} onBlur={() => { setPlate(normalizePlate(plate)); setEditingPlate(false); }} />
+            {success && <p className="profile-success" role="status"><FiCheck />{success}</p>}
+          </div>
           <div className="profile-field"><label htmlFor="vehicle-model">車子型號 <span><FiLock /> 由我們設定</span></label><input id="vehicle-model" value={plateChanged ? '' : saved.vehicleModel} placeholder="等待內勤確認" readOnly aria-describedby="model-hint" /><p id="model-hint">我們會依車牌查詢並設定你的車子型號。</p>
             <div className="vehicle-plate-submit"><button type="submit" className="profile-primary" disabled={busy || !dirty}><FiCheck />{saving ? '送出中…' : '送出車牌號碼'}</button></div>
-            {success && <p className="profile-success" role="status"><FiCheck />{success}</p>}
             {error && <div className="profile-error" role="alert">{error}<button type="button" className="profile-inline-reload" onClick={reload}>重新載入</button></div>}
             {saved.vehicleModel && !plateChanged && !saved.modelReport && <button type="button" className="vehicle-model-report-link" aria-expanded={reportOpen} aria-controls="vehicle-model-report" onClick={() => { setReportOpen(value => !value); setReportError(''); }}><FiFlag />{reportOpen ? '收合回報' : '回報車型有誤'}</button>}
           </div>

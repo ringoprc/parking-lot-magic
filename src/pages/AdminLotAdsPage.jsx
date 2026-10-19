@@ -23,8 +23,8 @@ const ASSET_SLOTS = [
   {
     key: "coupon",
     title: "優惠券圖片",
-    hint: "可為正方形或橫圖，點選商家廣告開啟彈窗時優先顯示；未上傳時顯示導航準備廣告圖。",
-    acceptShape: "正方形 / 橫圖",
+    hint: "上傳時自動等比例縮圖並壓縮。點選商家廣告開啟彈窗時優先顯示；未上傳時顯示導航準備廣告圖。",
+    acceptShape: "直圖 / 正方形 / 橫圖",
   },
   {
     key: "entrancePhoto",

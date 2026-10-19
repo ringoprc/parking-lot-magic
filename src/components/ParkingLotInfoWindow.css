@@ -43,12 +43,30 @@
   pointer-events: all !important;
 }
 
+/* Let the preview wrap the image's natural aspect ratio within the viewport. */
 .iw-nav-ad-modal.preview {
+  box-sizing: border-box;
+  width: fit-content;
+  min-width: min(240px, 92vw);
+  max-width: min(560px, 92vw);
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
   padding-top: 24px;
 }
 
 .iw-nav-ad-modal.preview .iw-nav-ad-img {
+  width: auto;
+  height: auto;
+  max-width: min(528px, calc(92vw - 32px));
+  max-height: min(70vh, calc(100vh - 180px));
+  max-height: min(70dvh, calc(100dvh - 180px));
   margin-bottom: 18px;
+}
+
+.iw-nav-ad-modal.preview .iw-nav-ad-sponsor-meta-div {
+  padding-right: 0;
+  overflow-wrap: anywhere;
 }
 
 .iw-nav-ad-choiceRow.single {

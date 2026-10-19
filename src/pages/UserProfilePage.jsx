@@ -198,10 +198,11 @@ function VehicleForm({ user, base, beforeLogoutRef }) {
             onFocus={() => setEditingPlate(true)} value={plate} onChange={event => { setPlate(event.target.value); setSuccess(''); }} onBlur={() => { setPlate(normalizePlate(plate)); setEditingPlate(false); }} />
             {success && <p className="profile-success" role="status"><FiCheck />{success}</p>}
           </div>
-          <div className="profile-field"><label htmlFor="vehicle-model">車子型號 <span><FiLock /> 由我們設定</span></label><input id="vehicle-model" value={plateChanged ? '' : saved.vehicleModel} placeholder="等待內勤確認" readOnly aria-describedby="model-hint" /><p id="model-hint">我們會依車牌查詢並設定你的車子型號。</p>
-            <div className="vehicle-plate-submit"><button type="submit" className="profile-primary" disabled={busy || !dirty}><FiCheck />{saving ? '送出中…' : '送出車牌號碼'}</button></div>
-            {error && <div className="profile-error" role="alert">{error}<button type="button" className="profile-inline-reload" onClick={reload}>重新載入</button></div>}
+          <div className="profile-field"><label htmlFor="vehicle-model">車子型號 <span><FiLock /> 由我們設定</span></label><input id="vehicle-model" value={plateChanged ? '' : saved.vehicleModel} placeholder="等待確認" readOnly aria-describedby="model-hint" /><p id="model-hint">我們會依車牌查詢並設定你的車子型號。</p>
             {saved.vehicleModel && !plateChanged && !saved.modelReport && <button type="button" className="vehicle-model-report-link" aria-expanded={reportOpen} aria-controls="vehicle-model-report" onClick={() => { setReportOpen(value => !value); setReportError(''); }}><FiFlag />{reportOpen ? '收合回報' : '回報車型有誤'}</button>}
+          </div>
+          <div className="vehicle-plate-submit"><button type="submit" className="profile-primary" disabled={busy || !dirty}><FiCheck />{saving ? '送出中…' : '送出車牌號碼'}</button>
+            {error && <div className="profile-error" role="alert">{error}<button type="button" className="profile-inline-reload" onClick={reload}>重新載入</button></div>}
           </div>
         </div>
         {saved.modelReport && !plateChanged && <div className="vehicle-model-report-status" role="status"><FiFlag /><div><strong>已回報車型有誤，待內勤重新確認</strong><p>回報車牌：{saved.modelReport.plate} · 車型：{saved.modelReport.vehicleModel}</p>{saved.modelReport.note && <p className="vehicle-report-note">你的說明：{saved.modelReport.note}</p>}<small>回報時間：{new Date(saved.modelReport.reportedAt).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}</small></div></div>}

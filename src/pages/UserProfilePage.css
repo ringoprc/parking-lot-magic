@@ -35,7 +35,7 @@
 .profile-section-heading h2 { margin: 9px 0 0; font-size: 20px; font-weight: 700; letter-spacing: -.4px; }
 .profile-badge { display: inline-flex; flex-shrink: 0; padding: 6px 10px; border: 1px solid #eee8d5; border-radius: 7px; background: #faf7ec; color: #918158; font-size: 11px; }
 .profile-badge.is-confirmed { color: #39754f; background: #edf5ed; border-color: #dfeadd; }
-.vehicle-details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.vehicle-details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 22px; }
 .profile-field { min-width: 0; }
 .profile-field label { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; margin-bottom: 10px; }
 .profile-field label span { display: inline-flex; align-items: center; gap: 4px; color: #87917f; font-size: 10px; font-weight: 400; }
@@ -154,7 +154,7 @@
   .profile-back > svg { display: none; }
 }
 
-.vehicle-plate-submit { margin-top: 14px; }
+.vehicle-plate-submit { grid-column: 1; }
 .vehicle-plate-submit .profile-primary { width: 100%; }
 .profile-field .profile-success { color: #397a53; }
 .vehicle-photo-status { margin: 10px 0 0; color: #397a53; font-size: 11px; line-height: 1.6; }

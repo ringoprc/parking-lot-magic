@@ -1,3 +1,4 @@
+import AccountVehicleModal from '../components/AccountVehicleModal';
 import AccountRoleDropdown from '../components/AccountRoleDropdown';
 import { useEffect, useState } from 'react';
 import logo from '../assets/logo4.png';
@@ -9,6 +10,8 @@ export default function AdminAccountsPage({ apiBase }) {
   const canEditRoles = user?.role === 'admin';
   const roleLabels = { admin: '管理員', staff: '內勤', none: '未授權' };
   const [accounts, setAccounts] = useState([]);
+  const [editingAccount, setEditingAccount] = useState(null);
+  const [success, setSuccess] = useState('');
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -55,30 +58,37 @@ export default function AdminAccountsPage({ apiBase }) {
       <section className="accounts-hero">
         <span className="accounts-kicker">後台管理中心 / ACCOUNTS</span>
         <h1>帳號管理</h1>
-        <p>管理帳號的後台存取權限，並查看用戶的車型回報。</p>
-        <div className="accounts-role-notes"><span>管理員 · 可設定帳號權限</span><span>內勤 · 可查看帳號列表</span></div>
+        <p>管理帳號的後台存取權限，並查看用戶送出的車牌與車型回報。</p>
+        <div className="accounts-role-notes"><span>管理員 · 可設定帳號權限</span><span>管理員與內勤 · 可設定車型</span></div>
       </section>
       <section className="accounts-panel" aria-labelledby="accounts-list-title">
         <div className="accounts-panel-heading"><div><span className="accounts-badge">Accounts</span><h2 id="accounts-list-title">團隊帳號</h2></div><span className="accounts-total">共 {total} 個帳號</span></div>
         <p className="accounts-hint">新成員請先使用 Google 帳號登入一次，再由管理員授權。未授權帳號僅能瀏覽空白後台。</p>
-        {canManage && <p className="accounts-access-note">{canEditRoles ? '你可以調整其他成員的角色；自己的角色需由另一位管理員變更。' : '你目前具有內勤權限，可查看帳號資訊；角色變更請交由管理員處理。'}</p>}
+        {canManage && <p className="accounts-access-note">{canEditRoles ? '你可以調整其他成員的角色；自己的角色需由另一位管理員變更。' : '你目前具有內勤權限，可查看帳號與設定車型；角色變更請交由管理員處理。'}</p>}
         <form className="accounts-search" onSubmit={event => { event.preventDefault(); setPage(1); setQuery(search.trim()); setRevision(value => value + 1); }}>
           <input aria-label="搜尋帳號" placeholder="搜尋姓名或 Google Email" value={search} onChange={event => setSearch(event.target.value)} />
           <button className="accounts-primary" disabled={!canManage || busy}>搜尋／更新</button>
         </form>
+        {success && <p className="accounts-access-note" role="status">{success}</p>}
         {error && <div className="accounts-error" role="alert">{error} <button onClick={() => setRevision(value => value + 1)}>重試</button></div>}
         <div className="account-table"><table aria-busy={busy}>
-          <thead><tr><th>帳號</th><th>角色與權限</th><th>車型回報</th><th>最近登入（台北時間）</th></tr></thead>
+          <thead><tr><th>帳號</th><th>角色與權限</th><th>車輛確認與回報</th><th>最近登入（台北時間）</th><th>操作</th></tr></thead>
           <tbody>{accounts.map(account => <tr key={account._id}>
             <td><div className="accounts-person"><span className="accounts-avatar" aria-hidden="true">{(account.name || account.email || '?').slice(0, 1).toUpperCase()}</span><div><strong>{account.name || '—'}</strong>{account._id === user?.id && <span className="accounts-self">你</span>}<small>{account.email}</small></div></div></td>
             <td>{canEditRoles ? <AccountRoleDropdown label={`${account.email} 的角色`} value={account.role || 'none'} disabled={!!saving || busy || account._id === user?.id}
               onChange={role => changeRole(account, role)} /> : <span className={`accounts-role accounts-role-${account.role || 'none'}`}>{roleLabels[account.role] || '未授權'}</span>}{saving === account._id && <small role="status">儲存中…</small>}</td>
-            <td className="accounts-model-report">{account.modelReport ? <><span className="accounts-report-pending">待重新確認</span><strong>{account.modelReport.plate} · {account.modelReport.vehicleModel}</strong><p>{account.modelReport.note || '用戶未補充說明'}</p><small>{new Date(account.modelReport.reportedAt).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}</small></> : <span className="accounts-report-empty">無待處理回報</span>}</td>
+            <td className="accounts-model-report">{account.modelReport ? <><span className="accounts-report-pending">待重新確認</span><strong>{account.modelReport.plate} · {account.modelReport.vehicleModel}</strong><p>{account.modelReport.note || '用戶未補充說明'}</p><small>{new Date(account.modelReport.reportedAt).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}</small></> : account.vehicle ? <><span className={account.vehicle.vehicleModel ? 'accounts-report-confirmed' : 'accounts-report-pending'}>{account.vehicle.vehicleModel ? '車型已設定' : '待確認車型'}</span><strong>{account.vehicle.plate}</strong><p>{account.vehicle.vehicleModel || '用戶已送出車牌，請查詢並確認車型。'}</p></> : <span className="accounts-report-empty">尚未送出車牌</span>}</td>
             <td className="accounts-date">{account.lastLoginAt ? new Date(account.lastLoginAt).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }) : '—'}</td>
-          </tr>)}{!accounts.length && <tr><td colSpan="4" className="accounts-empty"><span aria-hidden="true">◎</span><strong>{busy ? '載入中…' : canManage ? '沒有符合條件的帳號' : '尚未取得後台權限'}</strong><p>{canManage ? '請確認搜尋條件，或請新成員先完成 Google 登入。' : '登入獲授權的 Google 帳號後，即可查看團隊帳號資訊。'}</p></td></tr>}</tbody>
+            <td><button type="button" className="accounts-edit" disabled={!canManage || busy || !!saving} aria-label={`編輯 ${account.email} 的車輛資料`} onClick={() => { setSuccess(''); setEditingAccount(account); }}>編輯</button></td>
+          </tr>)}{!accounts.length && <tr><td colSpan="5" className="accounts-empty"><span aria-hidden="true">◎</span><strong>{busy ? '載入中…' : canManage ? '沒有符合條件的帳號' : '尚未取得後台權限'}</strong><p>{canManage ? '請確認搜尋條件，或請新成員先完成 Google 登入。' : '登入獲授權的 Google 帳號後，即可查看團隊帳號資訊。'}</p></td></tr>}</tbody>
         </table></div>
         <footer><span>第 {page} 頁</span><div><button disabled={busy || page <= 1} onClick={() => setPage(value => value - 1)}>‹ 上一頁</button><button disabled={busy || page * 50 >= total} onClick={() => setPage(value => value + 1)}>下一頁 ›</button></div></footer>
       </section>
     </main>
+    {editingAccount && canManage && <AccountVehicleModal key={editingAccount._id} account={editingAccount} apiBase={apiBase} onClose={() => setEditingAccount(null)} onSaved={vehicle => {
+      setAccounts(rows => rows.map(row => row._id === editingAccount._id ? { ...row, vehicle: { plate: vehicle.plate, vehicleModel: vehicle.vehicleModel }, modelReport: null } : row));
+      setSuccess(`${vehicle.plate} 的車型已儲存為 ${vehicle.vehicleModel}。`);
+      setEditingAccount(null);
+    }} />}
   </div>;
 }

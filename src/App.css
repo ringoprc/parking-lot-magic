@@ -1560,3 +1560,5 @@ div .gm-style-iw {
   overflow-wrap: anywhere;
   box-shadow: 0 2px 7px #18324d30;
 }
+.shared-vehicle-marker.is-sports .shared-vehicle-icon { background: #c63d3d; box-shadow: 0 2px 7px #74232340; }
+.shared-vehicle-marker.is-sports .shared-vehicle-label { background: #a72f35; box-shadow: 0 2px 7px #74232330; }

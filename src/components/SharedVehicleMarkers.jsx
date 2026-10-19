@@ -1,7 +1,15 @@
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { AdvancedMarker, useMap } from '@vis.gl/react-google-maps';
-import { FiTruck } from 'react-icons/fi';
-import { locationRequest } from '../utils/locationSharing';
+import SharedVehicleMarkerContent from './SharedVehicleMarkerContent';
+import { applyNearbyResult, locationRequest, pruneSharedLocations } from '../utils/locationSharing';
+
+const SharedVehicleMarker = memo(function SharedVehicleMarker({ lat, lng, vehicleModel, vehicleType }) {
+  // Match parking dots: map pans and expiry checks must not reassign marker.position.
+  const position = useMemo(() => ({ lat, lng }), [lat, lng]);
+  return <AdvancedMarker position={position} zIndex={1500}>
+    <SharedVehicleMarkerContent vehicleModel={vehicleModel} vehicleType={vehicleType} />
+  </AdvancedMarker>;
+});
 
 export default function SharedVehicleMarkers({ user, apiBase }) {
   const map = useMap();
@@ -23,18 +31,18 @@ export default function SharedVehicleMarkers({ user, apiBase }) {
         const data = await locationRequest(base, user.id, 'nearby', { lat: center.lat(), lng: center.lng() }, {
           signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15_000)]),
         });
-        if (!disposed && current === version) setLocations(data.locations);
-      } catch {
-        if (!disposed) setLocations([]);
+        if (!disposed && current === version && Array.isArray(data.locations)) setLocations(rows => applyNearbyResult(rows, data));
+      } catch (error) {
+        if (!disposed && current === version) setLocations(rows => applyNearbyResult(rows, { error }));
       } finally { busy = false; }
     }
     const onVisibility = () => {
       version++;
-      setLocations([]);
+      setLocations(rows => pruneSharedLocations(rows));
       if (document.visibilityState === 'visible') void refresh();
     };
     const interval = window.setInterval(refresh, 5000);
-    const expiry = window.setInterval(() => setLocations(rows => rows.filter(row => Date.parse(row.expiresAt) > Date.now())), 1000);
+    const expiry = window.setInterval(() => setLocations(rows => pruneSharedLocations(rows)), 1000);
     const listener = map.addListener('idle', refresh);
     document.addEventListener('visibilitychange', onVisibility);
     void refresh();
@@ -46,11 +54,6 @@ export default function SharedVehicleMarkers({ user, apiBase }) {
     };
   }, [map, user?.id, base]);
   if (!user?.id) return null;
-  return locations.map(location => <AdvancedMarker key={location.id}
-    position={{ lat: location.lat, lng: location.lng }} zIndex={1500}>
-    <div className="shared-vehicle-marker" title={`其他用戶 · ${location.vehicleModel}`}>
-      <span className="shared-vehicle-icon"><FiTruck aria-hidden="true" /></span>
-      <span className="shared-vehicle-label">{location.vehicleModel}</span>
-    </div>
-  </AdvancedMarker>);
+  return locations.map(location => <SharedVehicleMarker key={location.id}
+    lat={location.lat} lng={location.lng} vehicleModel={location.vehicleModel} vehicleType={location.vehicleType} />);
 }

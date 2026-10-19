@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { createLocationPublisher, locationRequest } from '../utils/locationSharing';
+import { createLocationPublisher, locationRequest, WAITING_FOR_MAP_LOCATION } from '../utils/locationSharing';
 
-export default function MapSharingToggle({ user, apiBase, locateRequest = 0 }) {
+export default function MapSharingToggle({ user, apiBase, locateRequest = 0, hasMapLocation = false }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(!!user?.id);
   const [saving, setSaving] = useState(false);
@@ -13,7 +13,6 @@ export default function MapSharingToggle({ user, apiBase, locateRequest = 0 }) {
   const publisher = useRef(null);
   // Do not consume a completed location request until the sharing preference is ready.
   const lastLocate = useRef(null);
-  const hasLocated = useRef(false);
   const [live, setLive] = useState(null);
   const base = import.meta.env.DEV ? apiBase.replace(/\/$/, '') : '';
   const endpoint = `${base}/api/profile`;
@@ -23,10 +22,7 @@ export default function MapSharingToggle({ user, apiBase, locateRequest = 0 }) {
     const instance = createLocationPublisher({
       request: (action, body, options) => locationRequest(base, user.id, action, body, options),
       geolocation: navigator.geolocation,
-      onState: state => {
-        if (state.sharing) hasLocated.current = true;
-        setLive(state);
-      },
+      onState: setLive,
     });
     publisher.current = instance;
     const pause = () => {
@@ -45,12 +41,16 @@ export default function MapSharingToggle({ user, apiBase, locateRequest = 0 }) {
   }, [base, user?.id]);
 
   useEffect(() => {
+    if (!hasMapLocation || !profile?.shareOnMap) {
+      publisher.current?.stop();
+      lastLocate.current = null;
+      return;
+    }
     if (!profile || loading || saving || error || document.visibilityState !== 'visible') return;
-    if (locateRequest === 0 && !hasLocated.current) return;
     if (lastLocate.current === locateRequest) return;
     lastLocate.current = locateRequest;
-    if (profile.shareOnMap) void publisher.current?.start(profile.revision);
-  }, [locateRequest, profile, loading, saving, error]);
+    void publisher.current?.start(profile.revision, hasMapLocation);
+  }, [locateRequest, hasMapLocation, profile, loading, saving, error]);
 
   useEffect(() => {
     active.current = true;
@@ -86,6 +86,7 @@ export default function MapSharingToggle({ user, apiBase, locateRequest = 0 }) {
     if (!user?.id) { setMessage('請先登入，再設定位置分享偏好。'); return; }
     if (working.current || loading || !profile || error) return;
     publisher.current?.stop(); setLive(null);
+    lastLocate.current = null;
     working.current = true; setSaving(true); setMessage('');
     try {
       const response = await fetch(`${endpoint}/sharing-preference`, {
@@ -97,10 +98,6 @@ export default function MapSharingToggle({ user, apiBase, locateRequest = 0 }) {
       if (!response.ok) throw new Error(data.error || '無法儲存分享偏好，請重試。');
       if (!active.current) return;
       setProfile(data.profile);
-      if (data.profile.shareOnMap && document.visibilityState === 'visible') {
-        lastLocate.current = locateRequest;
-        void publisher.current?.start(data.profile.revision);
-      }
     } catch (err) {
       if (active.current) { setError(true); setMessage(err.name === 'TimeoutError' ? '儲存逾時，請重新載入確認偏好。' : err.name === 'TypeError' ? '無法連線，請重新載入後重試。' : err.message); }
     } finally { working.current = false; if (active.current) setSaving(false); }
@@ -113,7 +110,7 @@ export default function MapSharingToggle({ user, apiBase, locateRequest = 0 }) {
         {!user?.id && <a href="?profile=1">登入／管理資料</a>}
         {error && <button type="button" disabled={loading || saving} onClick={() => setAttempt(value => value + 1)}>重新載入</button>}
       </div>}
-      <span className="map-sharing-hint" id="map-sharing-hint" role={live?.error ? 'alert' : 'status'}>{loading ? '讀取偏好中…' : saving ? '儲存中…' : !profile?.shareOnMap ? '開啟時，僅分享位置與車型' : live?.sharing ? '正在分享位置與車型 · 離開網頁時停止分享' : live?.text || (locateRequest > 0 ? '正在準備分享 · 離開網頁時停止分享' : '按定位開始分享 · 離開網頁時停止分享')}</span>
+      <span className="map-sharing-hint" id="map-sharing-hint" role={hasMapLocation && live?.error ? 'alert' : 'status'}>{loading ? '讀取偏好中…' : saving ? '儲存中…' : !profile?.shareOnMap ? '開啟時，僅分享位置與車型' : !hasMapLocation ? WAITING_FOR_MAP_LOCATION : live?.sharing ? '正在分享位置與車型 · 離開網頁時停止分享' : live?.text || '正在準備分享 · 離開網頁時停止分享'}</span>
     </div>
     <button type="button" className={`map-number-filter map-sharing-toggle${profile?.shareOnMap ? ' is-active' : ''}`}
       role="switch" aria-checked={profile?.shareOnMap === true} aria-label="顯示我的位置給其他用戶"

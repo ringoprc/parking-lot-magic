@@ -678,7 +678,8 @@ export default function ParkingMap({
 
       </div>
       <div className="map-bottom-left-controls" role="group" aria-label="位置顯示設定">
-        <MapSharingToggle key={accountUser?.id || 'guest'} user={accountUser} apiBase={apiBase} locateRequest={locateRequest} />
+        <MapSharingToggle key={accountUser?.id || 'guest'} user={accountUser} apiBase={apiBase} locateRequest={locateRequest}
+          hasMapLocation={myPos?.lat != null && myPos?.lng != null} />
         <div className="map-sharing-control">
           <button type="button"
             className={`map-number-filter map-sharing-toggle${showOtherUsers && accountUser?.id ? ' is-active' : ''}`}
@@ -701,8 +702,9 @@ export default function ParkingMap({
           + (locatingMe ? "locating " : " ")
         }
         onClick={() => requestMyLocation?.()}
-        disabled={!!locatingMe}
-        aria-label="定位到我的位置"
+        disabled={!!locatingMe && !(myPos?.lat != null && myPos?.lng != null)}
+        aria-pressed={myPos?.lat != null && myPos?.lng != null}
+        aria-label={myPos?.lat != null && myPos?.lng != null ? '停止定位' : '定位到我的位置'}
       >
         {locatingMe ? (
           <Spinner className="map-locate-spinner" animation="grow" role="status" size="sm" />

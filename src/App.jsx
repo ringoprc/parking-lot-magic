@@ -347,7 +347,7 @@ export default function App() {
   }, [validLots, active?.lotId]);
 
 
-  const { locating: locatingMe, requestMyLocation } = useMyLocationAction({
+  const { locating: locatingMe, requestMyLocation, cancelMyLocation } = useMyLocationAction({
     onSuccess: ({ lat, lng, accuracy }) => {
       setMyPos({ lat, lng });
       setLocateRequest(value => value + 1);
@@ -374,6 +374,19 @@ export default function App() {
   }
 
   function requestMyLocationForMapFly() {
+    if (myPos?.lat != null && myPos?.lng != null) {
+      cancelMyLocation();
+      afterLocateRef.current = null;
+      setMyPos(null);
+      setMyAcc(null);
+      if (focus?.kind === 'my_location') {
+        setFocus(null);
+        setSearchCenter(null);
+        setQueryCenter(null);
+        resumeListViewport();
+      }
+      return;
+    }
     afterLocateRef.current = ({ lat, lng }) => {
       resumeListViewport();
       flyToRef.current?.({ lat, lng, zoom: 16 });
@@ -541,7 +554,7 @@ export default function App() {
       lat: p.lat,
       lng: p.lng,
       zoom: 15,
-      kind: "search",
+      kind: p.kind === 'my_location' ? 'my_location' : 'search',
     });
 
     // 2) use this point to sort nearest lots in the sidebar

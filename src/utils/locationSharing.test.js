@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createLocationPublisher } from './locationSharing.js';
+import { createLocationPublisher, WAITING_FOR_MAP_LOCATION } from './locationSharing.js';
 
 const flush = () => new Promise(resolve => setImmediate(resolve));
 function fixture(requestOverride) {
@@ -19,7 +19,7 @@ function fixture(requestOverride) {
 test('publishes only after explicit start and each fresh fix; stop prevents later GPS callbacks', async () => {
   const f = fixture();
   assert.equal(f.calls.length, 0);
-  await f.publisher.start(3);
+  await f.publisher.start(3, true);
   assert.deepEqual(f.calls, [{ action: 'start', body: { revision: 3 } }]);
   assert.equal(f.fixes[0].options.maximumAge, 0);
   await f.fix();
@@ -44,7 +44,7 @@ test('late start response is cleaned up if page was hidden or unmounted while st
     if (action === 'start') return new Promise(resolve => { finish = resolve; });
     return { ok: true };
   });
-  const pending = f.publisher.start(1);
+  const pending = f.publisher.start(1, true);
   f.publisher.stop();
   finish({ lease: 'late-lease' });
   await pending;
@@ -53,7 +53,7 @@ test('late start response is cleaned up if page was hidden or unmounted while st
 });
 
 test('permission denial stops the lease and never sends coordinates', async () => {
-  const f = fixture(); await f.publisher.start(1);
+  const f = fixture(); await f.publisher.start(1, true);
   f.fixes[0].failure({ code: 1 });
   await flush();
   assert.deepEqual(f.calls.map(call => call.action), ['start', 'stop']);
@@ -69,7 +69,7 @@ test('failed publishing stops sharing and does not retry an old coordinate', asy
     if (action === 'update') throw new Error('Connection failed');
     return { ok: true };
   });
-  await f.publisher.start(1); await f.fix();
+  await f.publisher.start(1, true); await f.fix();
   assert.deepEqual(calls, ['start', 'update', 'stop']);
   assert.equal(f.states.at(-1).error, true);
   assert.equal(f.pendingTimers.size, 0);
@@ -82,8 +82,38 @@ test('an update completing after stop cannot restart the publishing loop', async
     if (action === 'update') return new Promise(resolve => { finish = resolve; });
     return { ok: true };
   });
-  await f.publisher.start(1);
+  await f.publisher.start(1, true);
   const pending = f.fix(); f.publisher.stop(); finish({ ok: true }); await pending;
   assert.equal(f.pendingTimers.size, 0);
   assert.ok(!f.states.some(state => state.sharing));
+});
+
+
+test('enabling sharing alone waits without GPS or network requests until the map locates', async () => {
+  const f = fixture();
+  await f.publisher.start(1);
+  await f.publisher.start(1, false);
+  assert.deepEqual(f.calls, []);
+  assert.equal(f.fixes.length, 0);
+  assert.deepEqual(f.states.at(-1), { text: WAITING_FOR_MAP_LOCATION });
+
+  await f.publisher.start(1, true);
+  assert.equal(f.fixes.length, 1);
+  assert.ok(!f.states.some(state => state.sharing), 'GPS and upload must succeed before reporting sharing');
+  await f.fix();
+  assert.equal(f.states.at(-1).sharing, true);
+
+  await f.publisher.start(1, false);
+  assert.equal(f.calls.at(-1).action, 'stop');
+  assert.equal(f.pendingTimers.size, 0);
+  assert.deepEqual(f.states.at(-1), { text: WAITING_FOR_MAP_LOCATION });
+
+  await f.publisher.start(1, true);
+  assert.equal(f.fixes.length, 2, 'turning location back on obtains a fresh fix');
+  const beforeLateFix = f.calls.length;
+  await f.fixes[0].success({ coords: { latitude: 0, longitude: 0 }, timestamp: Date.now() });
+  assert.equal(f.calls.length, beforeLateFix, 'the stopped location callback cannot publish after restarting');
+  await f.fix();
+  assert.equal(f.calls.at(-1).body.sequence, 1);
+  assert.equal(f.states.at(-1).sharing, true);
 });

@@ -1,3 +1,5 @@
+export const WAITING_FOR_MAP_LOCATION = '正在等待開啟定位，成功定位後分享位置與車型';
+
 export function createLocationPublisher({ request, geolocation, onState, timers = globalThis }) {
   let run = null;
   const remove = lease => request('stop', { lease }, { keepalive: true }).catch(() => {});
@@ -8,8 +10,9 @@ export function createLocationPublisher({ request, geolocation, onState, timers 
     timers.clearTimeout(previous.timer);
     if (previous.lease) void remove(previous.lease);
   }
-  async function start(revision) {
+  async function start(revision, hasMapLocation = false) {
     stop();
+    if (!hasMapLocation) { onState({ text: WAITING_FOR_MAP_LOCATION }); return; }
     if (!geolocation) { onState({ error: true, text: '此瀏覽器無法定位，請使用支援定位的瀏覽器。' }); return; }
     const current = { sequence: 0, lease: null, timer: null };
     run = current;

@@ -29,7 +29,17 @@ export function useMyLocationAction({
 } = {}) {
   const [locating, setLocating] = useState(false);
   const locateTimeoutRef = useRef(null);
+  const preDelayRef = useRef(null);
   const inFlightRef = useRef(false);
+  const requestVersionRef = useRef(0);
+
+  function cancelMyLocation() {
+    requestVersionRef.current++;
+    clearTimeout(preDelayRef.current);
+    clearTimeout(locateTimeoutRef.current);
+    inFlightRef.current = false;
+    setLocating(false);
+  }
 
   async function requestMyLocation() {
     if (inFlightRef.current || locating) return;
@@ -39,21 +49,28 @@ export function useMyLocationAction({
     }
 
     inFlightRef.current = true;
+    const version = ++requestVersionRef.current;
     setLocating(true);
     onStart?.();
 
     // Hard timeout: if GPS is off / cannot acquire
     if (locateTimeoutRef.current) clearTimeout(locateTimeoutRef.current);
     locateTimeoutRef.current = setTimeout(() => {
+      if (version !== requestVersionRef.current) return;
+      requestVersionRef.current++;
+      clearTimeout(preDelayRef.current);
       inFlightRef.current = false;
       setLocating(false);
       onTimeout?.();
       alert("定位逾時。請開啟手機定位/GPS，或確認瀏覽器允許定位權限。");
     }, hardTimeoutMs);
 
-    setTimeout(() => {
+    preDelayRef.current = setTimeout(() => {
+      if (version !== requestVersionRef.current) return;
       navigator.geolocation.getCurrentPosition(
         (pos) => {
+          if (version !== requestVersionRef.current) return;
+          requestVersionRef.current++;
           if (locateTimeoutRef.current) clearTimeout(locateTimeoutRef.current);
           inFlightRef.current = false;
           setLocating(false);
@@ -66,6 +83,8 @@ export function useMyLocationAction({
           );
         },
         (err) => {
+          if (version !== requestVersionRef.current) return;
+          requestVersionRef.current++;
           if (locateTimeoutRef.current) clearTimeout(locateTimeoutRef.current);
           inFlightRef.current = false;
           setLocating(false);
@@ -95,12 +114,13 @@ export function useMyLocationAction({
   }
 
   useEffect(() => {
+    const requestVersion = requestVersionRef;
     return () => {
+      requestVersion.current++;
+      clearTimeout(preDelayRef.current);
       if (locateTimeoutRef.current) clearTimeout(locateTimeoutRef.current);
     };
   }, []);
 
-  return { locating, requestMyLocation };
+  return { locating, requestMyLocation, cancelMyLocation };
 }
-
-
